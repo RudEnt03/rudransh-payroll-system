@@ -2,185 +2,241 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Rudransh Payroll System</title>
+<title>Rudransh Enterprise Payroll</title>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
 <style>
-body{
-    font-family: Arial;
-    background:#f4f6f9;
-    padding:20px;
-}
-h2{
-    text-align:center;
-}
-.card{
-    background:white;
-    padding:20px;
-    border-radius:8px;
-    box-shadow:0 0 10px rgba(0,0,0,0.1);
-    margin-bottom:20px;
-}
-table{
-    width:100%;
-    border-collapse:collapse;
-    margin-top:10px;
-}
-th,td{
-    border:1px solid #ddd;
-    padding:8px;
-}
-th{
-    background:#2c3e50;
-    color:white;
-}
-button{
-    padding:6px 12px;
-    background:#2c3e50;
-    color:white;
-    border:none;
-    border-radius:4px;
-    cursor:pointer;
-}
-button:hover{
-    background:#34495e;
-}
-.hidden{
-    display:none;
-}
+body{font-family:Arial;margin:0;background:#0f172a;color:white}
+.center{display:flex;flex-direction:column;justify-content:center;align-items:center;height:100vh}
+.card{background:#111827;padding:25px;border-radius:10px;text-align:center;margin:10px}
+button{background:#d4af37;color:black;border:none;padding:8px 15px;margin:5px;cursor:pointer;border-radius:4px}
+input,select{padding:6px;margin:5px}
+.hidden{display:none}
+table{width:100%;border-collapse:collapse;margin-top:10px}
+th,td{border:1px solid #333;padding:6px}
+th{background:#1e293b;color:#d4af37}
+
+.payslip{background:white;color:black;padding:25px}
+.header{text-align:center;border-bottom:2px solid #d4af37;margin-bottom:15px}
+.flex{display:flex;justify-content:space-between}
+.section{width:48%}
+.netbox{background:#0f172a;color:#d4af37;padding:10px;text-align:center;font-size:18px;margin-top:15px}
+.footer{text-align:center;margin-top:20px;font-size:12px;color:gray}
 </style>
 </head>
-
 <body>
 
-<h2>Rudransh Enterprise Payroll System</h2>
-
-<div class="card" id="dashboardCard">
-    <input type="file" id="excelFile" accept=".xlsx,.xls">
-    <button onclick="importExcel()">Import Excel</button>
-
-    <table id="employeeTable">
-        <tr>
-            <th>Emp Code</th>
-            <th>Name</th>
-            <th>Designation</th>
-            <th>UAN</th>
-            <th>ESI</th>
-            <th>Action</th>
-        </tr>
-    </table>
+<div id="rolePage" class="center">
+<h1>Rudransh Enterprise Payroll</h1>
+<div class="card">
+<button onclick="showAdmin()">Admin Login</button>
+<button onclick="showEmployee()">Employee Login</button>
+</div>
 </div>
 
-<div class="card hidden" id="payslipCard">
-    <button onclick="goBack()">⬅ Back</button>
-    <h3>Payslip</h3>
-    <div id="payslipContent"></div>
+<div id="adminPage" class="center hidden">
+<div class="card">
+<h2>Admin Login</h2>
+<input id="adminId" placeholder="ID">
+<input id="adminPass" type="password" placeholder="Password">
+<button onclick="adminLogin()">Login</button>
+<button onclick="back()">Back</button>
+</div>
+</div>
+
+<div id="employeePage" class="center hidden">
+<div class="card">
+<h2>Employee Login (Android Only)</h2>
+<input id="empId" placeholder="Emp Code">
+<input id="empPass" type="password" placeholder="Password">
+<button onclick="employeeLogin()">Login</button>
+<button onclick="back()">Back</button>
+</div>
+</div>
+
+<div id="adminDash" class="hidden" style="padding:20px">
+<h2>Admin Dashboard</h2>
+<input type="file" id="excelFile">
+<button onclick="importExcel()">Import Excel</button>
+<button onclick="bulkDownload()">Bulk PDF</button>
+
+<h3>Reset Employee Binding</h3>
+<input id="resetEmp" placeholder="Emp Code">
+<button onclick="resetBinding()">Reset</button>
+
+<button onclick="logout()">Logout</button>
+
+<table id="empTable"></table>
+</div>
+
+<div id="empDash" class="hidden" style="padding:20px">
+<h2>Employee Dashboard</h2>
+<select id="monthSelect" onchange="loadEmpPayslip()"></select>
+<div id="payslipArea"></div>
+<button onclick="printPayslip()">Print</button>
+<button onclick="downloadPDF()">Download PDF</button>
+<button onclick="logout()">Logout</button>
 </div>
 
 <script>
 
+function showAdmin(){hideAll();adminPage.classList.remove("hidden")}
+function showEmployee(){hideAll();employeePage.classList.remove("hidden")}
+function back(){hideAll();rolePage.classList.remove("hidden")}
+function hideAll(){rolePage.classList.add("hidden");adminPage.classList.add("hidden");employeePage.classList.add("hidden");adminDash.classList.add("hidden");empDash.classList.add("hidden")}
+function logout(){location.reload()}
+
+function adminLogin(){
+if(adminId.value==="Admin" && adminPass.value==="Rud@03"){
+hideAll();adminDash.classList.remove("hidden");loadTable()
+}else alert("Invalid Admin")
+}
+
+function employeeLogin(){
+if(!/Android/i.test(navigator.userAgent)){alert("Android Only");return}
+if(empId.value!==empPass.value){alert("Invalid");return}
+if(!validateBinding(empId.value))return
+localStorage.setItem("empLogged",empId.value)
+hideAll();empDash.classList.remove("hidden")
+loadMonths()
+}
+
+function getDevice(){
+let id=localStorage.getItem("deviceID")
+if(!id){id="DEV-"+Math.random().toString(36).substr(2,9);localStorage.setItem("deviceID",id)}
+return id
+}
+
+function validateBinding(emp){
+let bind=JSON.parse(localStorage.getItem("bindings"))||{}
+let reg=JSON.parse(localStorage.getItem("deviceRegistry"))||{}
+let dev=getDevice()
+
+if(bind[emp] && bind[emp]!==dev){alert("Bound to other device");return false}
+if(reg[dev] && reg[dev]!==emp){alert("Device used by other employee");return false}
+
+bind[emp]=dev
+reg[dev]=emp
+localStorage.setItem("bindings",JSON.stringify(bind))
+localStorage.setItem("deviceRegistry",JSON.stringify(reg))
+return true
+}
+
+function resetBinding(){
+let emp=resetEmp.value
+let bind=JSON.parse(localStorage.getItem("bindings"))||{}
+let reg=JSON.parse(localStorage.getItem("deviceRegistry"))||{}
+let dev=bind[emp]
+delete bind[emp]
+delete reg[dev]
+localStorage.setItem("bindings",JSON.stringify(bind))
+localStorage.setItem("deviceRegistry",JSON.stringify(reg))
+alert("Reset Done")
+}
+
 function importExcel(){
-
-    const fileInput = document.getElementById("excelFile");
-
-    if(!fileInput.files.length){
-        alert("Please select Excel file");
-        return;
-    }
-
-    const reader = new FileReader();
-
-    reader.onload = function(e){
-
-        const data = new Uint8Array(e.target.result);
-        const workbook = XLSX.read(data, {type:"array"});
-        const sheet = workbook.Sheets[workbook.SheetNames[0]];
-        const json = XLSX.utils.sheet_to_json(sheet);
-
-        localStorage.setItem("payrollData", JSON.stringify(json));
-
-        loadEmployees();
-    };
-
-    reader.readAsArrayBuffer(fileInput.files[0]);
+let file=excelFile.files[0]
+let reader=new FileReader()
+reader.onload=function(e){
+let data=new Uint8Array(e.target.result)
+let wb=XLSX.read(data,{type:"array"})
+let sheet=wb.Sheets[wb.SheetNames[0]]
+let json=XLSX.utils.sheet_to_json(sheet)
+localStorage.setItem("payrollData",JSON.stringify(json))
+loadTable()
+}
+reader.readAsArrayBuffer(file)
 }
 
-function loadEmployees(){
-
-    const data = JSON.parse(localStorage.getItem("payrollData")) || [];
-    const table = document.getElementById("employeeTable");
-
-    table.innerHTML = `
-        <tr>
-            <th>Emp Code</th>
-            <th>Name</th>
-            <th>Designation</th>
-            <th>UAN</th>
-            <th>ESI</th>
-            <th>Action</th>
-        </tr>`;
-
-    data.forEach(emp=>{
-
-        const row = document.createElement("tr");
-
-        row.innerHTML = `
-        <td>${emp["Emp Code"] || ""}</td>
-        <td>${emp["Name"] || ""}</td>
-        <td>${emp["Designation"] || ""}</td>
-        <td>${emp["UAN No"] || ""}</td>
-        <td>${emp["ESI No"] || ""}</td>
-        <td><button onclick="viewPayslip('${emp["Emp Code"]}')">View</button></td>
-        `;
-
-        table.appendChild(row);
-    });
+function loadTable(){
+let data=JSON.parse(localStorage.getItem("payrollData"))||[]
+empTable.innerHTML="<tr><th>Select</th><th>Emp Code</th><th>Name</th><th>Month</th></tr>"
+data.forEach(e=>{
+empTable.innerHTML+=`<tr>
+<td><input type="checkbox" value="${e["Emp Code"]}"></td>
+<td>${e["Emp Code"]}</td>
+<td>${e["Name"]}</td>
+<td>${e["Month"]}</td></tr>`
+})
 }
 
-function viewPayslip(code){
-
-    const data = JSON.parse(localStorage.getItem("payrollData")) || [];
-    const emp = data.find(e => e["Emp Code"] == code);
-
-    if(!emp) return;
-
-    let html = `
-    <table>
-        <tr><td><b>Emp Code</b></td><td>${emp["Emp Code"]}</td></tr>
-        <tr><td><b>Name</b></td><td>${emp["Name"]}</td></tr>
-        <tr><td><b>Designation</b></td><td>${emp["Designation"]}</td></tr>
-        <tr><td><b>Month</b></td><td>${emp["Month"]}</td></tr>
-        <tr><td><b>M Days</b></td><td>${emp["M Days"]}</td></tr>
-        <tr><td><b>P Days</b></td><td>${emp["P Days"]}</td></tr>
-        <tr><td><b>Basic</b></td><td>${emp["Basic"]}</td></tr>
-        <tr><td><b>HRA</b></td><td>${emp["HRA"]}</td></tr>
-        <tr><td><b>Allowance</b></td><td>${emp["Allowance"]}</td></tr>
-        <tr><td><b>Leave</b></td><td>${emp["Leave"]}</td></tr>
-        <tr><td><b>Bonus</b></td><td>${emp["Bonus"]}</td></tr>
-        <tr><td><b>Gross</b></td><td>${emp["Gross"]}</td></tr>
-        <tr><td><b>PF@12%</b></td><td>${emp["PF@12%"]}</td></tr>
-        <tr><td><b>ESI@.75%</b></td><td>${emp["ESI@.75%"]}</td></tr>
-        <tr><td><b>LWF</b></td><td>${emp["LWF"]}</td></tr>
-        <tr><td><b>OT Amt</b></td><td>${emp["OT Amt"]}</td></tr>
-        <tr><td><b>Total In Hand</b></td><td>${emp["Total In Hand"]}</td></tr>
-        <tr><td><b>Advance Paid</b></td><td>${emp["Advance Paid"]}</td></tr>
-        <tr><td><b>Net In Hand</b></td><td>${emp["Net In Hand"]}</td></tr>
-    </table>`;
-
-    document.getElementById("dashboardCard").classList.add("hidden");
-    document.getElementById("payslipCard").classList.remove("hidden");
-    document.getElementById("payslipContent").innerHTML = html;
+function loadMonths(){
+let data=JSON.parse(localStorage.getItem("payrollData"))||[]
+let emp=localStorage.getItem("empLogged")
+let months=[...new Set(data.filter(e=>e["Emp Code"]==emp).map(e=>e["Month"]))]
+monthSelect.innerHTML=""
+months.forEach(m=>monthSelect.innerHTML+=`<option>${m}</option>`)
+loadEmpPayslip()
 }
 
-function goBack(){
-    document.getElementById("dashboardCard").classList.remove("hidden");
-    document.getElementById("payslipCard").classList.add("hidden");
+function loadEmpPayslip(){
+let data=JSON.parse(localStorage.getItem("payrollData"))||[]
+let emp=localStorage.getItem("empLogged")
+let month=monthSelect.value
+let e=data.find(x=>x["Emp Code"]==emp && x["Month"]==month)
+if(!e)return
+
+payslipArea.innerHTML=`
+<div class="payslip" id="printArea">
+<div class="header"><h3>RUDRANSH ENTERPRISES</h3><p>Salary Slip - ${e["Month"]}</p></div>
+<b>Emp Code:</b> ${e["Emp Code"]} |
+<b>Name:</b> ${e["Name"]} |
+<b>Designation:</b> ${e["Designation"]} |
+<b>UAN:</b> ${e["UAN No"]} |
+<b>ESI:</b> ${e["ESI No"]} |
+<b>CTC:</b> ${e["CTC"]}
+
+<div class="flex">
+<div class="section">
+<h4>Earnings</h4>
+Basic: ${e["Basic"]}<br>
+HRA: ${e["HRA"]}<br>
+Allowance: ${e["Allowance"]}<br>
+Bonus: ${e["Bonus"]}<br>
+OT Amt: ${e["OT Amt"]}<br>
+Gross: ${e["Gross"]}
+</div>
+
+<div class="section">
+<h4>Deductions</h4>
+PF@12%: ${e["PF@12%"]}<br>
+ESI@.75%: ${e["ESI@.75%"]}<br>
+LWF: ${e["LWF"]}<br>
+Advance Paid: ${e["Advance Paid"]}
+</div>
+</div>
+
+<div class="netbox">
+NET IN HAND : ₹ ${e["Net In Hand"]}
+</div>
+
+<div class="footer">
+This is a computer generated payslip. Signature not required.
+</div>
+</div>`
 }
 
-window.onload = loadEmployees;
+function printPayslip(){window.print()}
+function downloadPDF(){html2pdf().from(printArea).save("Payslip.pdf")}
+
+function bulkDownload(){
+let checks=document.querySelectorAll("input[type=checkbox]:checked")
+let data=JSON.parse(localStorage.getItem("payrollData"))||[]
+checks.forEach(ch=>{
+let e=data.find(x=>x["Emp Code"]==ch.value)
+if(!e)return
+payslipArea.innerHTML=""
+payslipArea.innerHTML=`
+<div class="payslip" id="printArea">
+<h3>${e["Name"]} - ${e["Month"]}</h3>
+Net In Hand: ${e["Net In Hand"]}
+</div>`
+html2pdf().from(printArea).save(e["Emp Code"]+"-"+e["Month"]+".pdf")
+})
+}
 
 </script>
-
 </body>
 </html>
