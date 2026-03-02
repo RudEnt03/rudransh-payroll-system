@@ -107,16 +107,29 @@ function logout(){ location.reload(); }
 
 // Excel date to JS date
 function excelDateToJSDate(serial){ return new Date(Math.round((serial - 25569) * 86400 * 1000)); }
-function formatMonth(date){ let months=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]; return months[date.getMonth()] + "-" + String(date.getFullYear()).slice(2); }
 
-// Robust Month Parser (extract Jan-26 from Wages-Jan26)
+// Normalize month to Jan-26 format
 function parseExcelMonth(val){
   if(!val) return "Unknown";
   val = val.toString().trim();
-  let m = val.match(/([A-Za-z]+[-]\d{2,4})/);
-  if(m) return m[1];
+
+  // Handle Jan26, Jan-26, January 2026, etc.
+  let m = val.match(/([A-Za-z]+)[- ]?(\d{2,4})/);
+  if(m){
+    let monthStr = m[1].slice(0,3); // Jan, Feb, Mar
+    let yearStr = m[2].length==2 ? "20"+m[2] : m[2];
+    return monthStr+"-"+yearStr.slice(2); // e.g., Jan-26
+  }
+
+  // Numeric: treat as Excel serial
   if(!isNaN(val)) return formatMonth(excelDateToJSDate(Number(val)));
+
   return val;
+}
+
+function formatMonth(date){ 
+  let months=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]; 
+  return months[date.getMonth()] + "-" + String(date.getFullYear()).slice(2); 
 }
 
 // XLSX Import
@@ -130,9 +143,14 @@ document.getElementById("excelFile").onchange=function(e){
     employees=[]; monthData={};
     wb.SheetNames.forEach(sheet=>{
       let sheetName=sheet.trim();
+      let parts = sheetName.split("-");
+      let project = parts[0].trim();
+      let sheetLocation = parts.slice(1).join("-").trim() || "Main";
+
       let rows=XLSX.utils.sheet_to_json(wb.Sheets[sheet],{header:1});
       if(rows.length<2) return;
       let headers=rows[0].map(h=>h.toString().toLowerCase());
+
       let monthCol=headers.indexOf("month");
       let mDaysCol=headers.indexOf("m days");
       let pDaysCol=headers.indexOf("p days");
@@ -145,21 +163,20 @@ document.getElementById("excelFile").onchange=function(e){
       let netCol=headers.indexOf("net");
       let locationCol=headers.indexOf("location");
 
-      // Sheet Name Parsing: Project = first part, Location = rest
-      let parts = sheetName.split("-");
-      let project = parts[0].trim();
-      let sheetLocation = parts.slice(1).join("-").trim() || "Main";
-
       for(let i=1;i<rows.length;i++){
         let r=rows[i]; if(r.length>1){
-          let rawMonth = monthCol>=0?r[monthCol]:"";
+          let rawMonth = monthCol>=0 ? r[monthCol] : "";
           let monthVal = parseExcelMonth(rawMonth);
+
+          let rawLocation = locationCol >= 0 ? r[locationCol] : "";
+          let empLocation = rawLocation && rawLocation.toString().trim() ? rawLocation.toString().trim() : sheetLocation;
+
           let empObj={
             code:r[1]||"",
             name:r[2]||"",
             desig:r[3]||"",
             project: project,
-            location: (locationCol>=0 && r[locationCol])?r[locationCol]:sheetLocation,
+            location: empLocation,
             month: monthVal,
             mDays:mDaysCol>=0?r[mDaysCol]:"", 
             pDays:pDaysCol>=0?r[pDaysCol]:"", 
