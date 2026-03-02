@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Rudransh Payroll System - Month Fix UTC</title>
+<title>Rudransh Payroll System - Fixed Month Text</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
@@ -40,19 +40,17 @@ let employees = [], monthData = {};
 const empTable = document.getElementById("empTable").getElementsByTagName("tbody")[0];
 const monthSelect = document.getElementById("monthSelect");
 
-// ===== FIX: Convert Excel Date to Month without timezone shift =====
-function fixMonth(cell){
-    if(typeof cell === "string") return cell.trim(); // already text
+// ===== Convert Excel date to text "MMM-YY" ignoring timezone =====
+function convertMonth(cell){
+    if(typeof cell === "string") return cell.trim();
     if(cell instanceof Date){
-        // Force UTC month/year
-        const utcDate = new Date(Date.UTC(cell.getFullYear(), cell.getMonth(), 1));
-        return utcDate.toLocaleString('en-US',{month:'short',year:'2-digit',timeZone:'UTC'});
+        return `${cell.toLocaleString('en-US',{month:'short',year:'2-digit',timeZone:'UTC'})}`;
     }
-    if(typeof cell === "number"){
-        // Excel serial number
+    if(typeof cell === 'number'){
+        // Excel serial number -> JS date
         const d = XLSX.SSF.parse_date_code(cell);
         const utcDate = new Date(Date.UTC(d.y,d.m-1,1));
-        return utcDate.toLocaleString('en-US',{month:'short',year:'2-digit',timeZone:'UTC'});
+        return `${utcDate.toLocaleString('en-US',{month:'short',year:'2-digit',timeZone:'UTC'})}`;
     }
     return String(cell).trim();
 }
@@ -79,7 +77,7 @@ document.getElementById("excelFile").onchange = function(e){
 
             for(let i=1;i<rows.length;i++){
                 const r = rows[i]; if(r.length>0){
-                    const empMonth = fixMonth(r[monthCol]);
+                    const empMonth = convertMonth(r[monthCol]);
                     const emp = {
                         code: r[codeCol] || "",
                         name: r[nameCol] || "",
@@ -95,7 +93,7 @@ document.getElementById("excelFile").onchange = function(e){
 
         renderTable();
         renderMonthDropdown();
-        alert("Excel imported! Month shows correctly using UTC first-of-month rule.");
+        alert("Excel imported! Months now always show as Jan-26, Feb-26, etc.");
     };
     reader.readAsArrayBuffer(file);
 };
