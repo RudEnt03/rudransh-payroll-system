@@ -21,7 +21,6 @@ th{background:#001f3f;color:#ffd700;}
 
 <header>Rudransh Payroll System</header>
 
-<!-- Role Selection -->
 <div id="rolePage" class="glass">
 <h3>Select Role</h3>
 <select id="roleSelect">
@@ -32,17 +31,15 @@ th{background:#001f3f;color:#ffd700;}
 <button id="roleNextBtn">Next</button>
 </div>
 
-<!-- Admin Login -->
 <div id="adminLogin" class="glass hidden">
 <h3>Admin Login</h3>
 <input id="adminPass" type="password" placeholder="Password">
 <button id="loginAdminBtn">Login</button>
 </div>
 
-<!-- Admin Dashboard -->
 <div id="adminDash" class="glass hidden">
 <h3>Admin Dashboard</h3>
-<input type="file" id="excelFile" accept=".xlsx">
+<input type="file" id="excelFile" accept=".xlsx,.xls">
 <select id="monthSelect"><option value="">--Select Month--</option></select>
 <button id="generateBtn">Generate Payslip(s)</button>
 <button onclick="logout()">Logout</button>
@@ -56,7 +53,6 @@ th{background:#001f3f;color:#ffd700;}
 </table>
 </div>
 
-<!-- Employee Dashboard -->
 <div id="empDash" class="glass hidden">
 <h3>Employee Dashboard</h3>
 <input id="empCodeInput" type="text" placeholder="Enter Emp Code">
@@ -92,7 +88,7 @@ document.getElementById("loginAdminBtn").onclick = () => {
 
 function logout() { location.reload(); }
 
-// Excel Import
+// Excel Import (patched)
 document.getElementById("excelFile").onchange = function(e) {
   let file = e.target.files[0]; if(!file) return;
   let reader = new FileReader();
@@ -102,23 +98,30 @@ document.getElementById("excelFile").onchange = function(e) {
     employees=[]; monthData={};
 
     wb.SheetNames.forEach(sheet => {
-      let rows = XLSX.utils.sheet_to_json(wb.Sheets[sheet], {header:1});
+      let rows = XLSX.utils.sheet_to_json(wb.Sheets[sheet], {header:1, defval:""});
       if(rows.length < 2) return;
-      let headers = rows[0].map(h=>h.toString().toLowerCase());
+      let headers = rows[0].map(h=>h.toString().trim().toLowerCase());
       let codeCol = headers.indexOf("emp code");
       let nameCol = headers.indexOf("name");
       let monthCol = headers.indexOf("month");
       let netCol = headers.indexOf("net in hand");
 
-      for(let i=1; i<rows.length; i++){
-        let r = rows[i]; if(r.length>1){
-          let empMonth = monthCol>=0 ? r[monthCol] : "";
-          empMonth = empMonth instanceof Date ? empMonth.toLocaleDateString('en-US', {month:'short', year:'2-digit'}) : empMonth.toString().trim();
+      if(codeCol===-1 || nameCol===-1 || monthCol===-1 || netCol===-1){
+        alert("Excel headers must include: Emp Code, Name, Month, Net In Hand");
+        return;
+      }
+
+      for(let i=1;i<rows.length;i++){
+        let r = rows[i]; if(r.length>0){
+          let empMonth = r[monthCol] || "";
+          if(empMonth instanceof Date){
+            empMonth = empMonth.toLocaleDateString('en-US',{month:'short',year:'2-digit'});
+          } else empMonth = empMonth.toString().trim();
           let emp = {
-            code: codeCol>=0?r[codeCol]:"", 
-            name: nameCol>=0?r[nameCol]:"", 
-            month: empMonth, 
-            net: netCol>=0?r[netCol]||0:0
+            code: r[codeCol] || "",
+            name: r[nameCol] || "",
+            month: empMonth,
+            net: r[netCol] || 0
           };
           employees.push(emp);
           monthData[emp.month] = monthData[emp.month] || [];
@@ -163,7 +166,7 @@ document.getElementById("viewEmpSlipBtn").onclick = () => {
   } else alert("Employee not found or Excel not imported.");
 };
 
-// PDF Generation (Basic)
+// PDF Generation
 document.getElementById("generateBtn").onclick = () => {
   let selMonth = monthSelect.value;
   if(!selMonth){ alert("Select Month"); return; }
