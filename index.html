@@ -21,6 +21,7 @@ th{background:#001f3f;color:#ffd700;}
 
 <header>Rudransh Payroll System</header>
 
+<!-- Role Selection -->
 <div id="rolePage" class="glass">
 <h3>Select Role</h3>
 <select id="roleSelect">
@@ -31,12 +32,14 @@ th{background:#001f3f;color:#ffd700;}
 <button id="roleNextBtn">Next</button>
 </div>
 
+<!-- Admin Login -->
 <div id="adminLogin" class="glass hidden">
 <h3>Admin Login</h3>
 <input id="adminPass" type="password" placeholder="Password">
 <button id="loginAdminBtn">Login</button>
 </div>
 
+<!-- Admin Dashboard -->
 <div id="adminDash" class="glass hidden">
 <h3>Admin Dashboard</h3>
 <input type="file" id="excelFile" accept=".xlsx">
@@ -44,13 +47,16 @@ th{background:#001f3f;color:#ffd700;}
 <button id="generateBtn">Generate Payslip(s)</button>
 <button onclick="logout()">Logout</button>
 <table id="empTable">
-<thead><tr>
+<thead>
+<tr>
 <th>Select</th><th>Emp Code</th><th>Name</th><th>Month</th><th>Net Salary</th>
-</tr></thead>
+</tr>
+</thead>
 <tbody></tbody>
 </table>
 </div>
 
+<!-- Employee Dashboard -->
 <div id="empDash" class="glass hidden">
 <h3>Employee Dashboard</h3>
 <input id="empCodeInput" type="text" placeholder="Enter Emp Code">
@@ -68,54 +74,54 @@ let empTable=document.getElementById("empTable").getElementsByTagName("tbody")[0
 let monthSelect=document.getElementById("monthSelect");
 let empSlip=document.getElementById("empSlip");
 
-// Role selection
-document.getElementById("roleNextBtn").onclick=()=>{ 
-  let role=document.getElementById("roleSelect").value;
-  if(role==="Admin"){rolePage.classList.add("hidden");adminLogin.classList.remove("hidden");}
-  else if(role==="Employee"){rolePage.classList.add("hidden");empDash.classList.remove("hidden");}
+// Role Selection
+document.getElementById("roleNextBtn").onclick = () => {
+  let role = document.getElementById("roleSelect").value;
+  if(role === "Admin") { rolePage.classList.add("hidden"); adminLogin.classList.remove("hidden"); }
+  else if(role === "Employee") { rolePage.classList.add("hidden"); empDash.classList.remove("hidden"); }
   else alert("Select Role");
 };
 
-// Admin login
-document.getElementById("loginAdminBtn").onclick=()=>{
-  if(document.getElementById("adminPass").value==="Rud@03"){
+// Admin Login
+document.getElementById("loginAdminBtn").onclick = () => {
+  if(document.getElementById("adminPass").value === "Rud@03") {
     adminLogin.classList.add("hidden");
     adminDash.classList.remove("hidden");
   } else alert("Invalid Password");
 };
 
-function logout(){location.reload();}
+function logout() { location.reload(); }
 
-// Excel import
-document.getElementById("excelFile").onchange=function(e){
-  let file=e.target.files[0]; if(!file) return;
-  let reader=new FileReader();
-  reader.onload=function(ev){
-    let data=new Uint8Array(ev.target.result);
-    let wb=XLSX.read(data,{type:'array',cellDates:true});
+// Excel Import
+document.getElementById("excelFile").onchange = function(e) {
+  let file = e.target.files[0]; if(!file) return;
+  let reader = new FileReader();
+  reader.onload = function(ev) {
+    let data = new Uint8Array(ev.target.result);
+    let wb = XLSX.read(data, {type:'array', cellDates:true});
     employees=[]; monthData={};
 
-    wb.SheetNames.forEach(sheet=>{
-      let rows=XLSX.utils.sheet_to_json(wb.Sheets[sheet],{header:1});
-      if(rows.length<2) return;
-      let headers=rows[0].map(h=>h.toString().toLowerCase());
-      let codeCol=headers.indexOf("emp code");
-      let nameCol=headers.indexOf("name");
-      let monthCol=headers.indexOf("month");
-      let netCol=headers.indexOf("net in hand");
+    wb.SheetNames.forEach(sheet => {
+      let rows = XLSX.utils.sheet_to_json(wb.Sheets[sheet], {header:1});
+      if(rows.length < 2) return;
+      let headers = rows[0].map(h=>h.toString().toLowerCase());
+      let codeCol = headers.indexOf("emp code");
+      let nameCol = headers.indexOf("name");
+      let monthCol = headers.indexOf("month");
+      let netCol = headers.indexOf("net in hand");
 
-      for(let i=1;i<rows.length;i++){
-        let r=rows[i]; if(r.length>1){
-          let empMonth=monthCol>=0?r[monthCol]:"";
-          empMonth=empMonth instanceof Date?empMonth.toLocaleDateString('en-US',{month:'short',year:'2-digit'}):empMonth.toString().trim();
-          let emp={
+      for(let i=1; i<rows.length; i++){
+        let r = rows[i]; if(r.length>1){
+          let empMonth = monthCol>=0 ? r[monthCol] : "";
+          empMonth = empMonth instanceof Date ? empMonth.toLocaleDateString('en-US', {month:'short', year:'2-digit'}) : empMonth.toString().trim();
+          let emp = {
             code: codeCol>=0?r[codeCol]:"", 
             name: nameCol>=0?r[nameCol]:"", 
             month: empMonth, 
             net: netCol>=0?r[netCol]||0:0
           };
           employees.push(emp);
-          monthData[emp.month]=monthData[emp.month]||[];
+          monthData[emp.month] = monthData[emp.month] || [];
           monthData[emp.month].push(emp);
         }
       }
@@ -127,47 +133,50 @@ document.getElementById("excelFile").onchange=function(e){
   reader.readAsArrayBuffer(file);
 };
 
-function renderTable(){
-  let html="";
-  employees.forEach(e=>{
-    html+=`<tr>
+// Render Table
+function renderTable() {
+  let html = "";
+  employees.forEach(e => {
+    html += `<tr>
     <td><input type="checkbox" data-month="${e.month}" data-code="${e.code}"></td>
     <td>${e.code}</td><td>${e.name}</td><td>${e.month}</td><td>${e.net}</td>
     </tr>`;
   });
-  empTable.innerHTML=html;
+  empTable.innerHTML = html;
 }
 
-function renderMonthDropdown(){
-  monthSelect.innerHTML="<option value=''>--Select Month--</option>";
-  Object.keys(monthData).sort().forEach(m=>{
-    monthSelect.innerHTML+=`<option value='${m}'>${m}</option>`;
+// Render Month Dropdown
+function renderMonthDropdown() {
+  monthSelect.innerHTML = "<option value=''>--Select Month--</option>";
+  Object.keys(monthData).sort().forEach(m => {
+    monthSelect.innerHTML += `<option value='${m}'>${m}</option>`;
   });
 }
 
-// Employee view
-document.getElementById("viewEmpSlipBtn").onclick=()=>{
-  let code=document.getElementById("empCodeInput").value.trim();
-  if(!code){alert("Enter Emp Code"); return;}
-  let emp=employees.find(e=>e.code===code);
-  if(emp){empSlip.innerHTML=`<p>Emp Code: ${emp.code} | Name: ${emp.name} | Month: ${emp.month} | Net Salary: ${emp.net}</p>`;}
-  else alert("Employee not found or Excel not imported.");
+// Employee View
+document.getElementById("viewEmpSlipBtn").onclick = () => {
+  let code = document.getElementById("empCodeInput").value.trim();
+  if(!code) { alert("Enter Emp Code"); return; }
+  let emp = employees.find(e=>e.code===code);
+  if(emp){
+    empSlip.innerHTML = `<p>Emp Code: ${emp.code} | Name: ${emp.name} | Month: ${emp.month} | Net Salary: ${emp.net}</p>`;
+  } else alert("Employee not found or Excel not imported.");
 };
 
-// PDF generation (basic)
-document.getElementById("generateBtn").onclick=()=>{
-  let selMonth=monthSelect.value;
-  if(!selMonth){alert("Select Month");return;}
-  let checks=document.querySelectorAll(`input[type='checkbox']:checked[data-month='${selMonth}']`);
-  if(checks.length===0){alert("Select at least one employee"); return;}
-  checks.forEach(c=>{
-    let code=c.getAttribute("data-code");
-    let emp=employees.find(e=>e.code===code && e.month===selMonth);
+// PDF Generation (Basic)
+document.getElementById("generateBtn").onclick = () => {
+  let selMonth = monthSelect.value;
+  if(!selMonth){ alert("Select Month"); return; }
+  let checks = document.querySelectorAll(`input[type='checkbox']:checked[data-month='${selMonth}']`);
+  if(checks.length===0){ alert("Select at least one employee"); return; }
+  checks.forEach(c => {
+    let code = c.getAttribute("data-code");
+    let emp = employees.find(e=>e.code===code && e.month===selMonth);
     if(emp){
       const { jsPDF } = window.jspdf;
-      let doc=new jsPDF();
+      let doc = new jsPDF();
       doc.text(`Emp Code: ${emp.code}\nName: ${emp.name}\nMonth: ${emp.month}\nNet Salary: ${emp.net}`, 20, 20);
-      doc.save(emp.code+"_Payslip.pdf");
+      doc.save(emp.code + "_Payslip.pdf");
     }
   });
 };
