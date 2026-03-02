@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Rudransh Payroll System - Fixed Month Text</title>
+<title>Rudransh Payroll System - Month Fix UTC</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
@@ -40,17 +40,19 @@ let employees = [], monthData = {};
 const empTable = document.getElementById("empTable").getElementsByTagName("tbody")[0];
 const monthSelect = document.getElementById("monthSelect");
 
-// ===== Convert Excel date to text "MMM-YY" ignoring timezone =====
+// ===== FIX: Convert Excel Month to text ignoring timezone =====
 function convertMonth(cell){
-    if(typeof cell === "string") return cell.trim();
+    if(typeof cell === "string") return cell.trim(); // already text
     if(cell instanceof Date){
-        return `${cell.toLocaleString('en-US',{month:'short',year:'2-digit',timeZone:'UTC'})}`;
+        const year = cell.getFullYear();
+        const month = cell.getMonth();
+        const d = new Date(Date.UTC(year, month, 1)); // first day of month UTC
+        return d.toLocaleString('en-US',{month:'short',year:'2-digit',timeZone:'UTC'});
     }
     if(typeof cell === 'number'){
-        // Excel serial number -> JS date
         const d = XLSX.SSF.parse_date_code(cell);
-        const utcDate = new Date(Date.UTC(d.y,d.m-1,1));
-        return `${utcDate.toLocaleString('en-US',{month:'short',year:'2-digit',timeZone:'UTC'})}`;
+        const date = new Date(Date.UTC(d.y,d.m-1,1));
+        return date.toLocaleString('en-US',{month:'short',year:'2-digit',timeZone:'UTC'});
     }
     return String(cell).trim();
 }
@@ -93,7 +95,7 @@ document.getElementById("excelFile").onchange = function(e){
 
         renderTable();
         renderMonthDropdown();
-        alert("Excel imported! Months now always show as Jan-26, Feb-26, etc.");
+        alert("Excel imported! Months now match Excel exactly.");
     };
     reader.readAsArrayBuffer(file);
 };
