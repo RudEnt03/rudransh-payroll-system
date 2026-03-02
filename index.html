@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Rudransh Payroll System - F&F</title>
+<title>Rudransh Payroll System - Colored F&F</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
@@ -14,7 +14,7 @@ button:hover{opacity:0.8;}
 table{width:100%;border-collapse:collapse;color:black;background:white;margin-top:15px;}
 th,td{border:1px solid #ddd;padding:8px;text-align:center;}
 th{background:#001f3f;color:#ffd700;}
-.payslip{background:white;color:black;padding:25px;position:relative;border:2px solid #001f3f;border-radius:12px;margin-bottom:30px;}
+.payslip{background:white;color:black;padding:25px;position:relative;border-radius:12px;margin-bottom:30px;box-shadow:0 4px 10px rgba(0,0,0,0.3);}
 .payslip-header{text-align:center;margin-bottom:15px;}
 .payslip-header h2{margin:2px;color:#001f3f;}
 .payslip-header h4{margin:2px;color:#d4af37;font-weight:normal;}
@@ -95,6 +95,22 @@ document.getElementById("loginAdminBtn").onclick=()=>{
 // Logout
 function logout(){ location.reload(); }
 
+// Convert Excel date serial to JS Date
+function excelDateToJSDate(serial){
+  if(typeof serial === "number"){ 
+    let utc_days = Math.floor(serial - 25569);
+    let utc_value = utc_days * 86400; 
+    let date_info = new Date(utc_value * 1000);
+    return date_info;
+  } else return new Date(serial);
+}
+
+// Format as Jan-26
+function formatMonth(date){ 
+  let months=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  return months[date.getMonth()] + "-" + String(date.getFullYear()).slice(2);
+}
+
 // XLSX Import
 document.getElementById("excelFile").onchange=function(e){
   let file=e.target.files[0];
@@ -102,7 +118,7 @@ document.getElementById("excelFile").onchange=function(e){
   let reader=new FileReader();
   reader.onload=function(ev){
     let data=new Uint8Array(ev.target.result);
-    let wb=XLSX.read(data,{type:'array'});
+    let wb=XLSX.read(data,{type:'array',cellDates:true});
     employees=[]; monthData={};
     wb.SheetNames.forEach(sheet=>{
       let sheetName=sheet;
@@ -112,11 +128,12 @@ document.getElementById("excelFile").onchange=function(e){
       let pDaysCol=rows[0].findIndex(h=>h.toLowerCase()==="p days");
       for(let i=1;i<rows.length;i++){
         let r=rows[i]; if(r.length>5){
-          let monthVal=monthCol>=0?r[monthCol]:"";
+          let rawMonth = monthCol>=0?r[monthCol]:"";
+          let monthVal = rawMonth instanceof Date ? formatMonth(rawMonth) : rawMonth;
           employees.push({
             code:r[1], name:r[2], desig:r[3],
             project:sheetName.split("-")[0], 
-            location:sheetName.split("-").slice(1).join("-"),
+            location:sheetName.substring(sheetName.indexOf("-")+1),
             month:monthVal,
             mDays:mDaysCol>=0?r[mDaysCol]:"", 
             pDays:pDaysCol>=0?r[pDaysCol]:"", 
@@ -162,7 +179,7 @@ document.getElementById("generateBtn").onclick=()=>{
   });
 };
 
-// Payslip HTML
+// Payslip HTML (Colorful)
 function slipHTML(e){
   let gross = e.basic+e.hra+e.allow+e.bonus;
   function formatNum(n){ return n===0?"":Math.round(n); }
@@ -189,26 +206,22 @@ function slipHTML(e){
   </div>`;
 }
 
-// PDF generation
+// PDF Generation using jsPDF.html() for full color
 function generatePDF(emp){
   const {jsPDF} = window.jspdf;
-  let doc = new jsPDF();
-  doc.setFontSize(16); doc.setTextColor(0,0,120);
-  doc.text("Rudransh Enterprises",20,20);
-  doc.setFontSize(12); doc.setTextColor(212,175,55);
-  doc.text(`Project: ${emp.project} | Location: ${emp.location}`,20,28);
-  doc.setFontSize(11); doc.setTextColor(0,0,0);
-  doc.text(`Emp Code: ${emp.code} | Name: ${emp.name} | Month: ${emp.month}`,20,38);
-  doc.text(`Designation: ${emp.desig} | M Days: ${emp.mDays} | P Days: ${emp.pDays}`,20,46);
-  let y=60;
-  let earnings=[["Basic",emp.basic],["HRA",emp.hra],["Allowance",emp.allow],["Bonus",emp.bonus],["Gross",emp.basic+emp.hra+emp.allow+emp.bonus]];
-  let deductions=[["PF",emp.pf],["ESI",emp.esid]];
-  earnings.forEach((item,i)=>{if(item[1]!=0) doc.text(`${item[0]}: ${Math.round(item[1])}`,20,y+i*10);});
-  deductions.forEach((item,i)=>{if(item[1]!=0) doc.text(`${item[0]}: ${Math.round(item[1])}`,120,y+i*10);});
-  doc.setFontSize(14); doc.setTextColor(0,0,120);
-  doc.text(`Net Salary: ${Math.round(emp.net)}`,70,y+60);
-  doc.setFontSize(10); doc.text("Computer Generated – No Signature Required",50,y+70);
-  doc.save(`${emp.code}_Payslip.pdf`);
+  let doc = new jsPDF('p','pt','a4');
+  let div = document.createElement('div');
+  div.innerHTML = slipHTML(emp);
+  document.body.appendChild(div);
+  doc.html(div,{
+    callback:function(pdf){
+      pdf.save(emp.code+"_Payslip.pdf");
+      div.remove();
+    },
+    x:20,
+    y:20,
+    html2canvas:{scale:0.85, backgroundColor:null}
+  });
 }
 </script>
 </body>
