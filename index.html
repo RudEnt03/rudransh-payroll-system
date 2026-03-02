@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Rudransh Payroll System - F&F</title>
+<title>Rudransh Payroll System - F&F (Local Fix)</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
@@ -19,7 +19,7 @@ th{background:#001f3f;color:#ffd700;}
 </head>
 <body>
 
-<header>Rudransh Payroll System</header>
+<header>Rudransh Payroll System - Local Fix</header>
 
 <div id="rolePage" class="glass">
 <h3>Select Role</h3>
@@ -88,7 +88,20 @@ document.getElementById("loginAdminBtn").onclick = () => {
 
 function logout() { location.reload(); }
 
-// Excel Import - Robust
+// --- Local Fix for Month Conversion ---
+function formatExcelMonth(excelDate){
+  if(excelDate instanceof Date){
+    // Avoid timezone shift by setting day=1
+    const d = new Date(excelDate.getFullYear(), excelDate.getMonth(), 1);
+    const month = d.toLocaleString('en-US', { month: 'short' });
+    const year = String(d.getFullYear()).slice(-2);
+    return `${month}-${year}`;
+  } else {
+    return excelDate.toString().trim();
+  }
+}
+
+// Excel Import - Robust with Month Fix
 document.getElementById("excelFile").onchange = function(e) {
   const file = e.target.files[0]; if(!file) return;
   const reader = new FileReader();
@@ -101,7 +114,6 @@ document.getElementById("excelFile").onchange = function(e) {
       const rows = XLSX.utils.sheet_to_json(wb.Sheets[sheet], {header:1, defval:""});
       if(rows.length<2) return;
 
-      // Auto-detect headers
       const headers = rows[0].map(h => h.toString().trim().toLowerCase());
       const codeCol = headers.findIndex(h => h.includes("emp") && h.includes("code"));
       const nameCol = headers.findIndex(h => h.includes("name"));
@@ -116,8 +128,7 @@ document.getElementById("excelFile").onchange = function(e) {
       for(let i=1;i<rows.length;i++){
         const r = rows[i]; if(r.length>0){
           let empMonth = r[monthCol];
-          if(empMonth instanceof Date) empMonth = empMonth.toLocaleDateString('en-US',{month:'short',year:'2-digit'});
-          else empMonth = empMonth.toString().trim();
+          empMonth = formatExcelMonth(empMonth); // <-- Local fix applied
           const emp = {
             code: r[codeCol] || "",
             name: r[nameCol] || "",
