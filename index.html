@@ -83,7 +83,7 @@ let monthSelect=document.getElementById("monthSelect");
 let empSlip=document.getElementById("empSlip");
 
 // Role selection
-document.getElementById("roleNextBtn").onclick=()=>{
+document.getElementById("roleNextBtn").onclick=()=> {
   let role=document.getElementById("roleSelect").value;
   if(role==="Admin"){ rolePage.classList.add("hidden"); adminLogin.classList.remove("hidden"); }
   else if(role==="Employee"){ rolePage.classList.add("hidden"); document.getElementById("empDash").classList.remove("hidden"); }
@@ -91,7 +91,7 @@ document.getElementById("roleNextBtn").onclick=()=>{
 };
 
 // Admin Login
-document.getElementById("loginAdminBtn").onclick=()=>{
+document.getElementById("loginAdminBtn").onclick=()=> {
   if(document.getElementById("adminPass").value==="Rud@03"){
     adminLogin.classList.add("hidden");
     adminDash.classList.remove("hidden");
@@ -119,7 +119,7 @@ function parseExcelMonth(val){
   if(typeof val === "string"){
     let d = new Date(val);
     if(!isNaN(d)) return formatMonth(d);
-    return val.trim(); // fallback
+    return val.trim();
   }
   return "Unknown";
 }
@@ -136,7 +136,7 @@ document.getElementById("excelFile").onchange=function(e){
     wb.SheetNames.forEach(sheet=>{
       let sheetName=sheet.trim();
       let rows=XLSX.utils.sheet_to_json(wb.Sheets[sheet],{header:1});
-      if(rows.length<2) return; // skip empty sheets
+      if(rows.length<2) return;
 
       let headers=rows[0].map(h=>h.toString().toLowerCase());
       let monthCol=headers.indexOf("month");
@@ -150,10 +150,10 @@ document.getElementById("excelFile").onchange=function(e){
       let esiCol=headers.indexOf("esi");
       let netCol=headers.indexOf("net");
 
-      // Project & Location
-      let locParts = sheetName.split("-");
-      let project = locParts[0];
-      let location = locParts.length>1 ? locParts.slice(1).join("-") : "Main";
+      // Split Sheet Name robustly
+      let parts = sheetName.split("-");
+      let project = parts[0].trim();
+      let location = parts.slice(1).join("-").trim() || "Main";
 
       for(let i=1;i<rows.length;i++){
         let r=rows[i]; if(r.length>1){
@@ -218,7 +218,7 @@ document.getElementById("generateBtn").onclick=()=>{
   checks.forEach(c=>{
     let tr=c.parentNode.parentNode;
     let code=tr.children[1].textContent;
-    generatePDF(employees.find(e=>e.code===code));
+    generatePDF(employees.find(e=>e.code===code && e.month===selMonth));
   });
 };
 
