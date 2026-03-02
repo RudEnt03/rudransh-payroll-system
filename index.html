@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Rudransh Payroll System - F&F (Local Fix Robust)</title>
+<title>Rudransh Payroll System - F&F (Month Fix Robust)</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
@@ -19,7 +19,7 @@ th{background:#001f3f;color:#ffd700;}
 </head>
 <body>
 
-<header>Rudransh Payroll System - Local Fix Robust</header>
+<header>Rudransh Payroll System - Local Month Fix</header>
 
 <div id="rolePage" class="glass">
 <h3>Select Role</h3>
@@ -88,35 +88,39 @@ document.getElementById("loginAdminBtn").onclick = () => {
 
 function logout() { location.reload(); }
 
-// --- Robust Local Fix for Excel Month ---
-function formatExcelMonth(value){
-  let date;
-  if(value instanceof Date){
-    date = new Date(value.getFullYear(), value.getMonth(), 1); // Day=1 to prevent timezone shift
-  } else if(typeof value === "number") {
-    // Excel serial number to JS Date
-    const d = XLSX.SSF.parse_date_code(value); // {y,m,d,H,M,S}
-    date = new Date(d.y, d.m-1, 1);
+// --- Robust Month Conversion Function ---
+function getMonthValue(cell){
+  if(cell instanceof Date){
+    // Use UTC to avoid timezone shift
+    const d = new Date(Date.UTC(cell.getFullYear(), cell.getMonth(), 1));
+    const month = d.toLocaleString('en-US', { month: 'short', timeZone:'UTC' });
+    const year = String(d.getFullYear()).slice(-2);
+    return `${month}-${year}`;
+  } else if(typeof cell === "number"){
+    // Excel serial number
+    const dateObj = XLSX.SSF.parse_date_code(cell);
+    const d = new Date(Date.UTC(dateObj.y, dateObj.m-1, 1));
+    const month = d.toLocaleString('en-US', { month: 'short', timeZone:'UTC' });
+    const year = String(d.getFullYear()).slice(-2);
+    return `${month}-${year}`;
   } else {
-    return value.toString().trim();
+    // Treat as string
+    return cell.toString().trim();
   }
-  const month = date.toLocaleString('en-US', { month: 'short' });
-  const year = String(date.getFullYear()).slice(-2);
-  return `${month}-${year}`;
 }
 
 // Excel Import
-document.getElementById("excelFile").onchange = function(e) {
+document.getElementById("excelFile").onchange = function(e){
   const file = e.target.files[0]; if(!file) return;
   const reader = new FileReader();
-  reader.onload = function(ev) {
+  reader.onload = function(ev){
     const data = new Uint8Array(ev.target.result);
     const wb = XLSX.read(data, {type:'array', cellDates:true});
-    employees=[]; monthData={};
+    employees = []; monthData = {};
 
     wb.SheetNames.forEach(sheet => {
       const rows = XLSX.utils.sheet_to_json(wb.Sheets[sheet], {header:1, defval:""});
-      if(rows.length<2) return;
+      if(rows.length < 2) return;
 
       const headers = rows[0].map(h => h.toString().trim().toLowerCase());
       const codeCol = headers.findIndex(h => h.includes("emp") && h.includes("code"));
@@ -124,15 +128,14 @@ document.getElementById("excelFile").onchange = function(e) {
       const monthCol = headers.findIndex(h => h.includes("month"));
       const netCol = headers.findIndex(h => h.includes("net"));
 
-      if(codeCol===-1 || nameCol===-1 || monthCol===-1 || netCol===-1){
-        alert(`Excel headers missing. Required: Emp Code, Name, Month, Net In Hand`);
+      if(codeCol === -1 || nameCol === -1 || monthCol === -1 || netCol === -1){
+        alert("Excel headers missing. Required: Emp Code, Name, Month, Net In Hand");
         return;
       }
 
-      for(let i=1;i<rows.length;i++){
-        const r = rows[i]; if(r.length>0){
-          let empMonth = r[monthCol];
-          empMonth = formatExcelMonth(empMonth); // <-- Robust fix
+      for(let i=1; i<rows.length; i++){
+        const r = rows[i]; if(r.length > 0){
+          const empMonth = getMonthValue(r[monthCol]);
           const emp = {
             code: r[codeCol] || "",
             name: r[nameCol] || "",
@@ -145,29 +148,30 @@ document.getElementById("excelFile").onchange = function(e) {
         }
       }
     });
+
     renderMonthDropdown();
     renderTable();
     alert("Excel imported successfully!");
-  }
+  };
   reader.readAsArrayBuffer(file);
 };
 
 // Render Table
-function renderTable() {
-  let html="";
-  employees.forEach(e=>{
-    html+=`<tr>
-    <td><input type="checkbox" data-month="${e.month}" data-code="${e.code}"></td>
-    <td>${e.code}</td><td>${e.name}</td><td>${e.month}</td><td>${e.net}</td>
+function renderTable(){
+  let html = "";
+  employees.forEach(e => {
+    html += `<tr>
+      <td><input type="checkbox" data-month="${e.month}" data-code="${e.code}"></td>
+      <td>${e.code}</td><td>${e.name}</td><td>${e.month}</td><td>${e.net}</td>
     </tr>`;
   });
-  empTable.innerHTML=html;
+  empTable.innerHTML = html;
 }
 
 // Render Month Dropdown
-function renderMonthDropdown() {
+function renderMonthDropdown(){
   monthSelect.innerHTML = "<option value=''>--Select Month--</option>";
-  Object.keys(monthData).sort().forEach(m=>{
+  Object.keys(monthData).sort().forEach(m => {
     monthSelect.innerHTML += `<option value='${m}'>${m}</option>`;
   });
 }
@@ -175,8 +179,8 @@ function renderMonthDropdown() {
 // Employee View
 document.getElementById("viewEmpSlipBtn").onclick = () => {
   const code = document.getElementById("empCodeInput").value.trim();
-  if(!code) { alert("Enter Emp Code"); return; }
-  const emp = employees.find(e=>e.code===code);
+  if(!code){ alert("Enter Emp Code"); return; }
+  const emp = employees.find(e => e.code === code);
   if(emp) empSlip.innerHTML = `<p>Emp Code: ${emp.code} | Name: ${emp.name} | Month: ${emp.month} | Net Salary: ${emp.net}</p>`;
   else alert("Employee not found or Excel not imported.");
 };
@@ -186,10 +190,10 @@ document.getElementById("generateBtn").onclick = () => {
   const selMonth = monthSelect.value;
   if(!selMonth){ alert("Select Month"); return; }
   const checks = document.querySelectorAll(`input[type='checkbox']:checked[data-month='${selMonth}']`);
-  if(checks.length===0){ alert("Select at least one employee"); return; }
-  checks.forEach(c=>{
+  if(checks.length === 0){ alert("Select at least one employee"); return; }
+  checks.forEach(c => {
     const code = c.getAttribute("data-code");
-    const emp = employees.find(e=>e.code===code && e.month===selMonth);
+    const emp = employees.find(e => e.code === code && e.month === selMonth);
     if(emp){
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF();
@@ -199,5 +203,6 @@ document.getElementById("generateBtn").onclick = () => {
   });
 };
 </script>
+
 </body>
 </html>
