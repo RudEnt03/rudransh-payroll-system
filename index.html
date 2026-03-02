@@ -3,29 +3,25 @@
 <head>
 <meta charset="UTF-8">
 <title>Rudransh Payroll System - F&F</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
 body{margin:0;font-family:Segoe UI;background:linear-gradient(135deg,#0b1c2d,#000814);color:white;}
-.header{background:linear-gradient(90deg,#000814,#001d3d);padding:15px;text-align:center;box-shadow:0 4px 20px rgba(0,0,0,0.6);}
-.header img{height:60px;}
-.glass{background:rgba(255,255,255,0.08);backdrop-filter:blur(12px);border-radius:15px;padding:25px;margin:30px auto;width:90%;max-width:950px;box-shadow:0 8px 30px rgba(0,0,0,0.6);}
-button{background:linear-gradient(45deg,#d4af37,#b8962e);border:none;padding:10px 18px;margin:6px;border-radius:8px;font-weight:bold;cursor:pointer;transition:0.3s;}
-button:hover{transform:translateY(-2px);box-shadow:0 4px 15px rgba(212,175,55,0.6);}
-input, select{padding:8px;margin:6px;border-radius:6px;border:none;}
+.glass{background:rgba(255,255,255,0.08);backdrop-filter:blur(12px);border-radius:15px;padding:25px;margin:30px auto;width:90%;max-width:950px;}
+button{background:linear-gradient(45deg,#d4af37,#b8962e);color:#000;padding:10px 18px;border:none;border-radius:6px;margin:5px;cursor:pointer;font-weight:bold;}
+button:hover{opacity:0.8;}
 .hidden{display:none;}
-table{width:100%;border-collapse:collapse;margin-top:15px;background:white;color:black;border-radius:8px;overflow:hidden;display:block;overflow-x:auto;}
-th{background:#001f3f;color:#ffd700;padding:10px;}
-td{border:1px solid #ddd;padding:8px;text-align:center;}
-.payslip{background:white;color:black;padding:25px;position:relative;border:2px solid #001f3f;border-radius:12px;}
-.watermark{position:absolute;top:35%;left:50%;transform:translate(-50%,-50%);opacity:0.05;width:300px;}
+table{width:100%;border-collapse:collapse;color:black;background:white;margin-top:15px;}
+th,td{border:1px solid #ddd;padding:8px;text-align:center;}
+th{background:#001f3f;color:#ffd700;}
+.payslip{background:white;color:black;padding:25px;position:relative;border:2px solid #001f3f;border-radius:12px;margin-bottom:30px;}
+.payslip-header{text-align:center;margin-bottom:15px;}
+.payslip-header h2{margin:2px;color:#001f3f;}
+.payslip-header h4{margin:2px;color:#d4af37;font-weight:normal;}
 .flex{display:flex;justify-content:space-between;margin-top:15px;}
 .section{width:48%;}
 .net{background:#ffd700;color:#000;padding:12px;text-align:center;font-weight:bold;margin-top:20px;font-size:18px;border-radius:6px;}
 .footer{text-align:center;font-size:12px;margin-top:20px;color:#444;}
-.payslip-header{text-align:center;margin-bottom:15px;}
-.payslip-header h2{margin:2px;color:#001f3f;}
-.payslip-header h4{margin:2px;color:#d4af37;font-weight:normal;}
 table.payslip-table{width:100%;border-collapse:collapse;margin-top:10px;}
 table.payslip-table th, table.payslip-table td{border:1px solid #999;padding:6px;text-align:center;}
 table.payslip-table th{background:#001f3f;color:#ffd700;}
@@ -35,12 +31,7 @@ tr.net-row{background:#ffbf00;font-weight:bold;}
 </head>
 <body>
 
-<div class="header">
-<img src="logo.png" id="logoImg">
-</div>
-
-<!-- ROLE PAGE -->
-<div id="rolePage" class="glass" style="text-align:center">
+<div id="rolePage" class="glass">
 <h3>Select Login Role</h3>
 <select id="roleSelect">
 <option value="">--Select Role--</option>
@@ -50,54 +41,26 @@ tr.net-row{background:#ffbf00;font-weight:bold;}
 <button id="roleNextBtn">Next</button>
 </div>
 
-<!-- ADMIN LOGIN -->
 <div id="adminLogin" class="glass hidden">
 <h3>Admin Login</h3>
-<p><b>Enter Admin Password</b></p>
-<input id="adminPass" type="password" placeholder="Password"><br>
+<input id="adminPass" type="password" placeholder="Password">
 <button id="loginAdminBtn">Login</button>
 </div>
 
-<!-- EMP LOGIN -->
-<div id="empLogin" class="glass hidden">
-<h3>Employee Login (Android Only)</h3>
-<input id="empId" placeholder="Employee Code"><br>
-<input id="empPass" placeholder="Password"><br>
-<button id="loginEmpBtn">Login</button>
-</div>
-
-<!-- ADMIN DASHBOARD -->
 <div id="adminDash" class="glass hidden">
 <h3>Admin Dashboard</h3>
-<input type="file" onchange="importExcel(event)" accept=".xlsx">
-<select id="monthSelect">
-<option value="">--Select Month--</option>
-</select>
-<button onclick="bulkPDF()">Generate Selected Payslip(s)</button>
-<button onclick="replaceExcel()">Replace Month File</button>
-<button onclick="resetBind()">Reset Binding</button>
+<input type="file" id="excelFile" accept=".xlsx">
+<select id="monthSelect"><option value="">--Select Month--</option></select>
+<button id="generateBtn">Generate Selected Payslip(s)</button>
 <button onclick="logout()">Logout</button>
-
 <table id="empTable">
-<thead>
-<tr>
-<th>Select</th>
-<th>Emp Code</th>
-<th>Name</th>
-<th>Designation</th>
-<th>UAN</th>
-<th>ESI</th>
-<th>Project</th>
-<th>Location</th>
-<th>Month</th>
-<th>Action</th>
-</tr>
-</thead>
+<thead><tr>
+<th>Select</th><th>Emp Code</th><th>Name</th><th>Designation</th><th>Project</th><th>Location</th><th>Month</th>
+</tr></thead>
 <tbody></tbody>
 </table>
 </div>
 
-<!-- EMP DASHBOARD -->
 <div id="empDash" class="glass hidden">
 <h3>Employee Dashboard</h3>
 <button onclick="logout()">Logout</button>
@@ -105,191 +68,148 @@ tr.net-row{background:#ffbf00;font-weight:bold;}
 </div>
 
 <script>
-document.addEventListener("DOMContentLoaded", function(){
-const rolePage = document.getElementById("rolePage");
-const adminLogin = document.getElementById("adminLogin");
-const empLogin = document.getElementById("empLogin");
-const adminDash = document.getElementById("adminDash");
-const empDash = document.getElementById("empDash");
-const empSlip = document.getElementById("empSlip");
-const monthSelect = document.getElementById("monthSelect");
-let employees = [], monthData = {};
+let employees=[]; 
+let monthData={};
+let rolePage=document.getElementById("rolePage");
+let adminLogin=document.getElementById("adminLogin");
+let adminDash=document.getElementById("adminDash");
+let empTable=document.getElementById("empTable").getElementsByTagName("tbody")[0];
+let monthSelect=document.getElementById("monthSelect");
+let empSlip=document.getElementById("empSlip");
 
-function toInt(val){ return Math.round(Number(val)||0); }
-function formatNum(n){ return n===0? "": Math.round(n).toLocaleString(); }
-function hideAll(){
-rolePage.classList.add("hidden");
-adminLogin.classList.add("hidden");
-empLogin.classList.add("hidden");
-adminDash.classList.add("hidden");
-empDash.classList.add("hidden");
-}
+// Role selection
+document.getElementById("roleNextBtn").onclick=()=>{
+  let role=document.getElementById("roleSelect").value;
+  if(role==="Admin"){ rolePage.classList.add("hidden"); adminLogin.classList.remove("hidden"); }
+  else alert("Select Role");
+};
 
-// --- Role Page ---
-document.getElementById("roleNextBtn").onclick = ()=>{
-let role = document.getElementById("roleSelect").value;
-if(role==="Admin"){ hideAll(); adminLogin.classList.remove("hidden"); }
-else if(role==="Employee"){ hideAll(); empLogin.classList.remove("hidden"); }
-else alert("Select Role");
-}
+// Admin Login
+document.getElementById("loginAdminBtn").onclick=()=>{
+  if(document.getElementById("adminPass").value==="Rud@03"){
+    adminLogin.classList.add("hidden");
+    adminDash.classList.remove("hidden");
+  } else alert("Invalid Password");
+};
 
-// --- Admin Login simplified ---
-document.getElementById("loginAdminBtn").onclick = ()=>{
-let pass = document.getElementById("adminPass").value;
-if(pass==="Rud@03"){
-  hideAll(); adminDash.classList.remove("hidden");
-  if(employees.length>0) { renderMonthDropdown(); renderTable(); }
-}else alert("Invalid Admin Password");
-}
+// Logout
+function logout(){ location.reload(); }
 
-// --- Employee Login ---
-document.getElementById("loginEmpBtn").onclick = ()=>{
-let empIdVal = document.getElementById("empId").value;
-let empPassVal = document.getElementById("empPass").value;
-if(!navigator.userAgent.toLowerCase().includes("android")){ alert("Android Only"); return; }
-if(empIdVal!==empPassVal){ alert("ID & Pass must be same"); return; }
-let binds = JSON.parse(localStorage.getItem("binds")||"{}");
-if(binds[empIdVal] && binds[empIdVal]!==navigator.userAgent){ alert("Device already bound"); return; }
-binds[empIdVal] = navigator.userAgent; localStorage.setItem("binds", JSON.stringify(binds));
-let emp = employees.find(e=>e.code===empIdVal);
-if(!emp){ alert("Employee not found"); return; }
-hideAll(); empDash.classList.remove("hidden"); renderSlip(emp);
-}
-
-// --- Logout / Reset ---
-window.logout = ()=>{ location.reload(); }
-window.resetBind = ()=>{ localStorage.removeItem("binds"); alert("Binding Reset"); }
-
-// --- XLSX Import ---
-window.importExcel = function(event){
-let file = event.target.files[0]; if(!file) return;
-let reader = new FileReader();
-reader.onload = function(e){
-  let data = new Uint8Array(e.target.result);
-  let workbook = XLSX.read(data,{type:'array'});
-  monthData = {}; employees=[];
-  workbook.SheetNames.forEach(sheetName=>{
-    let sheet = workbook.Sheets[sheetName];
-    let rows = XLSX.utils.sheet_to_json(sheet,{header:1});
-    let monthColIndex = rows[0].findIndex(h=>h.toLowerCase()==="month");
-    for(let i=1;i<rows.length;i++){
-      let r = rows[i]; if(r.length>=21){
-        let monthVal = monthColIndex>=0?r[monthColIndex]||"" : "";
-        let empObj = {
-          code:r[1], name:r[2], desig:r[3], uan:r[4], esi:r[5],
-          project: sheetName.split("-")[0]||"", 
-          location: sheetName.split("-").slice(1).join("-")||"",
-          month: monthVal, mDays:r[7]||"", pDays:r[8]||"",
-          basic:r[9]||0, hra:r[10]||0, allow:r[11]||0, bonus:r[13]||0,
-          pf:r[15]||0, esid:r[16]||0, net:r[20]||0
-        };
-        employees.push(empObj);
-        monthData[empObj.month] = monthData[empObj.month]||[];
-        monthData[empObj.month].push(empObj);
+// XLSX Import
+document.getElementById("excelFile").onchange=function(e){
+  let file=e.target.files[0];
+  if(!file) return;
+  let reader=new FileReader();
+  reader.onload=function(ev){
+    let data=new Uint8Array(ev.target.result);
+    let wb=XLSX.read(data,{type:'array'});
+    employees=[]; monthData={};
+    wb.SheetNames.forEach(sheet=>{
+      let sheetName=sheet;
+      let rows=XLSX.utils.sheet_to_json(wb.Sheets[sheet],{header:1});
+      let monthCol=rows[0].findIndex(h=>h.toLowerCase()==="month");
+      let mDaysCol=rows[0].findIndex(h=>h.toLowerCase()==="m days");
+      let pDaysCol=rows[0].findIndex(h=>h.toLowerCase()==="p days");
+      for(let i=1;i<rows.length;i++){
+        let r=rows[i]; if(r.length>5){
+          let monthVal=monthCol>=0?r[monthCol]:"";
+          employees.push({
+            code:r[1], name:r[2], desig:r[3],
+            project:sheetName.split("-")[0], 
+            location:sheetName.split("-").slice(1).join("-"),
+            month:monthVal,
+            mDays:mDaysCol>=0?r[mDaysCol]:"", 
+            pDays:pDaysCol>=0?r[pDaysCol]:"", 
+            basic:r[9]||0, hra:r[10]||0, allow:r[11]||0, bonus:r[13]||0,
+            pf:r[15]||0, esid:r[16]||0, net:r[20]||0
+          });
+          monthData[monthVal]=monthData[monthVal]||[];
+          monthData[monthVal].push(employees[employees.length-1]);
+        }
       }
-    }
-  });
-  renderMonthDropdown();
-  renderTable();
-  alert("Excel imported successfully! Table & Month dropdown updated.");
-}
-reader.readAsArrayBuffer(file);
-}
+    });
+    renderMonthDropdown();
+    renderTable();
+    alert("Excel imported successfully!");
+  }
+  reader.readAsArrayBuffer(file);
+};
 
-// --- Month Dropdown ---
-function renderMonthDropdown(){
-monthSelect.innerHTML = "<option value=''>--Select Month--</option>";
-Object.keys(monthData).forEach(m=>{ monthSelect.innerHTML += `<option value='${m}'>${m}</option>`; });
-}
-
-// --- Render Table ---
 function renderTable(){
-let tbody = document.querySelector("#empTable tbody");
-tbody.innerHTML = employees.map(e=>`
-<tr>
-<td><input type="checkbox" value="${e.code}" data-month="${e.month}"></td>
-<td>${e.code}</td>
-<td>${e.name}</td>
-<td>${e.desig}</td>
-<td>${e.uan}</td>
-<td>${e.esi}</td>
-<td>${e.project}</td>
-<td>${e.location}</td>
-<td>${e.month}</td>
-<td>
-<button onclick="viewEmp('${e.code}')">View</button>
-<button onclick="generatePDF('${e.code}')">PDF</button>
-</td>
-</tr>`).join("");
+  empTable.innerHTML="";
+  employees.forEach(e=>{
+    empTable.innerHTML+=`<tr>
+    <td><input type="checkbox" data-month="${e.month}"></td>
+    <td>${e.code}</td><td>${e.name}</td><td>${e.desig}</td><td>${e.project}</td><td>${e.location}</td><td>${e.month}</td>
+    </tr>`;
+  });
 }
 
-// --- Payslip HTML ---
+function renderMonthDropdown(){
+  monthSelect.innerHTML="<option value=''>--Select Month--</option>";
+  Object.keys(monthData).forEach(m=>monthSelect.innerHTML+=`<option value='${m}'>${m}</option>`);
+}
+
+document.getElementById("generateBtn").onclick=()=>{
+  let selMonth=monthSelect.value;
+  if(!selMonth){ alert("Select Month"); return;}
+  let checks=document.querySelectorAll(`input[type='checkbox']:checked[data-month='${selMonth}']`);
+  if(checks.length===0){ alert("Select at least one employee"); return;}
+  checks.forEach(c=>{
+    let tr=c.parentNode.parentNode;
+    let code=tr.children[1].textContent;
+    generatePDF(employees.find(e=>e.code===code));
+  });
+};
+
+// Payslip HTML
 function slipHTML(e){
-let gross = e.basic+e.hra+e.allow+e.bonus;
-return `<div class="payslip">
-<div class="payslip-header">
-<h2>Rudransh Enterprises</h2>
-<h4>Project: ${e.project} | Location: ${e.location}</h4>
-</div>
-<img src="logo.png" class="watermark">
-<p><b>Emp Code:</b> ${e.code} | <b>Name:</b> ${e.name} | <b>Month:</b> ${e.month}</p>
-<p><b>Designation:</b> ${e.desig} | <b>M Days:</b> ${e.mDays} | <b>P Days:</b> ${e.pDays}</p>
-<table class="payslip-table">
-<tr><th>Earnings</th><th>Amount</th></tr>
-<tr><td>Basic</td><td>${formatNum(e.basic)}</td></tr>
-<tr><td>HRA</td><td>${formatNum(e.hra)}</td></tr>
-<tr><td>Allowance</td><td>${formatNum(e.allow)}</td></tr>
-<tr><td>Bonus</td><td>${formatNum(e.bonus)}</td></tr>
-<tr class="gross-row"><td>Gross</td><td>${formatNum(gross)}</td></tr>
-</table>
-<table class="payslip-table">
-<tr><th>Deductions</th><th>Amount</th></tr>
-<tr><td>PF</td><td>${formatNum(e.pf)}</td></tr>
-<tr><td>ESI</td><td>${formatNum(e.esid)}</td></tr>
-</table>
-<div class="net">Net Salary: ${formatNum(e.net)}</div>
-<div class="footer">Computer Generated – No Signature Required</div>
-</div>`;
+  let gross = e.basic+e.hra+e.allow+e.bonus;
+  function formatNum(n){ return n===0?"":Math.round(n); }
+  return `<div class="payslip">
+  <div class="payslip-header"><h2>Rudransh Enterprises</h2>
+  <h4>Project: ${e.project} | Location: ${e.location}</h4></div>
+  <p><b>Emp Code:</b> ${e.code} | <b>Name:</b> ${e.name} | <b>Month:</b> ${e.month}</p>
+  <p><b>Designation:</b> ${e.desig} | <b>M Days:</b> ${e.mDays} | <b>P Days:</b> ${e.pDays}</p>
+  <table class="payslip-table">
+  <tr><th>Earnings</th><th>Amount</th></tr>
+  <tr><td>Basic</td><td>${formatNum(e.basic)}</td></tr>
+  <tr><td>HRA</td><td>${formatNum(e.hra)}</td></tr>
+  <tr><td>Allowance</td><td>${formatNum(e.allow)}</td></tr>
+  <tr><td>Bonus</td><td>${formatNum(e.bonus)}</td></tr>
+  <tr class="gross-row"><td>Gross</td><td>${formatNum(gross)}</td></tr>
+  </table>
+  <table class="payslip-table">
+  <tr><th>Deductions</th><th>Amount</th></tr>
+  <tr><td>PF</td><td>${formatNum(e.pf)}</td></tr>
+  <tr><td>ESI</td><td>${formatNum(e.esid)}</td></tr>
+  </table>
+  <div class="net">Net Salary: ${formatNum(e.net)}</div>
+  <div class="footer">Computer Generated – No Signature Required</div>
+  </div>`;
 }
 
-function renderSlip(emp){ empSlip.innerHTML = slipHTML(emp); }
-window.viewEmp = function(code){ let emp = employees.find(e=>e.code===code); let w = window.open(""); w.document.write(slipHTML(emp)); w.print(); }
-
-// --- PDF Generation ---
-window.generatePDF = function(code){
-let emp = employees.find(e=>e.code===code);
-const {jsPDF} = window.jspdf;
-let doc = new jsPDF();
-doc.setFontSize(16); doc.setTextColor(0,0,120);
-doc.text("Rudransh Enterprises",20,20);
-doc.setFontSize(12); doc.setTextColor(212,175,55);
-doc.text(`Project: ${emp.project} | Location: ${emp.location}`,20,28);
-doc.setFontSize(11); doc.setTextColor(0,0,0);
-doc.text(`Emp Code: ${emp.code} | Name: ${emp.name} | Month: ${emp.month}`,20,38);
-doc.text(`Designation: ${emp.desig} | M Days: ${emp.mDays} | P Days: ${emp.pDays}`,20,46);
-
-let startY = 60;
-let earnings = [["Basic",emp.basic],["HRA",emp.hra],["Allowance",emp.allow],["Bonus",emp.bonus],["Gross",(emp.basic+emp.hra+emp.allow+emp.bonus)]];
-let deductions = [["PF",emp.pf],["ESI",emp.esid]];
-for(let i=0;i<earnings.length;i++){let y=startY+10*i;if(earnings[i][1]!==0) doc.text(`${earnings[i][0]}: ${Math.round(earnings[i][1])}`,20,y);}
-for(let i=0;i<deductions.length;i++){let y=startY+10*i;if(deductions[i][1]!==0) doc.text(`${deductions[i][0]}: ${Math.round(deductions[i][1])}`,120,y);}
-doc.setFontSize(14); doc.setTextColor(0,0,120);
-doc.text(`Net Salary: ${Math.round(emp.net)}`,70,startY+60);
-doc.setFontSize(10); doc.text("Computer Generated – No Signature Required",50,startY+70);
-doc.save(`${emp.code}_Payslip.pdf`);
+// PDF generation
+function generatePDF(emp){
+  const {jsPDF} = window.jspdf;
+  let doc = new jsPDF();
+  doc.setFontSize(16); doc.setTextColor(0,0,120);
+  doc.text("Rudransh Enterprises",20,20);
+  doc.setFontSize(12); doc.setTextColor(212,175,55);
+  doc.text(`Project: ${emp.project} | Location: ${emp.location}`,20,28);
+  doc.setFontSize(11); doc.setTextColor(0,0,0);
+  doc.text(`Emp Code: ${emp.code} | Name: ${emp.name} | Month: ${emp.month}`,20,38);
+  doc.text(`Designation: ${emp.desig} | M Days: ${emp.mDays} | P Days: ${emp.pDays}`,20,46);
+  let y=60;
+  let earnings=[["Basic",emp.basic],["HRA",emp.hra],["Allowance",emp.allow],["Bonus",emp.bonus],["Gross",emp.basic+emp.hra+emp.allow+emp.bonus]];
+  let deductions=[["PF",emp.pf],["ESI",emp.esid]];
+  earnings.forEach((item,i)=>{if(item[1]!=0) doc.text(`${item[0]}: ${Math.round(item[1])}`,20,y+i*10);});
+  deductions.forEach((item,i)=>{if(item[1]!=0) doc.text(`${item[0]}: ${Math.round(item[1])}`,120,y+i*10);});
+  doc.setFontSize(14); doc.setTextColor(0,0,120);
+  doc.text(`Net Salary: ${Math.round(emp.net)}`,70,y+60);
+  doc.setFontSize(10); doc.text("Computer Generated – No Signature Required",50,y+70);
+  doc.save(`${emp.code}_Payslip.pdf`);
 }
-
-// --- Bulk PDF ---
-window.bulkPDF = function(){ 
-  let selectedMonth = monthSelect.value;
-  if(!selectedMonth){ alert("Select Month!"); return;}
-  let checks = document.querySelectorAll(`input[type='checkbox']:checked[data-month='${selectedMonth}']`);
-  checks.forEach(c=>generatePDF(c.value));
-}
-
-window.replaceExcel = function(){ alert("Upload new Excel to replace previous month file"); }
-
-});
 </script>
 </body>
 </html>
