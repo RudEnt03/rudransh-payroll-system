@@ -2,38 +2,27 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Rudransh Payroll System - F&F</title>
+<title>RPS Base Payroll - F&F</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
-body{margin:0;font-family:Segoe UI;background:linear-gradient(135deg,#0b1c2d,#000814);color:white;}
-header{background:#001f3f;color:#ffd700;text-align:center;padding:15px;font-size:24px;font-weight:bold;position:sticky;top:0;z-index:1000;}
-.glass{background:rgba(255,255,255,0.08);backdrop-filter:blur(12px);border-radius:15px;padding:25px;margin:30px auto;width:90%;max-width:950px;}
-button{background:linear-gradient(45deg,#d4af37,#b8962e);color:#000;padding:10px 18px;border:none;border-radius:6px;margin:5px;cursor:pointer;font-weight:bold;}
+body{margin:0;font-family:Segoe UI;background:#0b1c2d;color:white;}
+header{background:#001f3f;color:#ffd700;text-align:center;padding:15px;font-size:24px;font-weight:bold;}
+.glass{background:rgba(255,255,255,0.08);backdrop-filter:blur(12px);border-radius:12px;padding:20px;margin:20px auto;width:90%;max-width:900px;}
+button{background:#d4af37;color:#000;padding:8px 14px;border:none;border-radius:6px;margin:4px;cursor:pointer;font-weight:bold;}
 button:hover{opacity:0.8;}
 .hidden{display:none;}
 table{width:100%;border-collapse:collapse;color:black;background:white;margin-top:15px;}
 th,td{border:1px solid #ddd;padding:8px;text-align:center;}
 th{background:#001f3f;color:#ffd700;}
-.payslip{background:white;color:black;padding:25px;position:relative;border-radius:12px;margin-bottom:30px;box-shadow:0 4px 10px rgba(0,0,0,0.3);page-break-inside:avoid;}
-.payslip-header{text-align:center;margin-bottom:15px;}
-.payslip-header h2{margin:2px;color:#001f3f;}
-.payslip-header h4{margin:2px;color:#d4af37;font-weight:normal;}
-.net{background:#ffd700;color:#000;padding:12px;text-align:center;font-weight:bold;margin-top:20px;font-size:18px;border-radius:6px;}
-.footer{text-align:center;font-size:12px;margin-top:20px;color:#444;}
-table.payslip-table{width:100%;border-collapse:collapse;margin-top:10px;}
-table.payslip-table th, table.payslip-table td{border:1px solid #999;padding:6px;text-align:center;}
-table.payslip-table th{background:#001f3f;color:#ffd700;}
-tr.gross-row{background:#ffd700;font-weight:bold;}
-tr.net-row{background:#ffbf00;font-weight:bold;}
 </style>
 </head>
 <body>
 
-<header>Rudransh Enterprises</header>
+<header>Rudransh Payroll System</header>
 
 <div id="rolePage" class="glass">
-<h3>Select Login Role</h3>
+<h3>Select Role</h3>
 <select id="roleSelect">
 <option value="">--Select Role--</option>
 <option value="Admin">Admin</option>
@@ -52,11 +41,11 @@ tr.net-row{background:#ffbf00;font-weight:bold;}
 <h3>Admin Dashboard</h3>
 <input type="file" id="excelFile" accept=".xlsx">
 <select id="monthSelect"><option value="">--Select Month--</option></select>
-<button id="generateBtn">Generate Selected Payslip(s)</button>
+<button id="generateBtn">Generate Payslip(s)</button>
 <button onclick="logout()">Logout</button>
 <table id="empTable">
 <thead><tr>
-<th>Select</th><th>Emp Code</th><th>Name</th><th>Designation</th><th>Page Name</th><th>Project</th><th>Location</th><th>Month</th>
+<th>Select</th><th>Emp Code</th><th>Name</th><th>Month</th><th>Net Salary</th>
 </tr></thead>
 <tbody></tbody>
 </table>
@@ -97,7 +86,7 @@ document.getElementById("loginAdminBtn").onclick=()=>{
 
 function logout(){location.reload();}
 
-// Import XLSX
+// Excel import
 document.getElementById("excelFile").onchange=function(e){
   let file=e.target.files[0]; if(!file) return;
   let reader=new FileReader();
@@ -107,25 +96,12 @@ document.getElementById("excelFile").onchange=function(e){
     employees=[]; monthData={};
 
     wb.SheetNames.forEach(sheet=>{
-      let pageName=sheet.trim();
-      let dashIndex=pageName.indexOf("-");
-      let project=dashIndex>=0?pageName.slice(0,dashIndex).trim():pageName;
-      let location=dashIndex>=0?pageName.slice(dashIndex+1).trim():"Main";
-
       let rows=XLSX.utils.sheet_to_json(wb.Sheets[sheet],{header:1});
       if(rows.length<2) return;
       let headers=rows[0].map(h=>h.toString().toLowerCase());
-
       let codeCol=headers.indexOf("emp code");
       let nameCol=headers.indexOf("name");
-      let desigCol=headers.indexOf("designation");
       let monthCol=headers.indexOf("month");
-      let basicCol=headers.indexOf("basic");
-      let hraCol=headers.indexOf("hra");
-      let allowCol=headers.indexOf("allowance");
-      let bonusCol=headers.indexOf("bonus");
-      let pfCol=headers.findIndex(h=>h.includes("pf"));
-      let esiCol=headers.findIndex(h=>h.includes("esi"));
       let netCol=headers.indexOf("net in hand");
 
       for(let i=1;i<rows.length;i++){
@@ -133,11 +109,10 @@ document.getElementById("excelFile").onchange=function(e){
           let empMonth=monthCol>=0?r[monthCol]:"";
           empMonth=empMonth instanceof Date?empMonth.toLocaleDateString('en-US',{month:'short',year:'2-digit'}):empMonth.toString().trim();
           let emp={
-            code:codeCol>=0?r[codeCol]:"", name:nameCol>=0?r[nameCol]:"", desig:desigCol>=0?r[desigCol]:"", 
-            pageName:pageName, project:project, location:location, month:empMonth,
-            basic:basicCol>=0?r[basicCol]||0:0, hra:hraCol>=0?r[hraCol]||0:0, allow:allowCol>=0?r[allowCol]||0:0,
-            bonus:bonusCol>=0?r[bonusCol]||0:0, pf:pfCol>=0?r[pfCol]||0:0, esi:esiCol>=0?r[esiCol]||0:0,
-            net:netCol>=0?r[netCol]||0:0
+            code: codeCol>=0?r[codeCol]:"", 
+            name: nameCol>=0?r[nameCol]:"", 
+            month: empMonth, 
+            net: netCol>=0?r[netCol]||0:0
           };
           employees.push(emp);
           monthData[emp.month]=monthData[emp.month]||[];
@@ -157,8 +132,7 @@ function renderTable(){
   employees.forEach(e=>{
     html+=`<tr>
     <td><input type="checkbox" data-month="${e.month}" data-code="${e.code}"></td>
-    <td>${e.code}</td><td>${e.name}</td><td>${e.desig}</td>
-    <td>${e.pageName}</td><td>${e.project}</td><td>${e.location}</td><td>${e.month}</td>
+    <td>${e.code}</td><td>${e.name}</td><td>${e.month}</td><td>${e.net}</td>
     </tr>`;
   });
   empTable.innerHTML=html;
@@ -171,36 +145,16 @@ function renderMonthDropdown(){
   });
 }
 
-function slipHTML(e){
-  function f(n){return n?Math.round(n):0;}
-  let gross=f(e.basic)+f(e.hra)+f(e.allow)+f(e.bonus);
-  let deductions=f(e.pf)+f(e.esi);
-  let net=f(e.net);
-  return `<div class="payslip">
-  <div class="payslip-header"><h2>Rudransh Enterprises</h2>
-  <h4>Project: ${e.project} | Location: ${e.location}</h4></div>
-  <p><b>Emp Code:</b> ${e.code} | <b>Name:</b> ${e.name} | <b>Month:</b> ${e.month}</p>
-  <p><b>Designation:</b> ${e.desig}</p>
-  <table class="payslip-table">
-  <tr><th>Earnings</th><th>Amount</th></tr>
-  <tr><td>Basic</td><td>${f(e.basic)}</td></tr>
-  <tr><td>HRA</td><td>${f(e.hra)}</td></tr>
-  <tr><td>Allowance</td><td>${f(e.allow)}</td></tr>
-  <tr><td>Bonus</td><td>${f(e.bonus)}</td></tr>
-  <tr class="gross-row"><td>Gross</td><td>${gross}</td></tr>
-  </table>
-  <table class="payslip-table">
-  <tr><th>Deductions</th><th>Amount</th></tr>
-  <tr><td>PF</td><td>${f(e.pf)}</td></tr>
-  <tr><td>ESI</td><td>${f(e.esi)}</td></tr>
-  <tr class="net-row"><td>Total Deductions</td><td>${deductions}</td></tr>
-  </table>
-  <div class="net">Net Salary: ${net}</div>
-  <div class="footer">Computer Generated – No Signature Required</div>
-  </div>`;
-}
+// Employee view
+document.getElementById("viewEmpSlipBtn").onclick=()=>{
+  let code=document.getElementById("empCodeInput").value.trim();
+  if(!code){alert("Enter Emp Code"); return;}
+  let emp=employees.find(e=>e.code===code);
+  if(emp){empSlip.innerHTML=`<p>Emp Code: ${emp.code} | Name: ${emp.name} | Month: ${emp.month} | Net Salary: ${emp.net}</p>`;}
+  else alert("Employee not found or Excel not imported.");
+};
 
-// Generate PDF
+// PDF generation (basic)
 document.getElementById("generateBtn").onclick=()=>{
   let selMonth=monthSelect.value;
   if(!selMonth){alert("Select Month");return;}
@@ -209,33 +163,14 @@ document.getElementById("generateBtn").onclick=()=>{
   checks.forEach(c=>{
     let code=c.getAttribute("data-code");
     let emp=employees.find(e=>e.code===code && e.month===selMonth);
-    if(emp) generatePDF(emp);
+    if(emp){
+      const { jsPDF } = window.jspdf;
+      let doc=new jsPDF();
+      doc.text(`Emp Code: ${emp.code}\nName: ${emp.name}\nMonth: ${emp.month}\nNet Salary: ${emp.net}`, 20, 20);
+      doc.save(emp.code+"_Payslip.pdf");
+    }
   });
 };
-
-// Employee view
-document.getElementById("viewEmpSlipBtn").onclick=()=>{
-  let code=document.getElementById("empCodeInput").value.trim();
-  if(!code){alert("Enter Emp Code"); return;}
-  let emp=employees.find(e=>e.code===code);
-  if(emp){empSlip.innerHTML=slipHTML(emp);}
-  else alert("Employee not found or Excel not imported.");
-};
-
-// PDF
-async function generatePDF(emp){
-  const { jsPDF }=window.jspdf;
-  let doc=new jsPDF('p','pt','a4');
-  let div=document.createElement('div');
-  div.style.width="800px"; div.style.background="#fff"; div.style.color="#000";
-  div.innerHTML=slipHTML(emp);
-  div.style.position="absolute"; div.style.left="-9999px";
-  document.body.appendChild(div);
-  await doc.html(div,{
-    callback:function(pdf){pdf.save(emp.code+"_Payslip.pdf"); div.remove();},
-    x:20,y:20,html2canvas:{scale:1,backgroundColor:"#fff"}
-  });
-}
 </script>
 </body>
 </html>
