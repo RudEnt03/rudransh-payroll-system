@@ -4,7 +4,10 @@
 <meta charset="UTF-8">
 <title>Rudransh Payroll System</title>
 
+<!-- jsPDF for PDF generation -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<!-- SheetJS for XLSX import -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
 <style>
 body{
@@ -69,6 +72,8 @@ background:white;
 color:black;
 border-radius:8px;
 overflow:hidden;
+display:block;
+overflow-x:auto;
 }
 
 th{
@@ -122,7 +127,7 @@ margin-top:20px;
 <body>
 
 <div class="header">
-<img src="logo.png">
+<img src="logo.png" id="logoImg">
 </div>
 
 <!-- ROLE PAGE -->
@@ -151,7 +156,7 @@ margin-top:20px;
 <!-- ADMIN DASHBOARD -->
 <div id="adminDash" class="glass hidden">
 <h3>Admin Dashboard</h3>
-<input type="file" onchange="importCSV(event)">
+<input type="file" onchange="importExcel(event)" accept=".xlsx">
 <button onclick="bulkPDF()">Bulk PDF</button>
 <button onclick="resetBind()">Reset Binding</button>
 <button onclick="logout()">Logout</button>
@@ -180,158 +185,206 @@ margin-top:20px;
 </div>
 
 <script>
-let employees=[]
-let currentEmp=null
+let employees = [];
+let currentEmp = null;
 
-function showAdmin(){hideAll();adminLogin.classList.remove("hidden")}
-function showEmp(){hideAll();empLogin.classList.remove("hidden")}
+// ---------- Utility ----------
+function toInt(val){ return Math.round(Number(val)||0); }
+function formatNum(n){ return n.toLocaleString(); }
 function hideAll(){
-rolePage.classList.add("hidden")
-adminLogin.classList.add("hidden")
-empLogin.classList.add("hidden")
-adminDash.classList.add("hidden")
-empDash.classList.add("hidden")
+rolePage.classList.add("hidden");
+adminLogin.classList.add("hidden");
+empLogin.classList.add("hidden");
+adminDash.classList.add("hidden");
+empDash.classList.add("hidden");
 }
 
+// ---------- Show Pages ----------
+function showAdmin(){ hideAll(); adminLogin.classList.remove("hidden"); }
+function showEmp(){ hideAll(); empLogin.classList.remove("hidden"); }
+
+// ---------- Admin Login ----------
 function adminLogin(){
 if(adminId.value==="Admin" && adminPass.value==="Rud@03"){
-hideAll();adminDash.classList.remove("hidden")
-}else alert("Invalid Admin")
+  hideAll();
+  adminDash.classList.remove("hidden");
+}else alert("Invalid Admin");
 }
 
+// ---------- Employee Login ----------
 function empLogin(){
-if(!navigator.userAgent.toLowerCase().includes("android")){alert("Android Only");return}
-if(empId.value!==empPass.value){alert("ID & Pass must be same");return}
-let bind=localStorage.getItem("bind")
-if(bind && bind!==empId.value){alert("Device already bound");return}
-let emp=employees.find(e=>e.code===empId.value)
-if(!emp){alert("Employee not found");return}
-localStorage.setItem("bind",empId.value)
-currentEmp=emp
-hideAll();empDash.classList.remove("hidden")
-renderSlip(emp)
+if(!navigator.userAgent.toLowerCase().includes("android")){ alert("Android Only"); return; }
+if(empId.value!==empPass.value){ alert("ID & Pass must be same"); return; }
+
+let binds = JSON.parse(localStorage.getItem("binds")||"{}");
+if(binds[empId.value] && binds[empId.value]!==navigator.userAgent){
+  alert("Device already bound to another employee"); return;
+}
+binds[empId.value] = navigator.userAgent;
+localStorage.setItem("binds", JSON.stringify(binds));
+
+let emp = employees.find(e=>e.code===empId.value);
+if(!emp){ alert("Employee not found"); return; }
+currentEmp = emp;
+hideAll(); empDash.classList.remove("hidden");
+renderSlip(emp);
 }
 
-function logout(){location.reload()}
-function resetBind(){localStorage.removeItem("bind");alert("Binding Reset")}
-function toInt(val){return Math.round(Number(val)||0)}
+// ---------- Logout & Reset ----------
+function logout(){ location.reload(); }
+function resetBind(){ localStorage.removeItem("binds"); alert("Binding Reset"); }
 
-function importCSV(event){
-let file=event.target.files[0]
-let reader=new FileReader()
-reader.onload=function(e){
-let rows=e.target.result.split("\n")
-employees=[]
-for(let i=1;i<rows.length;i++){
-let c=rows[i].split(",")
-if(c.length>20){
-employees.push({
-code:c[1],
-name:c[2],
-desig:c[3],
-uan:c[4],
-esi:c[5],
-basic:toInt(c[9]),
-hra:toInt(c[10]),
-allow:toInt(c[11]),
-bonus:toInt(c[13]),
-pf:toInt(c[15]),
-esid:toInt(c[16]),
-net:toInt(c[20])
-})
-}}
-renderTable()
-}
-reader.readAsText(file)
+// ---------- XLSX Import ----------
+function importExcel(event){
+  let file = event.target.files[0];
+  if(!file) return;
+  let reader = new FileReader();
+  reader.onload = function(e){
+    let data = new Uint8Array(e.target.result);
+    let workbook = XLSX.read(data, {type:'array'});
+    let sheetName = workbook.SheetNames[0];
+    let sheet = workbook.Sheets[sheetName];
+    let rows = XLSX.utils.sheet_to_json(sheet,{header:1});
+
+    employees=[];
+    for(let i=1;i<rows.length;i++){
+      let r = rows[i];
+      if(r.length>=21){
+        employees.push({
+          code: r[1],
+          name: r[2],
+          desig: r[3],
+          uan: r[4],
+          esi: r[5],
+          basic: toInt(r[9]),
+          hra: toInt(r[10]),
+          allow: toInt(r[11]),
+          bonus: toInt(r[13]),
+          pf: toInt(r[15]),
+          esid: toInt(r[16]),
+          net: toInt(r[20])
+        });
+      }
+    }
+    renderTable();
+    alert("Excel imported successfully!");
+  }
+  reader.readAsArrayBuffer(file);
 }
 
+// ---------- Render Table ----------
 function renderTable(){
-let tbody=document.querySelector("#empTable tbody")
-tbody.innerHTML=""
-employees.forEach(e=>{
-tbody.innerHTML+=`
-<tr>
-<td><input type="checkbox" value="${e.code}"></td>
-<td>${e.code}</td>
-<td>${e.name}</td>
-<td>${e.desig}</td>
-<td>${e.uan}</td>
-<td>${e.esi}</td>
-<td>
-<button onclick="viewEmp('${e.code}')">View</button>
-<button onclick="generatePDF('${e.code}')">PDF</button>
-</td>
-</tr>`
-})
+  let tbody = document.querySelector("#empTable tbody");
+  tbody.innerHTML = employees.map(e=>`
+    <tr>
+      <td><input type="checkbox" value="${e.code}"></td>
+      <td>${e.code}</td>
+      <td>${e.name}</td>
+      <td>${e.desig}</td>
+      <td>${e.uan}</td>
+      <td>${e.esi}</td>
+      <td>
+        <button onclick="viewEmp('${e.code}')">View</button>
+        <button onclick="generatePDF('${e.code}')">PDF</button>
+      </td>
+    </tr>`).join("");
 }
 
+// ---------- Payslip HTML ----------
 function slipHTML(e){
-return `
-<div class="payslip">
-<img src="logo.png" class="watermark">
-<h3 style="text-align:center">Payslip</h3>
-<p><b>Emp Code:</b> ${e.code}</p>
-<p><b>Name:</b> ${e.name}</p>
-<p><b>Designation:</b> ${e.desig}</p>
-<p><b>UAN:</b> ${e.uan} | <b>ESI:</b> ${e.esi}</p>
+  return `
+  <div class="payslip">
+    <img src="logo.png" class="watermark">
+    <h3 style="text-align:center">Payslip</h3>
+    <p><b>Emp Code:</b> ${e.code}</p>
+    <p><b>Name:</b> ${e.name}</p>
+    <p><b>Designation:</b> ${e.desig}</p>
+    <p><b>UAN:</b> ${e.uan} | <b>ESI:</b> ${e.esi}</p>
 
-<div class="flex">
-<div class="section">
-<h4>Earnings</h4>
-Basic: ${e.basic}<br>
-HRA: ${e.hra}<br>
-Allowance: ${e.allow}<br>
-Bonus: ${e.bonus}
-</div>
-<div class="section">
-<h4>Deductions</h4>
-PF: ${e.pf}<br>
-ESI: ${e.esid}
-</div>
-</div>
+    <div class="flex">
+      <div class="section">
+        <h4>Earnings</h4>
+        <table width="100%" border="0">
+          <tr><td>Basic</td><td>${formatNum(e.basic)}</td></tr>
+          <tr><td>HRA</td><td>${formatNum(e.hra)}</td></tr>
+          <tr><td>Allowance</td><td>${formatNum(e.allow)}</td></tr>
+          <tr><td>Bonus</td><td>${formatNum(e.bonus)}</td></tr>
+        </table>
+      </div>
+      <div class="section">
+        <h4>Deductions</h4>
+        <table width="100%" border="0">
+          <tr><td>PF</td><td>${formatNum(e.pf)}</td></tr>
+          <tr><td>ESI</td><td>${formatNum(e.esid)}</td></tr>
+        </table>
+      </div>
+    </div>
 
-<div class="net">Net Salary: ${e.net}</div>
-<div class="footer">Computer Generated – No Signature Required</div>
-</div>`
+    <div class="net">Net Salary: ${formatNum(e.net)}</div>
+    <div class="footer">Computer Generated – No Signature Required</div>
+  </div>`;
 }
 
 function renderSlip(emp){
-empSlip.innerHTML=slipHTML(emp)
+  empSlip.innerHTML = slipHTML(emp);
 }
 
+// ---------- View in new window ----------
 function viewEmp(code){
-let emp=employees.find(e=>e.code===code)
-let w=window.open("")
-w.document.write(slipHTML(emp))
-w.print()
+  let emp = employees.find(e=>e.code===code);
+  let w = window.open("");
+  w.document.write(slipHTML(emp));
+  w.print();
 }
 
+// ---------- Generate PDF ----------
 function generatePDF(code){
-let emp=employees.find(e=>e.code===code)
-const {jsPDF}=window.jspdf
-let doc=new jsPDF()
-doc.addImage("logo.png","PNG",80,5,50,20)
-doc.text("Payslip",90,35)
-doc.text("Emp Code: "+emp.code,20,45)
-doc.text("Name: "+emp.name,20,55)
-doc.text("Designation: "+emp.desig,20,65)
-doc.text("UAN: "+emp.uan+" ESI: "+emp.esi,20,75)
-doc.text("Basic: "+emp.basic,20,90)
-doc.text("HRA: "+emp.hra,20,100)
-doc.text("Allowance: "+emp.allow,20,110)
-doc.text("Bonus: "+emp.bonus,20,120)
-doc.text("PF: "+emp.pf,120,90)
-doc.text("ESI: "+emp.esid,120,100)
-doc.setFontSize(14)
-doc.text("Net Salary: "+emp.net,70,140)
-doc.setFontSize(10)
-doc.text("Computer Generated – No Signature Required",50,160)
-doc.save(emp.code+"_Payslip.pdf")
+  let emp = employees.find(e=>e.code===code);
+  const {jsPDF} = window.jspdf;
+  let doc = new jsPDF();
+
+  // Logo Base64
+  let img = document.getElementById("logoImg");
+  let canvas = document.createElement("canvas");
+  canvas.width = img.naturalWidth; canvas.height = img.naturalHeight;
+  let ctx = canvas.getContext("2d"); ctx.drawImage(img,0,0);
+  let imgData = canvas.toDataURL("image/png");
+
+  doc.addImage(imgData,"PNG",80,5,50,20);
+  doc.setFontSize(12);
+  doc.text("Payslip",90,35);
+
+  doc.text("Emp Code: "+emp.code,20,50);
+  doc.text("Name: "+emp.name,20,60);
+  doc.text("Designation: "+emp.desig,20,70);
+  doc.text("UAN: "+emp.uan+"  ESI: "+emp.esi,20,80);
+
+  // Table like layout
+  let startY=90;
+  doc.setFontSize(11);
+  doc.text("Earnings",30,startY-5);
+  doc.text("Deductions",120,startY-5);
+
+  let earnings = [["Basic",emp.basic],["HRA",emp.hra],["Allowance",emp.allow],["Bonus",emp.bonus]];
+  let deductions = [["PF",emp.pf],["ESI",emp.esid]];
+  for(let i=0;i<4;i++){
+    let y=startY + i*10;
+    if(earnings[i]) doc.text(`${earnings[i][0]}: ${formatNum(earnings[i][1])}`,30,y);
+    if(deductions[i]) doc.text(`${deductions[i][0]}: ${formatNum(deductions[i][1])}`,120,y);
+  }
+
+  doc.setFontSize(14);
+  doc.text("Net Salary: "+formatNum(emp.net),70,startY+50);
+  doc.setFontSize(10);
+  doc.text("Computer Generated – No Signature Required",40,startY+65);
+
+  doc.save(emp.code+"_Payslip.pdf");
 }
 
+// ---------- Bulk PDF ----------
 function bulkPDF(){
-let checks=document.querySelectorAll("input[type='checkbox']:checked")
-checks.forEach(c=>generatePDF(c.value))
+  let checks = document.querySelectorAll("input[type='checkbox']:checked");
+  checks.forEach(c=>generatePDF(c.value));
 }
 </script>
 </body>
