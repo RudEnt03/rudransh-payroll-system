@@ -30,7 +30,6 @@ table{
 th,td{
     border:1px solid #ddd;
     padding:8px;
-    text-align:left;
 }
 th{
     background:#2c3e50;
@@ -61,7 +60,16 @@ button:hover{
     <input type="file" id="excelFile" accept=".xlsx,.xls">
     <button onclick="importExcel()">Import Excel</button>
 
-    <table id="employeeTable"></table>
+    <table id="employeeTable">
+        <tr>
+            <th>Emp Code</th>
+            <th>Name</th>
+            <th>Designation</th>
+            <th>UAN</th>
+            <th>ESI</th>
+            <th>Action</th>
+        </tr>
+    </table>
 </div>
 
 <div class="card hidden" id="payslipCard">
@@ -88,7 +96,7 @@ function importExcel(){
         const data = new Uint8Array(e.target.result);
         const workbook = XLSX.read(data, {type:"array"});
         const sheet = workbook.Sheets[workbook.SheetNames[0]];
-        const json = XLSX.utils.sheet_to_json(sheet, {defval:""});
+        const json = XLSX.utils.sheet_to_json(sheet);
 
         localStorage.setItem("payrollData", JSON.stringify(json));
 
@@ -104,36 +112,26 @@ function loadEmployees(){
     const table = document.getElementById("employeeTable");
 
     table.innerHTML = `
-    <tr>
-        <th>Emp Code</th>
-        <th>Name</th>
-        <th>Designation</th>
-        <th>UAN</th>
-        <th>ESI</th>
-        <th>Action</th>
-    </tr>`;
-
-    if(data.length === 0) return;
-
-    const keys = Object.keys(data[0]);
-
-    const empKey = keys.find(k => k.toLowerCase().includes("emp"));
-    const nameKey = keys.find(k => k.toLowerCase().includes("name"));
-    const desKey = keys.find(k => k.toLowerCase().includes("design"));
-    const uanKey = keys.find(k => k.toLowerCase().includes("uan"));
-    const esiKey = keys.find(k => k.toLowerCase().includes("esi"));
+        <tr>
+            <th>Emp Code</th>
+            <th>Name</th>
+            <th>Designation</th>
+            <th>UAN</th>
+            <th>ESI</th>
+            <th>Action</th>
+        </tr>`;
 
     data.forEach(emp=>{
 
         const row = document.createElement("tr");
 
         row.innerHTML = `
-        <td>${emp[empKey] || ""}</td>
-        <td>${emp[nameKey] || ""}</td>
-        <td>${emp[desKey] || ""}</td>
-        <td>${emp[uanKey] || ""}</td>
-        <td>${emp[esiKey] || ""}</td>
-        <td><button onclick="viewPayslip('${emp[empKey]}')">View</button></td>
+        <td>${emp["Emp Code"] || ""}</td>
+        <td>${emp["Name"] || ""}</td>
+        <td>${emp["Designation"] || ""}</td>
+        <td>${emp["UAN No"] || ""}</td>
+        <td>${emp["ESI No"] || ""}</td>
+        <td><button onclick="viewPayslip('${emp["Emp Code"]}')">View</button></td>
         `;
 
         table.appendChild(row);
@@ -143,28 +141,32 @@ function loadEmployees(){
 function viewPayslip(code){
 
     const data = JSON.parse(localStorage.getItem("payrollData")) || [];
-    const emp = data.find(e => Object.values(e).includes(code));
+    const emp = data.find(e => e["Emp Code"] == code);
 
     if(!emp) return;
 
-    let html = "<table>";
-
-    Object.keys(emp).forEach(key=>{
-
-        let value = emp[key];
-
-        if(typeof value === "number"){
-            value = Math.floor(value);
-        }
-
-        html += `
-        <tr>
-            <td><b>${key}</b></td>
-            <td>${value}</td>
-        </tr>`;
-    });
-
-    html += "</table>";
+    let html = `
+    <table>
+        <tr><td><b>Emp Code</b></td><td>${emp["Emp Code"]}</td></tr>
+        <tr><td><b>Name</b></td><td>${emp["Name"]}</td></tr>
+        <tr><td><b>Designation</b></td><td>${emp["Designation"]}</td></tr>
+        <tr><td><b>Month</b></td><td>${emp["Month"]}</td></tr>
+        <tr><td><b>M Days</b></td><td>${emp["M Days"]}</td></tr>
+        <tr><td><b>P Days</b></td><td>${emp["P Days"]}</td></tr>
+        <tr><td><b>Basic</b></td><td>${emp["Basic"]}</td></tr>
+        <tr><td><b>HRA</b></td><td>${emp["HRA"]}</td></tr>
+        <tr><td><b>Allowance</b></td><td>${emp["Allowance"]}</td></tr>
+        <tr><td><b>Leave</b></td><td>${emp["Leave"]}</td></tr>
+        <tr><td><b>Bonus</b></td><td>${emp["Bonus"]}</td></tr>
+        <tr><td><b>Gross</b></td><td>${emp["Gross"]}</td></tr>
+        <tr><td><b>PF@12%</b></td><td>${emp["PF@12%"]}</td></tr>
+        <tr><td><b>ESI@.75%</b></td><td>${emp["ESI@.75%"]}</td></tr>
+        <tr><td><b>LWF</b></td><td>${emp["LWF"]}</td></tr>
+        <tr><td><b>OT Amt</b></td><td>${emp["OT Amt"]}</td></tr>
+        <tr><td><b>Total In Hand</b></td><td>${emp["Total In Hand"]}</td></tr>
+        <tr><td><b>Advance Paid</b></td><td>${emp["Advance Paid"]}</td></tr>
+        <tr><td><b>Net In Hand</b></td><td>${emp["Net In Hand"]}</td></tr>
+    </table>`;
 
     document.getElementById("dashboardCard").classList.add("hidden");
     document.getElementById("payslipCard").classList.remove("hidden");
