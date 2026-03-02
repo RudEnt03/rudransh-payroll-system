@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Rudransh Payroll System - F&F (Working Month Fix)</title>
+<title>Rudransh Payroll System - F&F (Full Fix)</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
@@ -19,7 +19,7 @@ th{background:#001f3f;color:#ffd700;}
 </head>
 <body>
 
-<header>Rudransh Payroll System - Local Month Fix Working</header>
+<header>Rudransh Payroll System - F&F (Full Fix)</header>
 
 <div id="rolePage" class="glass">
 <h3>Select Role</h3>
@@ -88,7 +88,7 @@ document.getElementById("loginAdminBtn").onclick = () => {
 
 function logout() { location.reload(); }
 
-// --- Excel to Month-safe Employees ---
+// --- UTC-safe Month Conversion ---
 function excelMonthToString(cell){
     if(cell instanceof Date){
         const d = new Date(cell.getTime() + cell.getTimezoneOffset()*60000);
@@ -106,7 +106,7 @@ function excelMonthToString(cell){
     }
 }
 
-// --- Excel Import (fully local, safe) ---
+// --- Excel Import ---
 document.getElementById("excelFile").onchange = function(e){
     const file = e.target.files[0]; if(!file) return;
     const reader = new FileReader();
@@ -154,7 +154,7 @@ document.getElementById("excelFile").onchange = function(e){
     reader.readAsArrayBuffer(file);
 };
 
-// --- Table & Month Dropdown ---
+// --- Table Rendering ---
 function renderTable(){
   let html = "";
   employees.forEach(e => {
@@ -166,6 +166,7 @@ function renderTable(){
   empTable.innerHTML = html;
 }
 
+// --- Month Dropdown ---
 function renderMonthDropdown(){
   monthSelect.innerHTML = "<option value=''>--Select Month--</option>";
   Object.keys(monthData).sort().forEach(m => {
@@ -173,7 +174,19 @@ function renderMonthDropdown(){
   });
 }
 
-// Employee view
+// --- Filter table when month selected ---
+monthSelect.onchange = function() {
+    const selMonth = this.value;
+    const rows = empTable.getElementsByTagName('tr');
+    for(let i=0;i<rows.length;i++){
+        const td = rows[i].getElementsByTagName('td')[3];
+        if(td){
+            rows[i].style.display = (selMonth === "" || td.innerText === selMonth) ? "" : "none";
+        }
+    }
+};
+
+// Employee View
 document.getElementById("viewEmpSlipBtn").onclick = () => {
   const code = document.getElementById("empCodeInput").value.trim();
   if(!code){ alert("Enter Emp Code"); return; }
