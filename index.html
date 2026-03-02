@@ -80,7 +80,7 @@ let monthSelect=document.getElementById("monthSelect");
 let empSlip=document.getElementById("empSlip");
 
 // Role selection
-document.getElementById("roleNextBtn").onclick=()=>{
+document.getElementById("roleNextBtn").onclick=()=>{ 
   let role=document.getElementById("roleSelect").value;
   if(role==="Admin"){rolePage.classList.add("hidden");adminLogin.classList.remove("hidden");}
   else if(role==="Employee"){rolePage.classList.add("hidden");empDash.classList.remove("hidden");}
@@ -133,19 +133,10 @@ document.getElementById("excelFile").onchange=function(e){
           let empMonth=monthCol>=0?r[monthCol]:"";
           empMonth=empMonth instanceof Date?empMonth.toLocaleDateString('en-US',{month:'short',year:'2-digit'}):empMonth.toString().trim();
           let emp={
-            code:codeCol>=0?r[codeCol]:"",
-            name:nameCol>=0?r[nameCol]:"",
-            desig:desigCol>=0?r[desigCol]:"",
-            pageName:pageName,
-            project:project,
-            location:location,
-            month:empMonth,
-            basic:basicCol>=0?r[basicCol]||0:0,
-            hra:hraCol>=0?r[hraCol]||0:0,
-            allow:allowCol>=0?r[allowCol]||0:0,
-            bonus:bonusCol>=0?r[bonusCol]||0:0,
-            pf:pfCol>=0?r[pfCol]||0:0,
-            esi:esiCol>=0?r[esiCol]||0:0,
+            code:codeCol>=0?r[codeCol]:"", name:nameCol>=0?r[nameCol]:"", desig:desigCol>=0?r[desigCol]:"", 
+            pageName:pageName, project:project, location:location, month:empMonth,
+            basic:basicCol>=0?r[basicCol]||0:0, hra:hraCol>=0?r[hraCol]||0:0, allow:allowCol>=0?r[allowCol]||0:0,
+            bonus:bonusCol>=0?r[bonusCol]||0:0, pf:pfCol>=0?r[pfCol]||0:0, esi:esiCol>=0?r[esiCol]||0:0,
             net:netCol>=0?r[netCol]||0:0
           };
           employees.push(emp);
