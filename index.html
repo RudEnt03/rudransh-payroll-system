@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Rudransh Payroll System - F&F (Local Fix)</title>
+<title>Rudransh Payroll System - F&F (Local Fix Robust)</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
@@ -19,7 +19,7 @@ th{background:#001f3f;color:#ffd700;}
 </head>
 <body>
 
-<header>Rudransh Payroll System - Local Fix</header>
+<header>Rudransh Payroll System - Local Fix Robust</header>
 
 <div id="rolePage" class="glass">
 <h3>Select Role</h3>
@@ -88,20 +88,24 @@ document.getElementById("loginAdminBtn").onclick = () => {
 
 function logout() { location.reload(); }
 
-// --- Local Fix for Month Conversion ---
-function formatExcelMonth(excelDate){
-  if(excelDate instanceof Date){
-    // Avoid timezone shift by setting day=1
-    const d = new Date(excelDate.getFullYear(), excelDate.getMonth(), 1);
-    const month = d.toLocaleString('en-US', { month: 'short' });
-    const year = String(d.getFullYear()).slice(-2);
-    return `${month}-${year}`;
+// --- Robust Local Fix for Excel Month ---
+function formatExcelMonth(value){
+  let date;
+  if(value instanceof Date){
+    date = new Date(value.getFullYear(), value.getMonth(), 1); // Day=1 to prevent timezone shift
+  } else if(typeof value === "number") {
+    // Excel serial number to JS Date
+    const d = XLSX.SSF.parse_date_code(value); // {y,m,d,H,M,S}
+    date = new Date(d.y, d.m-1, 1);
   } else {
-    return excelDate.toString().trim();
+    return value.toString().trim();
   }
+  const month = date.toLocaleString('en-US', { month: 'short' });
+  const year = String(date.getFullYear()).slice(-2);
+  return `${month}-${year}`;
 }
 
-// Excel Import - Robust with Month Fix
+// Excel Import
 document.getElementById("excelFile").onchange = function(e) {
   const file = e.target.files[0]; if(!file) return;
   const reader = new FileReader();
@@ -128,7 +132,7 @@ document.getElementById("excelFile").onchange = function(e) {
       for(let i=1;i<rows.length;i++){
         const r = rows[i]; if(r.length>0){
           let empMonth = r[monthCol];
-          empMonth = formatExcelMonth(empMonth); // <-- Local fix applied
+          empMonth = formatExcelMonth(empMonth); // <-- Robust fix
           const emp = {
             code: r[codeCol] || "",
             name: r[nameCol] || "",
