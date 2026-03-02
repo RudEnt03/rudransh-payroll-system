@@ -108,11 +108,15 @@ function logout(){ location.reload(); }
 // Excel date to JS date
 function excelDateToJSDate(serial){ return new Date(Math.round((serial - 25569) * 86400 * 1000)); }
 function formatMonth(date){ let months=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]; return months[date.getMonth()] + "-" + String(date.getFullYear()).slice(2); }
+
+// Robust Month Parser (extract Jan-26 from Wages-Jan26)
 function parseExcelMonth(val){
   if(!val) return "Unknown";
-  if(typeof val === "number") return formatMonth(excelDateToJSDate(val));
-  if(typeof val === "string"){ let d=new Date(val); return isNaN(d)?val.trim():formatMonth(d); }
-  return "Unknown";
+  val = val.toString().trim();
+  let m = val.match(/([A-Za-z]+[-]\d{2,4})/);
+  if(m) return m[1];
+  if(!isNaN(val)) return formatMonth(excelDateToJSDate(Number(val)));
+  return val;
 }
 
 // XLSX Import
@@ -139,11 +143,12 @@ document.getElementById("excelFile").onchange=function(e){
       let pfCol=headers.indexOf("pf");
       let esiCol=headers.indexOf("esi");
       let netCol=headers.indexOf("net");
+      let locationCol=headers.indexOf("location");
 
-      // Split Sheet Name robustly
+      // Sheet Name Parsing: Project = first part, Location = rest
       let parts = sheetName.split("-");
       let project = parts[0].trim();
-      let location = parts.slice(1).join("-").trim() || "Main";
+      let sheetLocation = parts.slice(1).join("-").trim() || "Main";
 
       for(let i=1;i<rows.length;i++){
         let r=rows[i]; if(r.length>1){
@@ -153,9 +158,9 @@ document.getElementById("excelFile").onchange=function(e){
             code:r[1]||"",
             name:r[2]||"",
             desig:r[3]||"",
-            project:project,
-            location:location,
-            month:monthVal,
+            project: project,
+            location: (locationCol>=0 && r[locationCol])?r[locationCol]:sheetLocation,
+            month: monthVal,
             mDays:mDaysCol>=0?r[mDaysCol]:"", 
             pDays:pDaysCol>=0?r[pDaysCol]:"", 
             basic:basicCol>=0?r[basicCol]||0:0,
