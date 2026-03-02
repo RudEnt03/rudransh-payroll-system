@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Rudransh Payroll System - Fixed Month</title>
+<title>Rudransh Payroll System - Fixed Month Rule</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
@@ -41,19 +41,24 @@ let employees=[], monthData={};
 const empTable=document.getElementById("empTable").getElementsByTagName("tbody")[0];
 const monthSelect=document.getElementById("monthSelect");
 
-// ===== FIX: Correct Month from Excel Date =====
-function fixMonth(cell){
-    if(typeof cell === "string") return cell.trim(); // already text
+// ===== FIX: Rule-based Month Conversion =====
+function formatMonth(cell){
+    // If string like "Jan-26", return as is
+    if(typeof cell === "string") return cell.trim();
+
+    // If JS Date object, format as "MMM-YY"
     if(cell instanceof Date){
-        // Extract month & year from Date, ignore timezone
         return cell.toLocaleString('en-US',{month:'short',year:'2-digit',timeZone:'UTC'});
     }
-    if(typeof cell === 'number'){
-        // Excel serial number -> date
+
+    // If Excel serial number
+    if(typeof cell === "number"){
         const d = XLSX.SSF.parse_date_code(cell);
-        return new Date(Date.UTC(d.y,d.m-1,1))
-            .toLocaleString('en-US',{month:'short',year:'2-digit',timeZone:'UTC'});
+        // Construct UTC date from Excel serial
+        const date = new Date(Date.UTC(d.y,d.m-1,1));
+        return date.toLocaleString('en-US',{month:'short',year:'2-digit',timeZone:'UTC'});
     }
+
     return String(cell).trim();
 }
 
@@ -79,7 +84,7 @@ document.getElementById("excelFile").onchange = function(e){
 
             for(let i=1;i<rows.length;i++){
                 const r = rows[i]; if(r.length>0){
-                    const empMonth = fixMonth(r[monthCol]);
+                    const empMonth = formatMonth(r[monthCol]);
                     const emp = {
                         code: r[codeCol] || "",
                         name: r[nameCol] || "",
@@ -95,7 +100,7 @@ document.getElementById("excelFile").onchange = function(e){
 
         renderTable();
         renderMonthDropdown();
-        alert("Excel imported! Month now shows correctly.");
+        alert("Excel imported! Months formatted using 1-1-2026=Jan-26 rule.");
     };
     reader.readAsArrayBuffer(file);
 };
