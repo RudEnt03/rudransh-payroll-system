@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Rudransh Payroll System - F&F (Month Fix UTC)</title>
+<title>Rudransh Payroll System - F&F (Working Month Fix)</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
@@ -19,7 +19,7 @@ th{background:#001f3f;color:#ffd700;}
 </head>
 <body>
 
-<header>Rudransh Payroll System - Local Month Fix UTC</header>
+<header>Rudransh Payroll System - Local Month Fix Working</header>
 
 <div id="rolePage" class="glass">
 <h3>Select Role</h3>
@@ -88,7 +88,73 @@ document.getElementById("loginAdminBtn").onclick = () => {
 
 function logout() { location.reload(); }
 
-// --- RPS_FF_HTML_v1 rendering functions ---
+// --- Excel to Month-safe Employees ---
+function excelMonthToString(cell){
+    if(cell instanceof Date){
+        const d = new Date(cell.getTime() + cell.getTimezoneOffset()*60000);
+        const month = d.toLocaleString('en-US', {month:'short', timeZone:'UTC'});
+        const year = String(d.getFullYear()).slice(-2);
+        return `${month}-${year}`;
+    } else if(typeof cell === 'number'){
+        const date = XLSX.SSF.parse_date_code(cell);
+        const d = new Date(Date.UTC(date.y, date.m-1, 1));
+        const month = d.toLocaleString('en-US', {month:'short', timeZone:'UTC'});
+        const year = String(date.y).slice(-2);
+        return `${month}-${year}`;
+    } else {
+        return cell.toString().trim();
+    }
+}
+
+// --- Excel Import (fully local, safe) ---
+document.getElementById("excelFile").onchange = function(e){
+    const file = e.target.files[0]; if(!file) return;
+    const reader = new FileReader();
+    reader.onload = function(ev){
+        const data = new Uint8Array(ev.target.result);
+        const wb = XLSX.read(data, {type:'array', cellDates:true});
+
+        employees=[]; monthData={};
+
+        wb.SheetNames.forEach(sheet => {
+            const rows = XLSX.utils.sheet_to_json(wb.Sheets[sheet], {header:1, defval:""});
+            if(rows.length < 2) return;
+
+            const headers = rows[0].map(h => h.toString().trim().toLowerCase());
+            const codeCol = headers.findIndex(h => h.includes("emp") && h.includes("code"));
+            const nameCol = headers.findIndex(h => h.includes("name"));
+            const monthCol = headers.findIndex(h => h.includes("month"));
+            const netCol = headers.findIndex(h => h.includes("net"));
+
+            if(codeCol === -1 || nameCol === -1 || monthCol === -1 || netCol === -1){
+                alert("Excel headers missing. Required: Emp Code, Name, Month, Net In Hand");
+                return;
+            }
+
+            for(let i=1;i<rows.length;i++){
+                const r = rows[i]; if(r.length > 0){
+                    const empMonth = excelMonthToString(r[monthCol]);
+                    const emp = {
+                        code: r[codeCol] || "",
+                        name: r[nameCol] || "",
+                        month: empMonth,
+                        net: r[netCol] || 0
+                    };
+                    employees.push(emp);
+                    monthData[emp.month] = monthData[emp.month] || [];
+                    monthData[emp.month].push(emp);
+                }
+            }
+        });
+
+        renderTable();
+        renderMonthDropdown();
+        alert("Excel imported successfully with month fix!");
+    };
+    reader.readAsArrayBuffer(file);
+};
+
+// --- Table & Month Dropdown ---
 function renderTable(){
   let html = "";
   employees.forEach(e => {
@@ -107,7 +173,7 @@ function renderMonthDropdown(){
   });
 }
 
-// Employee View
+// Employee view
 document.getElementById("viewEmpSlipBtn").onclick = () => {
   const code = document.getElementById("empCodeInput").value.trim();
   if(!code){ alert("Enter Emp Code"); return; }
@@ -133,48 +199,6 @@ document.getElementById("generateBtn").onclick = () => {
     }
   });
 };
-
-// --- LOCAL MONTH FIX: SAFE UTC month conversion ---
-function excelMonthToString(cell){
-    if(cell instanceof Date){
-        // remove local timezone shift
-        const d = new Date(cell.getTime() + cell.getTimezoneOffset()*60000);
-        const month = d.toLocaleString('en-US', {month:'short', timeZone:'UTC'});
-        const year = String(d.getFullYear()).slice(-2);
-        return `${month}-${year}`;
-    } else if(typeof cell === 'number'){
-        // Excel serial number
-        const date = XLSX.SSF.parse_date_code(cell);
-        const d = new Date(Date.UTC(date.y, date.m-1, 1));
-        const month = d.toLocaleString('en-US', {month:'short', timeZone:'UTC'});
-        const year = String(date.y).slice(-2);
-        return `${month}-${year}`;
-    } else {
-        return cell.toString().trim();
-    }
-}
-
-// --- OVERRIDE EXCEL IMPORT LOCALLY ---
-window.addEventListener('load', () => {
-    const excelInput = document.getElementById('excelFile');
-    if(!excelInput) return;
-
-    const originalHandler = excelInput.onchange;
-    excelInput.onchange = function(e){
-        originalHandler && originalHandler.call(this, e);
-
-        // Fix months in memory after import
-        if(Array.isArray(employees)){
-            employees.forEach(emp => {
-                emp.month = excelMonthToString(emp.month);
-            });
-        }
-
-        renderTable && renderTable();
-        renderMonthDropdown && renderMonthDropdown();
-        console.log("Local Month Fix Applied: Months corrected!");
-    };
-});
 </script>
 </body>
 </html>
