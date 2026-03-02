@@ -2,13 +2,9 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Rudransh Payroll System - Corrected F&F</title>
-
-<!-- jsPDF -->
+<title>Rudransh Payroll System - F&F</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<!-- SheetJS -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-
 <style>
 body{margin:0;font-family:Segoe UI;background:linear-gradient(135deg,#0b1c2d,#000814);color:white;}
 .header{background:linear-gradient(90deg,#000814,#001d3d);padding:15px;text-align:center;box-shadow:0 4px 20px rgba(0,0,0,0.6);}
@@ -37,7 +33,6 @@ tr.gross-row{background:#ffd700;font-weight:bold;}
 tr.net-row{background:#ffbf00;font-weight:bold;}
 </style>
 </head>
-
 <body>
 
 <div class="header">
@@ -58,10 +53,7 @@ tr.net-row{background:#ffbf00;font-weight:bold;}
 <!-- ADMIN LOGIN -->
 <div id="adminLogin" class="glass hidden">
 <h3>Admin Login</h3>
-<select id="adminRoleSelect">
-<option value="Admin">Admin</option>
-</select><br>
-<input id="adminId" placeholder="Admin ID"><br>
+<p><b>Enter Admin Password</b></p>
 <input id="adminPass" type="password" placeholder="Password"><br>
 <button id="loginAdminBtn">Login</button>
 </div>
@@ -114,7 +106,6 @@ tr.net-row{background:#ffbf00;font-weight:bold;}
 
 <script>
 document.addEventListener("DOMContentLoaded", function(){
-
 const rolePage = document.getElementById("rolePage");
 const adminLogin = document.getElementById("adminLogin");
 const empLogin = document.getElementById("empLogin");
@@ -122,9 +113,7 @@ const adminDash = document.getElementById("adminDash");
 const empDash = document.getElementById("empDash");
 const empSlip = document.getElementById("empSlip");
 const monthSelect = document.getElementById("monthSelect");
-
-let employees = [];
-let monthData = {}; 
+let employees = [], monthData = {};
 
 function toInt(val){ return Math.round(Number(val)||0); }
 function formatNum(n){ return n===0? "": Math.round(n).toLocaleString(); }
@@ -144,11 +133,13 @@ else if(role==="Employee"){ hideAll(); empLogin.classList.remove("hidden"); }
 else alert("Select Role");
 }
 
-// --- Admin Login ---
+// --- Admin Login simplified ---
 document.getElementById("loginAdminBtn").onclick = ()=>{
-if(document.getElementById("adminId").value==="Admin" && document.getElementById("adminPass").value==="Rud@03"){
+let pass = document.getElementById("adminPass").value;
+if(pass==="Rud@03"){
   hideAll(); adminDash.classList.remove("hidden");
-}else alert("Invalid Admin");
+  if(employees.length>0) { renderMonthDropdown(); renderTable(); }
+}else alert("Invalid Admin Password");
 }
 
 // --- Employee Login ---
@@ -171,65 +162,65 @@ window.resetBind = ()=>{ localStorage.removeItem("binds"); alert("Binding Reset"
 
 // --- XLSX Import ---
 window.importExcel = function(event){
-  let file = event.target.files[0]; if(!file) return;
-  let reader = new FileReader();
-  reader.onload = function(e){
-    let data = new Uint8Array(e.target.result);
-    let workbook = XLSX.read(data,{type:'array'});
-    monthData = {}; employees=[];
-    workbook.SheetNames.forEach(sheetName=>{
-      let sheet = workbook.Sheets[sheetName];
-      let rows = XLSX.utils.sheet_to_json(sheet,{header:1});
-      let monthColIndex = rows[0].findIndex(h=>h.toLowerCase()==="month");
-      for(let i=1;i<rows.length;i++){
-        let r = rows[i]; if(r.length>=21){
-          let monthVal = monthColIndex>=0?r[i][monthColIndex]||r[0]: r[0]; 
-          let empObj = {
-            code:r[1], name:r[2], desig:r[3], uan:r[4], esi:r[5],
-            project: sheetName.split("-")[0]||"", 
-            location: sheetName.split("-").slice(1).join("-")||"",
-            month: monthVal, mDays:r[7]||"", pDays:r[8]||"",
-            basic:r[9]||0, hra:r[10]||0, allow:r[11]||0, bonus:r[13]||0,
-            pf:r[15]||0, esid:r[16]||0, net:r[20]||0
-          };
-          employees.push(empObj);
-          monthData[empObj.month] = monthData[empObj.month]||[];
-          monthData[empObj.month].push(empObj);
-        }
+let file = event.target.files[0]; if(!file) return;
+let reader = new FileReader();
+reader.onload = function(e){
+  let data = new Uint8Array(e.target.result);
+  let workbook = XLSX.read(data,{type:'array'});
+  monthData = {}; employees=[];
+  workbook.SheetNames.forEach(sheetName=>{
+    let sheet = workbook.Sheets[sheetName];
+    let rows = XLSX.utils.sheet_to_json(sheet,{header:1});
+    let monthColIndex = rows[0].findIndex(h=>h.toLowerCase()==="month");
+    for(let i=1;i<rows.length;i++){
+      let r = rows[i]; if(r.length>=21){
+        let monthVal = monthColIndex>=0?r[monthColIndex]||"" : "";
+        let empObj = {
+          code:r[1], name:r[2], desig:r[3], uan:r[4], esi:r[5],
+          project: sheetName.split("-")[0]||"", 
+          location: sheetName.split("-").slice(1).join("-")||"",
+          month: monthVal, mDays:r[7]||"", pDays:r[8]||"",
+          basic:r[9]||0, hra:r[10]||0, allow:r[11]||0, bonus:r[13]||0,
+          pf:r[15]||0, esid:r[16]||0, net:r[20]||0
+        };
+        employees.push(empObj);
+        monthData[empObj.month] = monthData[empObj.month]||[];
+        monthData[empObj.month].push(empObj);
       }
-    });
-    renderMonthDropdown();
-    renderTable();
-    alert("Excel imported successfully!");
-  }
-  reader.readAsArrayBuffer(file);
+    }
+  });
+  renderMonthDropdown();
+  renderTable();
+  alert("Excel imported successfully! Table & Month dropdown updated.");
+}
+reader.readAsArrayBuffer(file);
 }
 
 // --- Month Dropdown ---
 function renderMonthDropdown(){
-  monthSelect.innerHTML = "<option value=''>--Select Month--</option>";
-  Object.keys(monthData).forEach(m=>{ monthSelect.innerHTML += `<option value='${m}'>${m}</option>`; });
+monthSelect.innerHTML = "<option value=''>--Select Month--</option>";
+Object.keys(monthData).forEach(m=>{ monthSelect.innerHTML += `<option value='${m}'>${m}</option>`; });
 }
 
 // --- Render Table ---
 function renderTable(){
-  let tbody = document.querySelector("#empTable tbody");
-  tbody.innerHTML = employees.map(e=>`
-    <tr>
-      <td><input type="checkbox" value="${e.code}" data-month="${e.month}"></td>
-      <td>${e.code}</td>
-      <td>${e.name}</td>
-      <td>${e.desig}</td>
-      <td>${e.uan}</td>
-      <td>${e.esi}</td>
-      <td>${e.project}</td>
-      <td>${e.location}</td>
-      <td>${e.month}</td>
-      <td>
-        <button onclick="viewEmp('${e.code}')">View</button>
-        <button onclick="generatePDF('${e.code}')">PDF</button>
-      </td>
-    </tr>`).join("");
+let tbody = document.querySelector("#empTable tbody");
+tbody.innerHTML = employees.map(e=>`
+<tr>
+<td><input type="checkbox" value="${e.code}" data-month="${e.month}"></td>
+<td>${e.code}</td>
+<td>${e.name}</td>
+<td>${e.desig}</td>
+<td>${e.uan}</td>
+<td>${e.esi}</td>
+<td>${e.project}</td>
+<td>${e.location}</td>
+<td>${e.month}</td>
+<td>
+<button onclick="viewEmp('${e.code}')">View</button>
+<button onclick="generatePDF('${e.code}')">PDF</button>
+</td>
+</tr>`).join("");
 }
 
 // --- Payslip HTML ---
@@ -262,12 +253,7 @@ return `<div class="payslip">
 }
 
 function renderSlip(emp){ empSlip.innerHTML = slipHTML(emp); }
-window.viewEmp = function(code){ 
-  let emp = employees.find(e=>e.code===code); 
-  let w = window.open(""); 
-  w.document.write(slipHTML(emp)); 
-  w.print(); 
-}
+window.viewEmp = function(code){ let emp = employees.find(e=>e.code===code); let w = window.open(""); w.document.write(slipHTML(emp)); w.print(); }
 
 // --- PDF Generation ---
 window.generatePDF = function(code){
@@ -285,14 +271,8 @@ doc.text(`Designation: ${emp.desig} | M Days: ${emp.mDays} | P Days: ${emp.pDays
 let startY = 60;
 let earnings = [["Basic",emp.basic],["HRA",emp.hra],["Allowance",emp.allow],["Bonus",emp.bonus],["Gross",(emp.basic+emp.hra+emp.allow+emp.bonus)]];
 let deductions = [["PF",emp.pf],["ESI",emp.esid]];
-for(let i=0;i<earnings.length;i++){
-  let y=startY+10*i;
-  if(earnings[i][1]!==0) doc.text(`${earnings[i][0]}: ${Math.round(earnings[i][1])}`,20,y);
-}
-for(let i=0;i<deductions.length;i++){
-  let y=startY+10*i;
-  if(deductions[i][1]!==0) doc.text(`${deductions[i][0]}: ${Math.round(deductions[i][1])}`,120,y);
-}
+for(let i=0;i<earnings.length;i++){let y=startY+10*i;if(earnings[i][1]!==0) doc.text(`${earnings[i][0]}: ${Math.round(earnings[i][1])}`,20,y);}
+for(let i=0;i<deductions.length;i++){let y=startY+10*i;if(deductions[i][1]!==0) doc.text(`${deductions[i][0]}: ${Math.round(deductions[i][1])}`,120,y);}
 doc.setFontSize(14); doc.setTextColor(0,0,120);
 doc.text(`Net Salary: ${Math.round(emp.net)}`,70,startY+60);
 doc.setFontSize(10); doc.text("Computer Generated – No Signature Required",50,startY+70);
@@ -311,6 +291,5 @@ window.replaceExcel = function(){ alert("Upload new Excel to replace previous mo
 
 });
 </script>
-
 </body>
 </html>
