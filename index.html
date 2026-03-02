@@ -21,11 +21,28 @@ th{background:#001f3f;color:#ffd700;}
 
 <header>Rudransh Payroll System</header>
 
-<div id="adminDash" class="glass">
+<div id="rolePage" class="glass">
+<h3>Select Role</h3>
+<select id="roleSelect">
+<option value="">--Select Role--</option>
+<option value="Admin">Admin</option>
+<option value="Employee">Employee</option>
+</select>
+<button id="roleNextBtn">Next</button>
+</div>
+
+<div id="adminLogin" class="glass hidden">
+<h3>Admin Login</h3>
+<input id="adminPass" type="password" placeholder="Password">
+<button id="loginAdminBtn">Login</button>
+</div>
+
+<div id="adminDash" class="glass hidden">
 <h3>Admin Dashboard</h3>
 <input type="file" id="excelFile" accept=".xlsx,.xls">
 <select id="monthSelect"><option value="">--Select Month--</option></select>
 <button id="generateBtn">Generate Payslip(s)</button>
+<button onclick="logout()">Logout</button>
 <table id="empTable">
 <thead>
 <tr>
@@ -36,28 +53,58 @@ th{background:#001f3f;color:#ffd700;}
 </table>
 </div>
 
+<div id="empDash" class="glass hidden">
+<h3>Employee Dashboard</h3>
+<input id="empCodeInput" type="text" placeholder="Enter Emp Code">
+<button id="viewEmpSlipBtn">View Payslip</button>
+<button onclick="logout()">Logout</button>
+<div id="empSlip"></div>
+</div>
+
 <script>
 let employees=[], monthData={};
+const rolePage=document.getElementById("rolePage");
+const adminLogin=document.getElementById("adminLogin");
+const adminDash=document.getElementById("adminDash");
 const empTable=document.getElementById("empTable").getElementsByTagName("tbody")[0];
 const monthSelect=document.getElementById("monthSelect");
+const empSlip=document.getElementById("empSlip");
 
-// ===== LOCAL MONTH FIX: Force text month =====
+// Role Selection
+document.getElementById("roleNextBtn").onclick = () => {
+  const role = document.getElementById("roleSelect").value;
+  if(role === "Admin") { rolePage.classList.add("hidden"); adminLogin.classList.remove("hidden"); }
+  else if(role === "Employee") { rolePage.classList.add("hidden"); empDash.classList.remove("hidden"); }
+  else alert("Select Role");
+};
+
+// Admin Login
+document.getElementById("loginAdminBtn").onclick = () => {
+  if(document.getElementById("adminPass").value === "Rud@03") {
+    adminLogin.classList.add("hidden");
+    adminDash.classList.remove("hidden");
+  } else alert("Invalid Password");
+};
+
+function logout() { location.reload(); }
+
+// ===== LOCAL MONTH FIX START =====
+// Force Month to always display correctly
 function parseMonth(cell){
-    if(typeof cell==="string") return cell.trim(); // Already text
+    if(typeof cell==="string") return cell.trim(); // already text like "Jan-26"
     if(cell instanceof Date){
-        // Convert Date to "MMM-YY" in UTC
         return cell.toLocaleString('en-US',{month:'short',year:'2-digit',timeZone:'UTC'});
     }
     if(typeof cell==='number'){
-        // Excel serial number
         const date = XLSX.SSF.parse_date_code(cell);
         return new Date(Date.UTC(date.y,date.m-1,1))
             .toLocaleString('en-US',{month:'short',year:'2-digit',timeZone:'UTC'});
     }
     return String(cell).trim();
 }
+// ===== LOCAL MONTH FIX END =====
 
-// ===== Excel Import =====
+// Excel Import
 document.getElementById("excelFile").onchange = function(e){
     const file = e.target.files[0]; if(!file) return;
     const reader = new FileReader();
@@ -69,7 +116,6 @@ document.getElementById("excelFile").onchange = function(e){
         wb.SheetNames.forEach(sheet=>{
             const rows = XLSX.utils.sheet_to_json(wb.Sheets[sheet],{header:1,defval:""});
             if(rows.length<2) return;
-
             const headers = rows[0].map(h=>h.toString().trim().toLowerCase());
             const codeCol = headers.findIndex(h=>h.includes("emp") && h.includes("code"));
             const nameCol = headers.findIndex(h=>h.includes("name"));
@@ -95,12 +141,12 @@ document.getElementById("excelFile").onchange = function(e){
 
         renderTable();
         renderMonthDropdown();
-        alert("Excel imported! Month fixed locally.");
+        alert("Excel imported! Month fix applied.");
     };
     reader.readAsArrayBuffer(file);
 };
 
-// ===== Render Table =====
+// Render Table
 function renderTable(){
     let html="";
     employees.forEach(e=>{
@@ -112,7 +158,7 @@ function renderTable(){
     empTable.innerHTML=html;
 }
 
-// ===== Render Month Dropdown =====
+// Render Month Dropdown
 function renderMonthDropdown(){
     monthSelect.innerHTML="<option value=''>--Select Month--</option>";
     Object.keys(monthData).sort().forEach(m=>{
@@ -120,7 +166,7 @@ function renderMonthDropdown(){
     });
 }
 
-// ===== Filter Table by Month =====
+// Filter Table by Selected Month
 monthSelect.onchange=function(){
     const sel=this.value;
     const rows=empTable.getElementsByTagName('tr');
@@ -130,7 +176,16 @@ monthSelect.onchange=function(){
     }
 };
 
-// ===== PDF Generation =====
+// Employee View
+document.getElementById("viewEmpSlipBtn")?.addEventListener("click",()=>{
+    const code=document.getElementById("empCodeInput").value.trim();
+    if(!code){alert("Enter Emp Code");return;}
+    const emp=employees.find(e=>e.code===code);
+    if(emp) empSlip.innerHTML=`<p>Emp Code: ${emp.code} | Name: ${emp.name} | Month: ${emp.month} | Net Salary: ${emp.net}</p>`;
+    else alert("Employee not found or Excel not imported.");
+});
+
+// PDF Generation
 document.getElementById("generateBtn").onclick = () => {
     const selMonth = monthSelect.value;
     if(!selMonth){alert("Select Month"); return;}
