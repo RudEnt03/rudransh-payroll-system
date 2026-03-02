@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html>
 <head>
 <meta charset="UTF-8">
@@ -102,11 +103,7 @@ function logout(){ location.reload(); }
 
 // Convert Excel date serial to JS Date
 function excelDateToJSDate(serial){
-  if(typeof serial === "number"){ 
-    return new Date(Math.round((serial - 25569) * 86400 * 1000));
-  } else if(serial instanceof Date){
-    return serial;
-  } else return new Date(serial);
+  return new Date(Math.round((serial - 25569) * 86400 * 1000));
 }
 
 // Format date as Jan-26
@@ -115,10 +112,16 @@ function formatMonth(date){
   return months[date.getMonth()] + "-" + String(date.getFullYear()).slice(2);
 }
 
-// Parse Month from Excel cell
+// Robust Month Parser
 function parseExcelMonth(val){
-    let d = excelDateToJSDate(val);
-    return formatMonth(d);
+  if(!val) return "Unknown";
+  if(typeof val === "number") return formatMonth(excelDateToJSDate(val));
+  if(typeof val === "string"){
+    let d = new Date(val);
+    if(!isNaN(d)) return formatMonth(d);
+    return val.trim(); // fallback
+  }
+  return "Unknown";
 }
 
 // XLSX Import
@@ -131,30 +134,47 @@ document.getElementById("excelFile").onchange=function(e){
     let wb=XLSX.read(data,{type:'array',cellDates:true});
     employees=[]; monthData={};
     wb.SheetNames.forEach(sheet=>{
-      let sheetName=sheet;
+      let sheetName=sheet.trim();
       let rows=XLSX.utils.sheet_to_json(wb.Sheets[sheet],{header:1});
-      let monthCol=rows[0].findIndex(h=>h.toLowerCase()==="month");
-      let mDaysCol=rows[0].findIndex(h=>h.toLowerCase()==="m days");
-      let pDaysCol=rows[0].findIndex(h=>h.toLowerCase()==="p days");
+      if(rows.length<2) return; // skip empty sheets
 
-      // Extract Project and Location
+      let headers=rows[0].map(h=>h.toString().toLowerCase());
+      let monthCol=headers.indexOf("month");
+      let mDaysCol=headers.indexOf("m days");
+      let pDaysCol=headers.indexOf("p days");
+      let basicCol=headers.indexOf("basic");
+      let hraCol=headers.indexOf("hra");
+      let allowCol=headers.indexOf("allowance");
+      let bonusCol=headers.indexOf("bonus");
+      let pfCol=headers.indexOf("pf");
+      let esiCol=headers.indexOf("esi");
+      let netCol=headers.indexOf("net");
+
+      // Project & Location
       let locParts = sheetName.split("-");
       let project = locParts[0];
-      let location = locParts.slice(1).join("-");
+      let location = locParts.length>1 ? locParts.slice(1).join("-") : "Main";
 
       for(let i=1;i<rows.length;i++){
-        let r=rows[i]; if(r.length>5){
+        let r=rows[i]; if(r.length>1){
           let rawMonth = monthCol>=0?r[monthCol]:"";
           let monthVal = parseExcelMonth(rawMonth);
           let empObj={
-            code:r[1], name:r[2], desig:r[3],
+            code:r[1]||"",
+            name:r[2]||"",
+            desig:r[3]||"",
             project:project,
             location:location,
             month:monthVal,
             mDays:mDaysCol>=0?r[mDaysCol]:"", 
             pDays:pDaysCol>=0?r[pDaysCol]:"", 
-            basic:r[9]||0, hra:r[10]||0, allow:r[11]||0, bonus:r[13]||0,
-            pf:r[15]||0, esid:r[16]||0, net:r[20]||0
+            basic:basicCol>=0?r[basicCol]||0:0,
+            hra:hraCol>=0?r[hraCol]||0:0,
+            allow:allowCol>=0?r[allowCol]||0:0,
+            bonus:bonusCol>=0?r[bonusCol]||0:0,
+            pf:pfCol>=0?r[pfCol]||0:0,
+            esid:esiCol>=0?r[esiCol]||0:0,
+            net:netCol>=0?r[netCol]||0:0
           };
           employees.push(empObj);
           monthData[monthVal] = monthData[monthVal] || [];
@@ -169,7 +189,7 @@ document.getElementById("excelFile").onchange=function(e){
   reader.readAsArrayBuffer(file);
 };
 
-// Render table efficiently
+// Render table
 function renderTable(){
   let html = "";
   employees.forEach(e=>{
@@ -181,7 +201,7 @@ function renderTable(){
   empTable.innerHTML = html;
 }
 
-// Render month dropdown without duplicates
+// Render month dropdown
 function renderMonthDropdown(){
   monthSelect.innerHTML="<option value=''>--Select Month--</option>";
   Object.keys(monthData).sort().forEach(m=>{
@@ -215,6 +235,8 @@ document.getElementById("viewEmpSlipBtn").onclick=()=>{
 function slipHTML(e){
   function f(n){return n?Math.round(n):0;}
   let gross = f(e.basic)+f(e.hra)+f(e.allow)+f(e.bonus);
+  let deductions = f(e.pf)+f(e.esid);
+  let net = f(e.net);
   return `<div class="payslip">
   <div class="payslip-header"><h2>Rudransh Enterprises</h2>
   <h4>Project: ${e.project} | Location: ${e.location}</h4></div>
@@ -232,27 +254,34 @@ function slipHTML(e){
   <tr><th>Deductions</th><th>Amount</th></tr>
   <tr><td>PF</td><td>${f(e.pf)}</td></tr>
   <tr><td>ESI</td><td>${f(e.esid)}</td></tr>
+  <tr class="net-row"><td>Total Deductions</td><td>${deductions}</td></tr>
   </table>
-  <div class="net">Net Salary: ${f(e.net)}</div>
+  <div class="net">Net Salary: ${net}</div>
   <div class="footer">Computer Generated – No Signature Required</div>
   </div>`;
 }
 
 // PDF Generation
 function generatePDF(emp){
-  const {jsPDF} = window.jspdf;
+  const { jsPDF } = window.jspdf;
   let doc = new jsPDF('p','pt','a4');
   let div = document.createElement('div');
+  div.style.width="800px";
+  div.style.background="#fff";
+  div.style.color="#000";
   div.innerHTML = slipHTML(emp);
+  div.style.position="absolute";
+  div.style.left="-9999px";
   document.body.appendChild(div);
-  doc.html(div,{
-    callback:function(pdf){
+
+  doc.html(div, {
+    callback: function(pdf){
       pdf.save(emp.code+"_Payslip.pdf");
       div.remove();
     },
     x:20,
     y:20,
-    html2canvas:{scale:0.85, backgroundColor:null}
+    html2canvas:{scale:1, backgroundColor:"#fff"}
   });
 }
 </script>
