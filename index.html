@@ -111,6 +111,15 @@ function formatMonth(date){
   return months[date.getMonth()] + "-" + String(date.getFullYear()).slice(2);
 }
 
+// Parse Month from Excel cell
+function parseExcelMonth(val){
+    if(typeof val === "number"){ 
+        return formatMonth(excelDateToJSDate(val));
+    } else if(val instanceof Date){
+        return formatMonth(val);
+    } else return val;
+}
+
 // XLSX Import
 document.getElementById("excelFile").onchange=function(e){
   let file=e.target.files[0];
@@ -126,14 +135,19 @@ document.getElementById("excelFile").onchange=function(e){
       let monthCol=rows[0].findIndex(h=>h.toLowerCase()==="month");
       let mDaysCol=rows[0].findIndex(h=>h.toLowerCase()==="m days");
       let pDaysCol=rows[0].findIndex(h=>h.toLowerCase()==="p days");
+
+      let locParts = sheetName.split("-");
+      let project = locParts[0];
+      let location = locParts.slice(1).join("-"); // everything after first dash
+
       for(let i=1;i<rows.length;i++){
         let r=rows[i]; if(r.length>5){
           let rawMonth = monthCol>=0?r[monthCol]:"";
-          let monthVal = rawMonth instanceof Date ? formatMonth(rawMonth) : rawMonth;
+          let monthVal = parseExcelMonth(rawMonth);
           employees.push({
             code:r[1], name:r[2], desig:r[3],
-            project:sheetName.split("-")[0], 
-            location:sheetName.substring(sheetName.indexOf("-")+1),
+            project:project,
+            location:location,
             month:monthVal,
             mDays:mDaysCol>=0?r[mDaysCol]:"", 
             pDays:pDaysCol>=0?r[pDaysCol]:"", 
@@ -179,10 +193,10 @@ document.getElementById("generateBtn").onclick=()=>{
   });
 };
 
-// Payslip HTML (Colorful)
+// Payslip HTML (Colorful with all components)
 function slipHTML(e){
-  let gross = e.basic+e.hra+e.allow+e.bonus;
-  function formatNum(n){ return n===0?"":Math.round(n); }
+  function f(n){return n===0?"":Math.round(n);}
+  let gross = f(e.basic)+f(e.hra)+f(e.allow)+f(e.bonus);
   return `<div class="payslip">
   <div class="payslip-header"><h2>Rudransh Enterprises</h2>
   <h4>Project: ${e.project} | Location: ${e.location}</h4></div>
@@ -190,18 +204,18 @@ function slipHTML(e){
   <p><b>Designation:</b> ${e.desig} | <b>M Days:</b> ${e.mDays} | <b>P Days:</b> ${e.pDays}</p>
   <table class="payslip-table">
   <tr><th>Earnings</th><th>Amount</th></tr>
-  <tr><td>Basic</td><td>${formatNum(e.basic)}</td></tr>
-  <tr><td>HRA</td><td>${formatNum(e.hra)}</td></tr>
-  <tr><td>Allowance</td><td>${formatNum(e.allow)}</td></tr>
-  <tr><td>Bonus</td><td>${formatNum(e.bonus)}</td></tr>
-  <tr class="gross-row"><td>Gross</td><td>${formatNum(gross)}</td></tr>
+  <tr><td>Basic</td><td>${f(e.basic)}</td></tr>
+  <tr><td>HRA</td><td>${f(e.hra)}</td></tr>
+  <tr><td>Allowance</td><td>${f(e.allow)}</td></tr>
+  <tr><td>Bonus</td><td>${f(e.bonus)}</td></tr>
+  <tr class="gross-row"><td>Gross</td><td>${gross}</td></tr>
   </table>
   <table class="payslip-table">
   <tr><th>Deductions</th><th>Amount</th></tr>
-  <tr><td>PF</td><td>${formatNum(e.pf)}</td></tr>
-  <tr><td>ESI</td><td>${formatNum(e.esid)}</td></tr>
+  <tr><td>PF</td><td>${f(e.pf)}</td></tr>
+  <tr><td>ESI</td><td>${f(e.esid)}</td></tr>
   </table>
-  <div class="net">Net Salary: ${formatNum(e.net)}</div>
+  <div class="net">Net Salary: ${f(e.net)}</div>
   <div class="footer">Computer Generated – No Signature Required</div>
   </div>`;
 }
