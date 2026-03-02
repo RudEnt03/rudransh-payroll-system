@@ -4,333 +4,335 @@
 <meta charset="UTF-8">
 <title>Rudransh Payroll System</title>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
 <style>
 body{
-    margin:0;
-    font-family:Segoe UI;
-    background:#0b1c2d;
-    color:white;
+margin:0;
+font-family:Segoe UI;
+background:linear-gradient(135deg,#0b1c2d,#000814);
+color:white;
 }
+
 .header{
-    background:#000814;
-    padding:15px;
-    text-align:center;
-    font-size:22px;
-    font-weight:bold;
-    color:#d4af37;
+background:linear-gradient(90deg,#000814,#001d3d);
+padding:15px;
+text-align:center;
+box-shadow:0 4px 20px rgba(0,0,0,0.6);
 }
-.container{
-    padding:20px;
+
+.header img{
+height:60px;
 }
-.card{
-    background:white;
-    color:black;
-    padding:20px;
-    border-radius:10px;
-    margin:15px 0;
+
+.glass{
+background:rgba(255,255,255,0.08);
+backdrop-filter:blur(12px);
+border-radius:15px;
+padding:25px;
+margin:30px auto;
+width:90%;
+max-width:950px;
+box-shadow:0 8px 30px rgba(0,0,0,0.6);
 }
+
 button{
-    background:#d4af37;
-    border:none;
-    padding:8px 15px;
-    cursor:pointer;
-    border-radius:5px;
-    font-weight:bold;
+background:linear-gradient(45deg,#d4af37,#b8962e);
+border:none;
+padding:10px 18px;
+margin:6px;
+border-radius:8px;
+font-weight:bold;
+cursor:pointer;
+transition:0.3s;
 }
+
 button:hover{
-    background:#b8962e;
+transform:translateY(-2px);
+box-shadow:0 4px 15px rgba(212,175,55,0.6);
 }
-input,select{
-    padding:8px;
-    margin:5px;
+
+input{
+padding:8px;
+margin:6px;
+border-radius:6px;
+border:none;
 }
+
+.hidden{display:none;}
+
 table{
-    width:100%;
-    border-collapse:collapse;
-    margin-top:10px;
+width:100%;
+border-collapse:collapse;
+margin-top:15px;
+background:white;
+color:black;
+border-radius:8px;
+overflow:hidden;
 }
+
 th{
-    background:#001f3f;
-    color:#d4af37;
-    padding:8px;
+background:#001f3f;
+color:#d4af37;
+padding:10px;
 }
+
 td{
-    border:1px solid #ddd;
-    padding:6px;
-    text-align:center;
+border:1px solid #ddd;
+padding:8px;
+text-align:center;
 }
-.hidden{
-    display:none;
-}
+
 .payslip{
-    background:white;
-    color:black;
-    padding:20px;
+background:white;
+color:black;
+padding:25px;
+position:relative;
 }
-.flex{
-    display:flex;
-    justify-content:space-between;
+
+.watermark{
+position:absolute;
+top:35%;
+left:50%;
+transform:translate(-50%,-50%);
+opacity:0.07;
+width:300px;
 }
-.section{
-    width:48%;
-}
+
+.flex{display:flex;justify-content:space-between;margin-top:15px}
+.section{width:48%}
+
 .net{
-    text-align:center;
-    font-size:18px;
-    font-weight:bold;
-    background:#d4af37;
-    padding:10px;
-    margin-top:15px;
+background:#d4af37;
+padding:12px;
+text-align:center;
+font-weight:bold;
+margin-top:20px;
+font-size:18px;
 }
+
 .footer{
-    text-align:center;
-    margin-top:15px;
-    font-size:12px;
+text-align:center;
+font-size:12px;
+margin-top:20px;
 }
 </style>
 </head>
 
 <body>
 
-<div class="header">RUDRANSH PAYROLL SYSTEM</div>
+<div class="header">
+<img src="logo.png">
+</div>
 
-<div class="container">
-
-<!-- ROLE SELECTION -->
-<div id="rolePage">
-    <div class="card" style="text-align:center">
-        <h3>Select Login</h3>
-        <button onclick="showAdminLogin()">Admin Login</button>
-        <button onclick="showEmpLogin()">Employee Login</button>
-    </div>
+<!-- ROLE PAGE -->
+<div id="rolePage" class="glass" style="text-align:center">
+<h3>Select Login</h3>
+<button onclick="showAdmin()">Admin Login</button>
+<button onclick="showEmp()">Employee Login</button>
 </div>
 
 <!-- ADMIN LOGIN -->
-<div id="adminLogin" class="hidden">
-    <div class="card">
-        <h3>Admin Login</h3>
-        <input id="adminId" placeholder="Admin ID"><br>
-        <input id="adminPass" type="password" placeholder="Password"><br>
-        <button onclick="adminLogin()">Login</button>
-    </div>
+<div id="adminLogin" class="glass hidden">
+<h3>Admin Login</h3>
+<input id="adminId" placeholder="Admin ID"><br>
+<input id="adminPass" type="password" placeholder="Password"><br>
+<button onclick="adminLogin()">Login</button>
 </div>
 
 <!-- EMP LOGIN -->
-<div id="empLogin" class="hidden">
-    <div class="card">
-        <h3>Employee Login (Android Only)</h3>
-        <input id="empId" placeholder="Employee Code"><br>
-        <input id="empPass" placeholder="Password"><br>
-        <button onclick="empLogin()">Login</button>
-    </div>
+<div id="empLogin" class="glass hidden">
+<h3>Employee Login (Android Only)</h3>
+<input id="empId" placeholder="Employee Code"><br>
+<input id="empPass" placeholder="Password"><br>
+<button onclick="empLogin()">Login</button>
 </div>
 
 <!-- ADMIN DASHBOARD -->
-<div id="adminDash" class="hidden">
-    <div class="card">
-        <h3>Admin Dashboard</h3>
-        <input type="file" onchange="importExcel(event)">
-        <button onclick="logout()">Logout</button>
-        <button onclick="resetBinding()">Reset All Binding</button>
+<div id="adminDash" class="glass hidden">
+<h3>Admin Dashboard</h3>
+<input type="file" onchange="importCSV(event)">
+<button onclick="bulkPDF()">Bulk PDF</button>
+<button onclick="resetBind()">Reset Binding</button>
+<button onclick="logout()">Logout</button>
 
-        <table id="empTable">
-            <thead>
-                <tr>
-                    <th>Select</th>
-                    <th>Emp Code</th>
-                    <th>Name</th>
-                    <th>Designation</th>
-                    <th>UAN</th>
-                    <th>ESI</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody></tbody>
-        </table>
-    </div>
+<table id="empTable">
+<thead>
+<tr>
+<th>Select</th>
+<th>Emp Code</th>
+<th>Name</th>
+<th>Designation</th>
+<th>UAN</th>
+<th>ESI</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody></tbody>
+</table>
 </div>
 
 <!-- EMP DASHBOARD -->
-<div id="empDash" class="hidden">
-    <div class="card">
-        <h3>Employee Dashboard</h3>
-        <button onclick="logout()">Logout</button>
-        <div id="empPayslipArea"></div>
-    </div>
-</div>
-
+<div id="empDash" class="glass hidden">
+<h3>Employee Dashboard</h3>
+<button onclick="logout()">Logout</button>
+<div id="empSlip"></div>
 </div>
 
 <script>
-let employees = [];
-let currentEmp = null;
+let employees=[]
+let currentEmp=null
 
-function showAdminLogin(){
-    hideAll();
-    adminLoginPage=true;
-    document.getElementById("adminLogin").classList.remove("hidden");
-}
-
-function showEmpLogin(){
-    hideAll();
-    document.getElementById("empLogin").classList.remove("hidden");
-}
-
+function showAdmin(){hideAll();adminLogin.classList.remove("hidden")}
+function showEmp(){hideAll();empLogin.classList.remove("hidden")}
 function hideAll(){
-    document.getElementById("rolePage").classList.add("hidden");
-    document.getElementById("adminLogin").classList.add("hidden");
-    document.getElementById("empLogin").classList.add("hidden");
-    document.getElementById("adminDash").classList.add("hidden");
-    document.getElementById("empDash").classList.add("hidden");
+rolePage.classList.add("hidden")
+adminLogin.classList.add("hidden")
+empLogin.classList.add("hidden")
+adminDash.classList.add("hidden")
+empDash.classList.add("hidden")
 }
 
 function adminLogin(){
-    let id=document.getElementById("adminId").value;
-    let pass=document.getElementById("adminPass").value;
-    if(id==="Admin" && pass==="Rud@03"){
-        hideAll();
-        document.getElementById("adminDash").classList.remove("hidden");
-    }else{
-        alert("Invalid Admin Credentials");
-    }
+if(adminId.value==="Admin" && adminPass.value==="Rud@03"){
+hideAll();adminDash.classList.remove("hidden")
+}else alert("Invalid Admin")
 }
 
 function empLogin(){
-    let id=document.getElementById("empId").value;
-    let pass=document.getElementById("empPass").value;
-
-    let ua = navigator.userAgent.toLowerCase();
-    if(!ua.includes("android")){
-        alert("Employee login allowed only in Android mobile");
-        return;
-    }
-
-    if(id!==pass){
-        alert("ID & Password must be same (Employee Code)");
-        return;
-    }
-
-    let device = localStorage.getItem("deviceBind");
-    if(device && device!==id){
-        alert("Another Employee already bound to this device");
-        return;
-    }
-
-    let emp = employees.find(e=>e.code===id);
-    if(!emp){
-        alert("Employee not found");
-        return;
-    }
-
-    localStorage.setItem("deviceBind",id);
-    currentEmp=emp;
-    hideAll();
-    document.getElementById("empDash").classList.remove("hidden");
-    showPayslip(emp,"empPayslipArea");
+if(!navigator.userAgent.toLowerCase().includes("android")){alert("Android Only");return}
+if(empId.value!==empPass.value){alert("ID & Pass must be same");return}
+let bind=localStorage.getItem("bind")
+if(bind && bind!==empId.value){alert("Device already bound");return}
+let emp=employees.find(e=>e.code===empId.value)
+if(!emp){alert("Employee not found");return}
+localStorage.setItem("bind",empId.value)
+currentEmp=emp
+hideAll();empDash.classList.remove("hidden")
+renderSlip(emp)
 }
 
-function logout(){
-    location.reload();
-}
+function logout(){location.reload()}
+function resetBind(){localStorage.removeItem("bind");alert("Binding Reset")}
+function toInt(val){return Math.round(Number(val)||0)}
 
-function resetBinding(){
-    localStorage.removeItem("deviceBind");
-    alert("All Device Binding Reset");
+function importCSV(event){
+let file=event.target.files[0]
+let reader=new FileReader()
+reader.onload=function(e){
+let rows=e.target.result.split("\n")
+employees=[]
+for(let i=1;i<rows.length;i++){
+let c=rows[i].split(",")
+if(c.length>20){
+employees.push({
+code:c[1],
+name:c[2],
+desig:c[3],
+uan:c[4],
+esi:c[5],
+basic:toInt(c[9]),
+hra:toInt(c[10]),
+allow:toInt(c[11]),
+bonus:toInt(c[13]),
+pf:toInt(c[15]),
+esid:toInt(c[16]),
+net:toInt(c[20])
+})
+}}
+renderTable()
 }
-
-function importExcel(event){
-    let file=event.target.files[0];
-    let reader=new FileReader();
-    reader.onload=function(e){
-        let lines=e.target.result.split("\n");
-        employees=[];
-        for(let i=1;i<lines.length;i++){
-            let cols=lines[i].split(",");
-            if(cols.length>5){
-                employees.push({
-                    code:cols[1],
-                    name:cols[2],
-                    desig:cols[3],
-                    uan:cols[4],
-                    esi:cols[5],
-                    basic:Math.round(cols[9]||0),
-                    hra:Math.round(cols[10]||0),
-                    allow:Math.round(cols[11]||0),
-                    bonus:Math.round(cols[13]||0),
-                    pf:Math.round(cols[15]||0),
-                    esid:Math.round(cols[16]||0),
-                    net:Math.round(cols[20]||0)
-                });
-            }
-        }
-        renderTable();
-    };
-    reader.readAsText(file);
+reader.readAsText(file)
 }
 
 function renderTable(){
-    let tbody=document.querySelector("#empTable tbody");
-    tbody.innerHTML="";
-    employees.forEach(emp=>{
-        let row=`
-        <tr>
-            <td><input type="checkbox"></td>
-            <td>${emp.code}</td>
-            <td>${emp.name}</td>
-            <td>${emp.desig}</td>
-            <td>${emp.uan}</td>
-            <td>${emp.esi}</td>
-            <td><button onclick='viewEmp("${emp.code}")'>View</button></td>
-        </tr>`;
-        tbody.innerHTML+=row;
-    });
+let tbody=document.querySelector("#empTable tbody")
+tbody.innerHTML=""
+employees.forEach(e=>{
+tbody.innerHTML+=`
+<tr>
+<td><input type="checkbox" value="${e.code}"></td>
+<td>${e.code}</td>
+<td>${e.name}</td>
+<td>${e.desig}</td>
+<td>${e.uan}</td>
+<td>${e.esi}</td>
+<td>
+<button onclick="viewEmp('${e.code}')">View</button>
+<button onclick="generatePDF('${e.code}')">PDF</button>
+</td>
+</tr>`
+})
+}
+
+function slipHTML(e){
+return `
+<div class="payslip">
+<img src="logo.png" class="watermark">
+<h3 style="text-align:center">Payslip</h3>
+<p><b>Emp Code:</b> ${e.code}</p>
+<p><b>Name:</b> ${e.name}</p>
+<p><b>Designation:</b> ${e.desig}</p>
+<p><b>UAN:</b> ${e.uan} | <b>ESI:</b> ${e.esi}</p>
+
+<div class="flex">
+<div class="section">
+<h4>Earnings</h4>
+Basic: ${e.basic}<br>
+HRA: ${e.hra}<br>
+Allowance: ${e.allow}<br>
+Bonus: ${e.bonus}
+</div>
+<div class="section">
+<h4>Deductions</h4>
+PF: ${e.pf}<br>
+ESI: ${e.esid}
+</div>
+</div>
+
+<div class="net">Net Salary: ${e.net}</div>
+<div class="footer">Computer Generated – No Signature Required</div>
+</div>`
+}
+
+function renderSlip(emp){
+empSlip.innerHTML=slipHTML(emp)
 }
 
 function viewEmp(code){
-    let emp=employees.find(e=>e.code===code);
-    let win=window.open("");
-    win.document.write(generatePayslipHTML(emp));
-    win.print();
+let emp=employees.find(e=>e.code===code)
+let w=window.open("")
+w.document.write(slipHTML(emp))
+w.print()
 }
 
-function showPayslip(emp,area){
-    document.getElementById(area).innerHTML=generatePayslipHTML(emp);
+function generatePDF(code){
+let emp=employees.find(e=>e.code===code)
+const {jsPDF}=window.jspdf
+let doc=new jsPDF()
+doc.addImage("logo.png","PNG",80,5,50,20)
+doc.text("Payslip",90,35)
+doc.text("Emp Code: "+emp.code,20,45)
+doc.text("Name: "+emp.name,20,55)
+doc.text("Designation: "+emp.desig,20,65)
+doc.text("UAN: "+emp.uan+" ESI: "+emp.esi,20,75)
+doc.text("Basic: "+emp.basic,20,90)
+doc.text("HRA: "+emp.hra,20,100)
+doc.text("Allowance: "+emp.allow,20,110)
+doc.text("Bonus: "+emp.bonus,20,120)
+doc.text("PF: "+emp.pf,120,90)
+doc.text("ESI: "+emp.esid,120,100)
+doc.setFontSize(14)
+doc.text("Net Salary: "+emp.net,70,140)
+doc.setFontSize(10)
+doc.text("Computer Generated – No Signature Required",50,160)
+doc.save(emp.code+"_Payslip.pdf")
 }
 
-function generatePayslipHTML(emp){
-    return `
-    <div class='payslip'>
-        <h3 style='text-align:center'>Payslip</h3>
-        <p><b>Employee Code:</b> ${emp.code}</p>
-        <p><b>Name:</b> ${emp.name}</p>
-        <p><b>Designation:</b> ${emp.desig}</p>
-        <p><b>UAN:</b> ${emp.uan} | <b>ESI:</b> ${emp.esi}</p>
-
-        <div class='flex'>
-            <div class='section'>
-                <h4>Earnings</h4>
-                Basic: ${emp.basic}<br>
-                HRA: ${emp.hra}<br>
-                Allowance: ${emp.allow}<br>
-                Bonus: ${emp.bonus}
-            </div>
-            <div class='section'>
-                <h4>Deductions</h4>
-                PF: ${emp.pf}<br>
-                ESI: ${emp.esid}
-            </div>
-        </div>
-
-        <div class='net'>
-            Net Salary: ${emp.net}
-        </div>
-
-        <div class='footer'>
-            Computer Generated – No Signature Required
-        </div>
-    </div>`;
+function bulkPDF(){
+let checks=document.querySelectorAll("input[type='checkbox']:checked")
+checks.forEach(c=>generatePDF(c.value))
 }
 </script>
-
 </body>
 </html>
