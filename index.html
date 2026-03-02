@@ -2,241 +2,335 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Rudransh Enterprise Payroll</title>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<title>Rudransh Payroll System</title>
 
 <style>
-body{font-family:Arial;margin:0;background:#0f172a;color:white}
-.center{display:flex;flex-direction:column;justify-content:center;align-items:center;height:100vh}
-.card{background:#111827;padding:25px;border-radius:10px;text-align:center;margin:10px}
-button{background:#d4af37;color:black;border:none;padding:8px 15px;margin:5px;cursor:pointer;border-radius:4px}
-input,select{padding:6px;margin:5px}
-.hidden{display:none}
-table{width:100%;border-collapse:collapse;margin-top:10px}
-th,td{border:1px solid #333;padding:6px}
-th{background:#1e293b;color:#d4af37}
-
-.payslip{background:white;color:black;padding:25px}
-.header{text-align:center;border-bottom:2px solid #d4af37;margin-bottom:15px}
-.flex{display:flex;justify-content:space-between}
-.section{width:48%}
-.netbox{background:#0f172a;color:#d4af37;padding:10px;text-align:center;font-size:18px;margin-top:15px}
-.footer{text-align:center;margin-top:20px;font-size:12px;color:gray}
+body{
+    margin:0;
+    font-family:Segoe UI;
+    background:#0b1c2d;
+    color:white;
+}
+.header{
+    background:#000814;
+    padding:15px;
+    text-align:center;
+    font-size:22px;
+    font-weight:bold;
+    color:#d4af37;
+}
+.container{
+    padding:20px;
+}
+.card{
+    background:white;
+    color:black;
+    padding:20px;
+    border-radius:10px;
+    margin:15px 0;
+}
+button{
+    background:#d4af37;
+    border:none;
+    padding:8px 15px;
+    cursor:pointer;
+    border-radius:5px;
+    font-weight:bold;
+}
+button:hover{
+    background:#b8962e;
+}
+input,select{
+    padding:8px;
+    margin:5px;
+}
+table{
+    width:100%;
+    border-collapse:collapse;
+    margin-top:10px;
+}
+th{
+    background:#001f3f;
+    color:#d4af37;
+    padding:8px;
+}
+td{
+    border:1px solid #ddd;
+    padding:6px;
+    text-align:center;
+}
+.hidden{
+    display:none;
+}
+.payslip{
+    background:white;
+    color:black;
+    padding:20px;
+}
+.flex{
+    display:flex;
+    justify-content:space-between;
+}
+.section{
+    width:48%;
+}
+.net{
+    text-align:center;
+    font-size:18px;
+    font-weight:bold;
+    background:#d4af37;
+    padding:10px;
+    margin-top:15px;
+}
+.footer{
+    text-align:center;
+    margin-top:15px;
+    font-size:12px;
+}
 </style>
 </head>
+
 <body>
 
-<div id="rolePage" class="center">
-<h1>Rudransh Enterprise Payroll</h1>
-<div class="card">
-<button onclick="showAdmin()">Admin Login</button>
-<button onclick="showEmployee()">Employee Login</button>
-</div>
-</div>
+<div class="header">RUDRANSH PAYROLL SYSTEM</div>
 
-<div id="adminPage" class="center hidden">
-<div class="card">
-<h2>Admin Login</h2>
-<input id="adminId" placeholder="ID">
-<input id="adminPass" type="password" placeholder="Password">
-<button onclick="adminLogin()">Login</button>
-<button onclick="back()">Back</button>
-</div>
+<div class="container">
+
+<!-- ROLE SELECTION -->
+<div id="rolePage">
+    <div class="card" style="text-align:center">
+        <h3>Select Login</h3>
+        <button onclick="showAdminLogin()">Admin Login</button>
+        <button onclick="showEmpLogin()">Employee Login</button>
+    </div>
 </div>
 
-<div id="employeePage" class="center hidden">
-<div class="card">
-<h2>Employee Login (Android Only)</h2>
-<input id="empId" placeholder="Emp Code">
-<input id="empPass" type="password" placeholder="Password">
-<button onclick="employeeLogin()">Login</button>
-<button onclick="back()">Back</button>
-</div>
-</div>
-
-<div id="adminDash" class="hidden" style="padding:20px">
-<h2>Admin Dashboard</h2>
-<input type="file" id="excelFile">
-<button onclick="importExcel()">Import Excel</button>
-<button onclick="bulkDownload()">Bulk PDF</button>
-
-<h3>Reset Employee Binding</h3>
-<input id="resetEmp" placeholder="Emp Code">
-<button onclick="resetBinding()">Reset</button>
-
-<button onclick="logout()">Logout</button>
-
-<table id="empTable"></table>
+<!-- ADMIN LOGIN -->
+<div id="adminLogin" class="hidden">
+    <div class="card">
+        <h3>Admin Login</h3>
+        <input id="adminId" placeholder="Admin ID"><br>
+        <input id="adminPass" type="password" placeholder="Password"><br>
+        <button onclick="adminLogin()">Login</button>
+    </div>
 </div>
 
-<div id="empDash" class="hidden" style="padding:20px">
-<h2>Employee Dashboard</h2>
-<select id="monthSelect" onchange="loadEmpPayslip()"></select>
-<div id="payslipArea"></div>
-<button onclick="printPayslip()">Print</button>
-<button onclick="downloadPDF()">Download PDF</button>
-<button onclick="logout()">Logout</button>
+<!-- EMP LOGIN -->
+<div id="empLogin" class="hidden">
+    <div class="card">
+        <h3>Employee Login (Android Only)</h3>
+        <input id="empId" placeholder="Employee Code"><br>
+        <input id="empPass" placeholder="Password"><br>
+        <button onclick="empLogin()">Login</button>
+    </div>
+</div>
+
+<!-- ADMIN DASHBOARD -->
+<div id="adminDash" class="hidden">
+    <div class="card">
+        <h3>Admin Dashboard</h3>
+        <input type="file" onchange="importExcel(event)">
+        <button onclick="logout()">Logout</button>
+        <button onclick="resetBinding()">Reset All Binding</button>
+
+        <table id="empTable">
+            <thead>
+                <tr>
+                    <th>Select</th>
+                    <th>Emp Code</th>
+                    <th>Name</th>
+                    <th>Designation</th>
+                    <th>UAN</th>
+                    <th>ESI</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+</div>
+
+<!-- EMP DASHBOARD -->
+<div id="empDash" class="hidden">
+    <div class="card">
+        <h3>Employee Dashboard</h3>
+        <button onclick="logout()">Logout</button>
+        <div id="empPayslipArea"></div>
+    </div>
+</div>
+
 </div>
 
 <script>
+let employees = [];
+let currentEmp = null;
 
-function showAdmin(){hideAll();adminPage.classList.remove("hidden")}
-function showEmployee(){hideAll();employeePage.classList.remove("hidden")}
-function back(){hideAll();rolePage.classList.remove("hidden")}
-function hideAll(){rolePage.classList.add("hidden");adminPage.classList.add("hidden");employeePage.classList.add("hidden");adminDash.classList.add("hidden");empDash.classList.add("hidden")}
-function logout(){location.reload()}
+function showAdminLogin(){
+    hideAll();
+    adminLoginPage=true;
+    document.getElementById("adminLogin").classList.remove("hidden");
+}
+
+function showEmpLogin(){
+    hideAll();
+    document.getElementById("empLogin").classList.remove("hidden");
+}
+
+function hideAll(){
+    document.getElementById("rolePage").classList.add("hidden");
+    document.getElementById("adminLogin").classList.add("hidden");
+    document.getElementById("empLogin").classList.add("hidden");
+    document.getElementById("adminDash").classList.add("hidden");
+    document.getElementById("empDash").classList.add("hidden");
+}
 
 function adminLogin(){
-if(adminId.value==="Admin" && adminPass.value==="Rud@03"){
-hideAll();adminDash.classList.remove("hidden");loadTable()
-}else alert("Invalid Admin")
+    let id=document.getElementById("adminId").value;
+    let pass=document.getElementById("adminPass").value;
+    if(id==="Admin" && pass==="Rud@03"){
+        hideAll();
+        document.getElementById("adminDash").classList.remove("hidden");
+    }else{
+        alert("Invalid Admin Credentials");
+    }
 }
 
-function employeeLogin(){
-if(!/Android/i.test(navigator.userAgent)){alert("Android Only");return}
-if(empId.value!==empPass.value){alert("Invalid");return}
-if(!validateBinding(empId.value))return
-localStorage.setItem("empLogged",empId.value)
-hideAll();empDash.classList.remove("hidden")
-loadMonths()
+function empLogin(){
+    let id=document.getElementById("empId").value;
+    let pass=document.getElementById("empPass").value;
+
+    let ua = navigator.userAgent.toLowerCase();
+    if(!ua.includes("android")){
+        alert("Employee login allowed only in Android mobile");
+        return;
+    }
+
+    if(id!==pass){
+        alert("ID & Password must be same (Employee Code)");
+        return;
+    }
+
+    let device = localStorage.getItem("deviceBind");
+    if(device && device!==id){
+        alert("Another Employee already bound to this device");
+        return;
+    }
+
+    let emp = employees.find(e=>e.code===id);
+    if(!emp){
+        alert("Employee not found");
+        return;
+    }
+
+    localStorage.setItem("deviceBind",id);
+    currentEmp=emp;
+    hideAll();
+    document.getElementById("empDash").classList.remove("hidden");
+    showPayslip(emp,"empPayslipArea");
 }
 
-function getDevice(){
-let id=localStorage.getItem("deviceID")
-if(!id){id="DEV-"+Math.random().toString(36).substr(2,9);localStorage.setItem("deviceID",id)}
-return id
-}
-
-function validateBinding(emp){
-let bind=JSON.parse(localStorage.getItem("bindings"))||{}
-let reg=JSON.parse(localStorage.getItem("deviceRegistry"))||{}
-let dev=getDevice()
-
-if(bind[emp] && bind[emp]!==dev){alert("Bound to other device");return false}
-if(reg[dev] && reg[dev]!==emp){alert("Device used by other employee");return false}
-
-bind[emp]=dev
-reg[dev]=emp
-localStorage.setItem("bindings",JSON.stringify(bind))
-localStorage.setItem("deviceRegistry",JSON.stringify(reg))
-return true
+function logout(){
+    location.reload();
 }
 
 function resetBinding(){
-let emp=resetEmp.value
-let bind=JSON.parse(localStorage.getItem("bindings"))||{}
-let reg=JSON.parse(localStorage.getItem("deviceRegistry"))||{}
-let dev=bind[emp]
-delete bind[emp]
-delete reg[dev]
-localStorage.setItem("bindings",JSON.stringify(bind))
-localStorage.setItem("deviceRegistry",JSON.stringify(reg))
-alert("Reset Done")
+    localStorage.removeItem("deviceBind");
+    alert("All Device Binding Reset");
 }
 
-function importExcel(){
-let file=excelFile.files[0]
-let reader=new FileReader()
-reader.onload=function(e){
-let data=new Uint8Array(e.target.result)
-let wb=XLSX.read(data,{type:"array"})
-let sheet=wb.Sheets[wb.SheetNames[0]]
-let json=XLSX.utils.sheet_to_json(sheet)
-localStorage.setItem("payrollData",JSON.stringify(json))
-loadTable()
-}
-reader.readAsArrayBuffer(file)
-}
-
-function loadTable(){
-let data=JSON.parse(localStorage.getItem("payrollData"))||[]
-empTable.innerHTML="<tr><th>Select</th><th>Emp Code</th><th>Name</th><th>Month</th></tr>"
-data.forEach(e=>{
-empTable.innerHTML+=`<tr>
-<td><input type="checkbox" value="${e["Emp Code"]}"></td>
-<td>${e["Emp Code"]}</td>
-<td>${e["Name"]}</td>
-<td>${e["Month"]}</td></tr>`
-})
-}
-
-function loadMonths(){
-let data=JSON.parse(localStorage.getItem("payrollData"))||[]
-let emp=localStorage.getItem("empLogged")
-let months=[...new Set(data.filter(e=>e["Emp Code"]==emp).map(e=>e["Month"]))]
-monthSelect.innerHTML=""
-months.forEach(m=>monthSelect.innerHTML+=`<option>${m}</option>`)
-loadEmpPayslip()
+function importExcel(event){
+    let file=event.target.files[0];
+    let reader=new FileReader();
+    reader.onload=function(e){
+        let lines=e.target.result.split("\n");
+        employees=[];
+        for(let i=1;i<lines.length;i++){
+            let cols=lines[i].split(",");
+            if(cols.length>5){
+                employees.push({
+                    code:cols[1],
+                    name:cols[2],
+                    desig:cols[3],
+                    uan:cols[4],
+                    esi:cols[5],
+                    basic:Math.round(cols[9]||0),
+                    hra:Math.round(cols[10]||0),
+                    allow:Math.round(cols[11]||0),
+                    bonus:Math.round(cols[13]||0),
+                    pf:Math.round(cols[15]||0),
+                    esid:Math.round(cols[16]||0),
+                    net:Math.round(cols[20]||0)
+                });
+            }
+        }
+        renderTable();
+    };
+    reader.readAsText(file);
 }
 
-function loadEmpPayslip(){
-let data=JSON.parse(localStorage.getItem("payrollData"))||[]
-let emp=localStorage.getItem("empLogged")
-let month=monthSelect.value
-let e=data.find(x=>x["Emp Code"]==emp && x["Month"]==month)
-if(!e)return
-
-payslipArea.innerHTML=`
-<div class="payslip" id="printArea">
-<div class="header"><h3>RUDRANSH ENTERPRISES</h3><p>Salary Slip - ${e["Month"]}</p></div>
-<b>Emp Code:</b> ${e["Emp Code"]} |
-<b>Name:</b> ${e["Name"]} |
-<b>Designation:</b> ${e["Designation"]} |
-<b>UAN:</b> ${e["UAN No"]} |
-<b>ESI:</b> ${e["ESI No"]} |
-<b>CTC:</b> ${e["CTC"]}
-
-<div class="flex">
-<div class="section">
-<h4>Earnings</h4>
-Basic: ${e["Basic"]}<br>
-HRA: ${e["HRA"]}<br>
-Allowance: ${e["Allowance"]}<br>
-Bonus: ${e["Bonus"]}<br>
-OT Amt: ${e["OT Amt"]}<br>
-Gross: ${e["Gross"]}
-</div>
-
-<div class="section">
-<h4>Deductions</h4>
-PF@12%: ${e["PF@12%"]}<br>
-ESI@.75%: ${e["ESI@.75%"]}<br>
-LWF: ${e["LWF"]}<br>
-Advance Paid: ${e["Advance Paid"]}
-</div>
-</div>
-
-<div class="netbox">
-NET IN HAND : ₹ ${e["Net In Hand"]}
-</div>
-
-<div class="footer">
-This is a computer generated payslip. Signature not required.
-</div>
-</div>`
+function renderTable(){
+    let tbody=document.querySelector("#empTable tbody");
+    tbody.innerHTML="";
+    employees.forEach(emp=>{
+        let row=`
+        <tr>
+            <td><input type="checkbox"></td>
+            <td>${emp.code}</td>
+            <td>${emp.name}</td>
+            <td>${emp.desig}</td>
+            <td>${emp.uan}</td>
+            <td>${emp.esi}</td>
+            <td><button onclick='viewEmp("${emp.code}")'>View</button></td>
+        </tr>`;
+        tbody.innerHTML+=row;
+    });
 }
 
-function printPayslip(){window.print()}
-function downloadPDF(){html2pdf().from(printArea).save("Payslip.pdf")}
-
-function bulkDownload(){
-let checks=document.querySelectorAll("input[type=checkbox]:checked")
-let data=JSON.parse(localStorage.getItem("payrollData"))||[]
-checks.forEach(ch=>{
-let e=data.find(x=>x["Emp Code"]==ch.value)
-if(!e)return
-payslipArea.innerHTML=""
-payslipArea.innerHTML=`
-<div class="payslip" id="printArea">
-<h3>${e["Name"]} - ${e["Month"]}</h3>
-Net In Hand: ${e["Net In Hand"]}
-</div>`
-html2pdf().from(printArea).save(e["Emp Code"]+"-"+e["Month"]+".pdf")
-})
+function viewEmp(code){
+    let emp=employees.find(e=>e.code===code);
+    let win=window.open("");
+    win.document.write(generatePayslipHTML(emp));
+    win.print();
 }
 
+function showPayslip(emp,area){
+    document.getElementById(area).innerHTML=generatePayslipHTML(emp);
+}
+
+function generatePayslipHTML(emp){
+    return `
+    <div class='payslip'>
+        <h3 style='text-align:center'>Payslip</h3>
+        <p><b>Employee Code:</b> ${emp.code}</p>
+        <p><b>Name:</b> ${emp.name}</p>
+        <p><b>Designation:</b> ${emp.desig}</p>
+        <p><b>UAN:</b> ${emp.uan} | <b>ESI:</b> ${emp.esi}</p>
+
+        <div class='flex'>
+            <div class='section'>
+                <h4>Earnings</h4>
+                Basic: ${emp.basic}<br>
+                HRA: ${emp.hra}<br>
+                Allowance: ${emp.allow}<br>
+                Bonus: ${emp.bonus}
+            </div>
+            <div class='section'>
+                <h4>Deductions</h4>
+                PF: ${emp.pf}<br>
+                ESI: ${emp.esid}
+            </div>
+        </div>
+
+        <div class='net'>
+            Net Salary: ${emp.net}
+        </div>
+
+        <div class='footer'>
+            Computer Generated – No Signature Required
+        </div>
+    </div>`;
+}
 </script>
+
 </body>
 </html>
