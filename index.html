@@ -1,4 +1,3 @@
-<!DOCTYPE html>
 <html>
 <head>
 <meta charset="UTF-8">
@@ -104,14 +103,13 @@ function logout(){ location.reload(); }
 // Convert Excel date serial to JS Date
 function excelDateToJSDate(serial){
   if(typeof serial === "number"){ 
-    let utc_days = Math.floor(serial - 25569);
-    let utc_value = utc_days * 86400; 
-    let date_info = new Date(utc_value * 1000);
-    return date_info;
+    return new Date(Math.round((serial - 25569) * 86400 * 1000));
+  } else if(serial instanceof Date){
+    return serial;
   } else return new Date(serial);
 }
 
-// Format as Jan-26
+// Format date as Jan-26
 function formatMonth(date){ 
   let months=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
   return months[date.getMonth()] + "-" + String(date.getFullYear()).slice(2);
@@ -119,11 +117,8 @@ function formatMonth(date){
 
 // Parse Month from Excel cell
 function parseExcelMonth(val){
-    if(typeof val === "number"){ 
-        return formatMonth(excelDateToJSDate(val));
-    } else if(val instanceof Date){
-        return formatMonth(val);
-    } else return val;
+    let d = excelDateToJSDate(val);
+    return formatMonth(d);
 }
 
 // XLSX Import
@@ -142,6 +137,7 @@ document.getElementById("excelFile").onchange=function(e){
       let mDaysCol=rows[0].findIndex(h=>h.toLowerCase()==="m days");
       let pDaysCol=rows[0].findIndex(h=>h.toLowerCase()==="p days");
 
+      // Extract Project and Location
       let locParts = sheetName.split("-");
       let project = locParts[0];
       let location = locParts.slice(1).join("-");
@@ -150,7 +146,7 @@ document.getElementById("excelFile").onchange=function(e){
         let r=rows[i]; if(r.length>5){
           let rawMonth = monthCol>=0?r[monthCol]:"";
           let monthVal = parseExcelMonth(rawMonth);
-          employees.push({
+          let empObj={
             code:r[1], name:r[2], desig:r[3],
             project:project,
             location:location,
@@ -159,9 +155,10 @@ document.getElementById("excelFile").onchange=function(e){
             pDays:pDaysCol>=0?r[pDaysCol]:"", 
             basic:r[9]||0, hra:r[10]||0, allow:r[11]||0, bonus:r[13]||0,
             pf:r[15]||0, esid:r[16]||0, net:r[20]||0
-          });
-          monthData[monthVal]=monthData[monthVal]||[];
-          monthData[monthVal].push(employees[employees.length-1]);
+          };
+          employees.push(empObj);
+          monthData[monthVal] = monthData[monthVal] || [];
+          monthData[monthVal].push(empObj);
         }
       }
     });
@@ -172,21 +169,27 @@ document.getElementById("excelFile").onchange=function(e){
   reader.readAsArrayBuffer(file);
 };
 
+// Render table efficiently
 function renderTable(){
-  empTable.innerHTML="";
+  let html = "";
   employees.forEach(e=>{
-    empTable.innerHTML+=`<tr>
+    html += `<tr>
     <td><input type="checkbox" data-month="${e.month}"></td>
     <td>${e.code}</td><td>${e.name}</td><td>${e.desig}</td><td>${e.project}</td><td>${e.location}</td><td>${e.month}</td>
     </tr>`;
   });
+  empTable.innerHTML = html;
 }
 
+// Render month dropdown without duplicates
 function renderMonthDropdown(){
   monthSelect.innerHTML="<option value=''>--Select Month--</option>";
-  Object.keys(monthData).forEach(m=>monthSelect.innerHTML+=`<option value='${m}'>${m}</option>`);
+  Object.keys(monthData).sort().forEach(m=>{
+    monthSelect.innerHTML+=`<option value='${m}'>${m}</option>`;
+  });
 }
 
+// Generate PDF for selected employees
 document.getElementById("generateBtn").onclick=()=>{
   let selMonth=monthSelect.value;
   if(!selMonth){ alert("Select Month"); return;}
@@ -210,7 +213,7 @@ document.getElementById("viewEmpSlipBtn").onclick=()=>{
 
 // Payslip HTML
 function slipHTML(e){
-  function f(n){return n===0?"":Math.round(n);}
+  function f(n){return n?Math.round(n):0;}
   let gross = f(e.basic)+f(e.hra)+f(e.allow)+f(e.bonus);
   return `<div class="payslip">
   <div class="payslip-header"><h2>Rudransh Enterprises</h2>
