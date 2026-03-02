@@ -77,7 +77,7 @@ tr.net-row{background:#ffbf00;font-weight:bold;}
 </div>
 
 <script>
-let employees=[]; 
+let employees=[];
 let monthData={};
 let rolePage=document.getElementById("rolePage");
 let adminLogin=document.getElementById("adminLogin");
@@ -112,6 +112,9 @@ function excelDateToJSDate(serial){ return new Date(Math.round((serial - 25569) 
 function parseExcelMonth(val){
   if(!val) return "Unknown";
   val = val.toString().trim();
+
+  // Remove "Wages-" prefix if exists
+  val = val.replace(/^Wages[-]?/i,'');
 
   // Handle Jan26, Jan-26, January 2026, etc.
   let m = val.match(/([A-Za-z]+)[- ]?(\d{2,4})/);
@@ -165,11 +168,19 @@ document.getElementById("excelFile").onchange=function(e){
 
       for(let i=1;i<rows.length;i++){
         let r=rows[i]; if(r.length>1){
+          // Parse Month
           let rawMonth = monthCol>=0 ? r[monthCol] : "";
-          let monthVal = parseExcelMonth(rawMonth);
+          let monthVal = "";
+          if(rawMonth instanceof Date){
+            monthVal = formatMonth(rawMonth);
+          } else {
+            monthVal = parseExcelMonth(rawMonth);
+          }
 
-          let rawLocation = locationCol >= 0 ? r[locationCol] : "";
-          let empLocation = rawLocation && rawLocation.toString().trim() ? rawLocation.toString().trim() : sheetLocation;
+          // Parse Location
+          let rawLocation = locationCol>=0 ? r[locationCol] : "";
+          let empLocation = rawLocation && rawLocation.toString().trim() && !rawLocation.toString().startsWith("Wages")
+                            ? rawLocation.toString().trim() : sheetLocation;
 
           let empObj={
             code:r[1]||"",
