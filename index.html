@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Rudransh Payroll System - F&F (Month Fix)</title>
+<title>Rudransh Payroll System - F&F (Full Fix)</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
@@ -19,7 +19,7 @@ th{background:#001f3f;color:#ffd700;}
 </head>
 <body>
 
-<header>Rudransh Payroll System</header>
+<header>Rudransh Payroll System - F&F (Full Fix)</header>
 
 <div id="rolePage" class="glass">
 <h3>Select Role</h3>
@@ -88,47 +88,51 @@ document.getElementById("loginAdminBtn").onclick = () => {
 
 function logout() { location.reload(); }
 
-// ===== LOCAL MONTH FIX START =====
-
-// This function replaces original Month parsing to prevent Dec-25 shift
+// --- UTC-safe Month Conversion ---
 function excelMonthToString(cell){
-    if(typeof cell === "string") return cell.trim(); // Keep text like "Jan-26" as-is
     if(cell instanceof Date){
-        // Use UTC to extract month+year only
-        const month = cell.toLocaleString('en-US',{month:'short',year:'2-digit',timeZone:'UTC'});
-        return month;
-    }
-    if(typeof cell==='number'){
-        // Excel serial number
+        const d = new Date(cell.getTime() + cell.getTimezoneOffset()*60000);
+        const month = d.toLocaleString('en-US', {month:'short', timeZone:'UTC'});
+        const year = String(d.getFullYear()).slice(-2);
+        return `${month}-${year}`;
+    } else if(typeof cell === 'number'){
         const date = XLSX.SSF.parse_date_code(cell);
-        const month = new Date(Date.UTC(date.y,date.m-1,1))
-            .toLocaleString('en-US',{month:'short',year:'2-digit',timeZone:'UTC'});
-        return month;
+        const d = new Date(Date.UTC(date.y, date.m-1, 1));
+        const month = d.toLocaleString('en-US', {month:'short', timeZone:'UTC'});
+        const year = String(date.y).slice(-2);
+        return `${month}-${year}`;
+    } else {
+        return cell.toString().trim();
     }
-    return String(cell).trim();
 }
 
-// Override Excel file handler locally
+// --- Excel Import ---
 document.getElementById("excelFile").onchange = function(e){
     const file = e.target.files[0]; if(!file) return;
     const reader = new FileReader();
     reader.onload = function(ev){
         const data = new Uint8Array(ev.target.result);
-        const wb = XLSX.read(data,{type:'array',cellDates:true});
+        const wb = XLSX.read(data, {type:'array', cellDates:true});
+
         employees=[]; monthData={};
 
-        wb.SheetNames.forEach(sheet=>{
-            const rows = XLSX.utils.sheet_to_json(wb.Sheets[sheet],{header:1,defval:""});
-            if(rows.length<2) return;
-            const headers = rows[0].map(h=>h.toString().trim().toLowerCase());
-            const codeCol = headers.findIndex(h=>h.includes("emp") && h.includes("code"));
-            const nameCol = headers.findIndex(h=>h.includes("name"));
-            const monthCol = headers.findIndex(h=>h.includes("month"));
-            const netCol = headers.findIndex(h=>h.includes("net"));
-            if(codeCol===-1||nameCol===-1||monthCol===-1||netCol===-1){alert("Missing headers"); return;}
+        wb.SheetNames.forEach(sheet => {
+            const rows = XLSX.utils.sheet_to_json(wb.Sheets[sheet], {header:1, defval:""});
+            if(rows.length < 2) return;
+
+            const headers = rows[0].map(h => h.toString().trim().toLowerCase());
+            const codeCol = headers.findIndex(h => h.includes("emp") && h.includes("code"));
+            const nameCol = headers.findIndex(h => h.includes("name"));
+            const monthCol = headers.findIndex(h => h.includes("month"));
+            const netCol = headers.findIndex(h => h.includes("net"));
+
+            if(codeCol === -1 || nameCol === -1 || monthCol === -1 || netCol === -1){
+                alert("Excel headers missing. Required: Emp Code, Name, Month, Net In Hand");
+                return;
+            }
 
             for(let i=1;i<rows.length;i++){
-                const r=rows[i]; if(r.length>0){
+                const r = rows[i]; if(r.length > 0){
                     const empMonth = excelMonthToString(r[monthCol]);
                     const emp = {
                         code: r[codeCol] || "",
@@ -145,69 +149,116 @@ document.getElementById("excelFile").onchange = function(e){
 
         renderTable();
         renderMonthDropdown();
-        alert("Excel imported! Month fixed.");
+        alert("Excel imported successfully with month fix!");
     };
     reader.readAsArrayBuffer(file);
 };
 
-// ===== LOCAL MONTH FIX END =====
-
-// Render Table
+// --- Table Rendering ---
 function renderTable(){
-  let html="";
-  employees.forEach(e=>{
-    html+=`<tr>
+  let html = "";
+  employees.forEach(e => {
+    html += `<tr>
       <td><input type="checkbox" data-month="${e.month}" data-code="${e.code}"></td>
       <td>${e.code}</td><td>${e.name}</td><td>${e.month}</td><td>${e.net}</td>
     </tr>`;
   });
-  empTable.innerHTML=html;
+  empTable.innerHTML = html;
 }
 
-// Render Month Dropdown
+// --- Month Dropdown ---
 function renderMonthDropdown(){
-  monthSelect.innerHTML="<option value=''>--Select Month--</option>";
-  Object.keys(monthData).sort().forEach(m=>{
-    monthSelect.innerHTML+=`<option value='${m}'>${m}</option>`;
+  monthSelect.innerHTML = "<option value=''>--Select Month--</option>";
+  Object.keys(monthData).sort().forEach(m => {
+    monthSelect.innerHTML += `<option value='${m}'>${m}</option>`;
   });
 }
 
-// Filter Table by Selected Month
-monthSelect.onchange=function(){
-    const sel=this.value;
-    const rows=empTable.getElementsByTagName('tr');
+// --- Filter table when month selected ---
+monthSelect.onchange = function() {
+    const selMonth = this.value;
+    const rows = empTable.getElementsByTagName('tr');
     for(let i=0;i<rows.length;i++){
-        const td=rows[i].getElementsByTagName('td')[3];
-        if(td) rows[i].style.display=(sel===""||td.innerText===sel)?"":"none";
+        const td = rows[i].getElementsByTagName('td')[3];
+        if(td){
+            rows[i].style.display = (selMonth === "" || td.innerText === selMonth) ? "" : "none";
+        }
     }
 };
 
 // Employee View
-document.getElementById("viewEmpSlipBtn")?.addEventListener("click",()=>{
-    const code=document.getElementById("empCodeInput").value.trim();
-    if(!code){alert("Enter Emp Code");return;}
-    const emp=employees.find(e=>e.code===code);
-    if(emp) empSlip.innerHTML=`<p>Emp Code: ${emp.code} | Name: ${emp.name} | Month: ${emp.month} | Net Salary: ${emp.net}</p>`;
-    else alert("Employee not found or Excel not imported.");
-});
+document.getElementById("viewEmpSlipBtn").onclick = () => {
+  const code = document.getElementById("empCodeInput").value.trim();
+  if(!code){ alert("Enter Emp Code"); return; }
+  const emp = employees.find(e => e.code === code);
+  if(emp) empSlip.innerHTML = `<p>Emp Code: ${emp.code} | Name: ${emp.name} | Month: ${emp.month} | Net Salary: ${emp.net}</p>`;
+  else alert("Employee not found or Excel not imported.");
+};
 
 // PDF Generation
 document.getElementById("generateBtn").onclick = () => {
   const selMonth = monthSelect.value;
-  if(!selMonth){alert("Select Month"); return;}
+  if(!selMonth){ alert("Select Month"); return; }
   const checks = document.querySelectorAll(`input[type='checkbox']:checked[data-month='${selMonth}']`);
-  if(checks.length===0){alert("Select at least one employee"); return;}
-  checks.forEach(c=>{
-    const code=c.getAttribute("data-code");
-    const emp=employees.find(e=>e.code===code && e.month===selMonth);
+  if(checks.length === 0){ alert("Select at least one employee"); return; }
+  checks.forEach(c => {
+    const code = c.getAttribute("data-code");
+    const emp = employees.find(e => e.code === code && e.month === selMonth);
     if(emp){
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF();
-      doc.text(`Emp Code: ${emp.code}\nName: ${emp.name}\nMonth: ${emp.month}\nNet Salary: ${emp.net}`,20,20);
-      doc.save(emp.code+"_Payslip.pdf");
+      doc.text(`Emp Code: ${emp.code}\nName: ${emp.name}\nMonth: ${emp.month}\nNet Salary: ${emp.net}`, 20, 20);
+      doc.save(emp.code + "_Payslip.pdf");
     }
   });
 };
+</script>
+
+<script>
+// Local enhancement layer (keeps RPS_FF_HTML_v1 block intact)
+(function(){
+  const MONTHS=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+
+  function toMonthLabel(year, monthIndex){
+    return `${MONTHS[monthIndex]}-${String(year).slice(-2)}`;
+  }
+
+  window.excelMonthToString = function(cell){
+    if(cell instanceof Date){
+      return toMonthLabel(cell.getFullYear(), cell.getMonth());
+    }
+
+    if(typeof cell === 'number'){
+      const parsed = XLSX.SSF.parse_date_code(cell);
+      if(parsed && parsed.y && parsed.m){
+        return toMonthLabel(parsed.y, parsed.m - 1);
+      }
+    }
+
+    const raw = (cell ?? '').toString().trim();
+    const parsedRaw = new Date(raw);
+    if(!Number.isNaN(parsedRaw.getTime())){
+      return toMonthLabel(parsedRaw.getFullYear(), parsedRaw.getMonth());
+    }
+
+    return raw;
+  };
+
+  window.renderMonthDropdown = function(){
+    monthSelect.innerHTML = "<option value=''>--Select Month--</option>";
+    Object.keys(monthData)
+      .sort((a,b)=>{
+        const [ma,ya]=a.split('-');
+        const [mb,yb]=b.split('-');
+        const da=new Date(`01 ${ma} 20${ya}`);
+        const db=new Date(`01 ${mb} 20${yb}`);
+        return da-db;
+      })
+      .forEach(m => {
+        monthSelect.innerHTML += `<option value='${m}'>${m}</option>`;
+      });
+  };
+})();
 </script>
 </body>
 </html>
