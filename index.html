@@ -5,6 +5,7 @@
 <title>Rudransh Payroll System - Enhanced Payslip</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
 body{margin:0;font-family:Segoe UI;background:#0b1c2d;color:white;}
 header{background:#001f3f;color:#ffd700;text-align:center;padding:15px;font-size:24px;font-weight:bold;}
@@ -76,7 +77,7 @@ const empTable=document.getElementById("empTable").getElementsByTagName("tbody")
 const monthSelect=document.getElementById("monthSelect");
 const empSlip=document.getElementById("empSlip");
 
-// ===== Role Selection =====
+// Role Selection
 document.getElementById("roleNextBtn").onclick = () => {
   const role = document.getElementById("roleSelect").value;
   if(role==="Admin"){ rolePage.classList.add("hidden"); adminLogin.classList.remove("hidden"); }
@@ -84,7 +85,7 @@ document.getElementById("roleNextBtn").onclick = () => {
   else alert("Select Role");
 };
 
-// ===== Admin Login =====
+// Admin Login
 document.getElementById("loginAdminBtn").onclick = () => {
   if(document.getElementById("adminPass").value==="Rud@03"){
     adminLogin.classList.add("hidden");
@@ -94,7 +95,7 @@ document.getElementById("loginAdminBtn").onclick = () => {
 
 function logout(){ location.reload(); }
 
-// ===== Helper Functions =====
+// Helper Functions
 function fixMonth(cell){
     if(typeof cell==="string") return cell.trim();
     let date;
@@ -110,7 +111,7 @@ function formatRupee(val){
     return "₹"+Math.round(val).toLocaleString('en-IN');
 }
 
-// ===== Excel Import =====
+// Excel Import
 document.getElementById("excelFile").onchange=function(e){
     const file=e.target.files[0]; if(!file) return;
     const reader=new FileReader();
@@ -151,7 +152,7 @@ document.getElementById("excelFile").onchange=function(e){
     reader.readAsArrayBuffer(file);
 };
 
-// ===== Render Table =====
+// Render Table
 function renderTable(){
     let html="";
     employees.forEach(e=>{
@@ -163,7 +164,7 @@ function renderTable(){
     empTable.innerHTML=html;
 }
 
-// ===== Render Month Dropdown =====
+// Render Month Dropdown
 function renderMonthDropdown(){
     monthSelect.innerHTML="<option value=''>--Select Month--</option>";
     Object.keys(monthData).sort().forEach(m=>{
@@ -171,7 +172,7 @@ function renderMonthDropdown(){
     });
 }
 
-// ===== Employee View =====
+// Employee View
 document.getElementById("viewEmpSlipBtn").onclick = ()=>{
     const code=document.getElementById("empCodeInput").value.trim();
     if(!code){ alert("Enter Emp Code"); return; }
@@ -181,7 +182,7 @@ document.getElementById("viewEmpSlipBtn").onclick = ()=>{
     } else alert("Employee not found or Excel not imported.");
 };
 
-// ===== Generate Payslip HTML =====
+// Generate Payslip HTML
 function generatePayslipHTML(emp){
     const headers=["Sl No","Emp Code","Name","Designation","UAN No","ESI No","Month","M Days","P Days","Basic","HRA","Allowance","Leave","Bonus","Gross","PF@12%","ESI@0.75%","LWF","Total In Hand","Advance Paid","Net In Hand"];
     const earnings=["Basic","HRA","Allowance","Leave","Bonus","Gross"];
@@ -190,12 +191,8 @@ function generatePayslipHTML(emp){
     emp.fullData.forEach((v,i)=>{ data[headers[i]]=v; });
 
     let earnHTML="", dedHTML="";
-    earnings.forEach(k=>{
-        if(k in data) earnHTML+=`<tr><td>${k}</td><td>${formatRupee(data[k])}</td></tr>`;
-    });
-    deductions.forEach(k=>{
-        if(k in data) dedHTML+=`<tr><td>${k}</td><td>${formatRupee(data[k])}</td></tr>`;
-    });
+    earnings.forEach(k=>{ if(k in data) earnHTML+=`<tr><td>${k}</td><td>${formatRupee(data[k])}</td></tr>`; });
+    deductions.forEach(k=>{ if(k in data) dedHTML+=`<tr><td>${k}</td><td>${formatRupee(data[k])}</td></tr>`; });
 
     const net=formatRupee(data["Net In Hand"]||emp.net);
 
@@ -213,23 +210,33 @@ function generatePayslipHTML(emp){
         </div>`;
 }
 
-// ===== PDF Generation =====
-document.getElementById("generateBtn").onclick = ()=>{
-    const selMonth=monthSelect.value;
+// PDF Generation using html2canvas
+document.getElementById("generateBtn").onclick = () => {
+    const selMonth = monthSelect.value;
     if(!selMonth){ alert("Select Month"); return; }
-    const checks=document.querySelectorAll(`input[type='checkbox']:checked[data-month='${selMonth}']`);
+    const checks = document.querySelectorAll(`input[type='checkbox']:checked[data-month='${selMonth}']`);
     if(checks.length===0){ alert("Select at least one employee"); return; }
-    checks.forEach(c=>{
-        const code=c.getAttribute("data-code");
-        const emp=employees.find(e=>e.code===code && e.month===selMonth);
+
+    checks.forEach(async c => {
+        const code = c.getAttribute("data-code");
+        const emp = employees.find(e => e.code===code && e.month===selMonth);
         if(emp){
+            const payslipHTML = generatePayslipHTML(emp);
+            const div = document.createElement("div");
+            div.innerHTML = payslipHTML;
+            div.style.width = "600px"; div.style.padding="20px";
+            document.body.appendChild(div);
+
+            const canvas = await html2canvas(div, {scale:2});
+            const imgData = canvas.toDataURL("image/png");
             const { jsPDF } = window.jspdf;
-            const doc = new jsPDF('p','pt','a4');
-            const div=document.createElement("div");
-            div.innerHTML=generatePayslipHTML(emp);
-            // Simple PDF text extraction (you can enhance with html2canvas later)
-            doc.text(`Emp Code: ${emp.code}\nName: ${emp.name}\nMonth: ${emp.month}\nNet In Hand: ${formatRupee(emp.net)}`, 40,40);
-            doc.save(emp.code+"_Payslip.pdf");
+            const pdf = new jsPDF('p','pt','a4');
+            const pdfWidth = pdf.internal.pageSize.getWidth();
+            const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+            pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+            pdf.save(emp.code+"_Payslip.pdf");
+
+            document.body.removeChild(div);
         }
     });
 };
