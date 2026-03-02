@@ -1,289 +1,182 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Rudransh Enterprise Payroll System</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta charset="UTF-8">
+<title>Rudransh Payroll System</title>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <style>
 body{
-    margin:0;
-    font-family:'Segoe UI',Arial,sans-serif;
-    background:#F4F7FA;
+    font-family: Arial;
+    background:#f4f6f9;
+    padding:20px;
 }
-
-/* TOP BAR */
-.topbar{
-    background:#0B3C5D;
-    color:white;
-    padding:15px 25px;
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    font-size:18px;
-}
-
-/* SIDEBAR */
-.sidebar{
-    width:220px;
-    background:#102A43;
-    height:100vh;
-    position:fixed;
-    padding-top:30px;
-    color:white;
-}
-
-.sidebar h3{
+h2{
     text-align:center;
 }
-
-.sidebar button{
-    width:90%;
-    margin:10px;
-    padding:10px;
-    border:none;
-    background:#1D70B8;
-    color:white;
-    border-radius:4px;
-    cursor:pointer;
-}
-
-.sidebar button:hover{
-    background:#155a96;
-}
-
-/* MAIN AREA */
-.main{
-    margin-left:220px;
-    padding:25px;
-}
-
 .card{
     background:white;
     padding:20px;
     border-radius:8px;
-    box-shadow:0 4px 12px rgba(0,0,0,0.08);
+    box-shadow:0 0 10px rgba(0,0,0,0.1);
     margin-bottom:20px;
 }
-
-input{
-    padding:8px;
-    margin:5px 0;
+table{
     width:100%;
+    border-collapse:collapse;
+    margin-top:10px;
 }
-
-button.primary{
-    background:#1D70B8;
+th,td{
+    border:1px solid #ddd;
+    padding:8px;
+    text-align:left;
+}
+th{
+    background:#2c3e50;
     color:white;
-    padding:8px 15px;
+}
+button{
+    padding:6px 12px;
+    background:#2c3e50;
+    color:white;
     border:none;
     border-radius:4px;
     cursor:pointer;
 }
-
-button.primary:hover{
-    background:#155a96;
+button:hover{
+    background:#34495e;
 }
-
-table{
-    width:100%;
-    border-collapse:collapse;
-}
-
-th{
-    background:#0B3C5D;
-    color:white;
-}
-
-th, td{
-    padding:10px;
-    border:1px solid #ddd;
-}
-
-.hidden{display:none;}
-
-.payslip-title{
-    text-align:center;
-    font-size:18px;
-    font-weight:bold;
-    margin-bottom:15px;
+.hidden{
+    display:none;
 }
 </style>
 </head>
 
 <body>
 
-<div class="topbar">
-    <div>Rudransh Enterprise Payroll</div>
-    <div id="topUser"></div>
-</div>
-
-<!-- LOGIN PAGE -->
-<div id="loginPage" class="main">
-<div class="card" style="max-width:400px;margin:auto;">
-<h3>Admin Login</h3>
-<input type="text" id="username" placeholder="Username">
-<input type="password" id="password" placeholder="Password">
-<button class="primary" onclick="login()">Login</button>
-</div>
-</div>
-
-<!-- SIDEBAR -->
-<div class="sidebar hidden" id="sidebar">
-<h3>Dashboard</h3>
-<button onclick="showDashboard()">Employee List</button>
-<button onclick="logout()">Logout</button>
-</div>
-
-<!-- MAIN CONTENT -->
-<div class="main hidden" id="mainContent">
+<h2>Rudransh Enterprise Payroll System</h2>
 
 <div class="card" id="dashboardCard">
-<h3>Employee Management</h3>
+    <input type="file" id="excelFile" accept=".xlsx,.xls">
+    <button onclick="importExcel()">Import Excel</button>
 
-<input type="file" id="excelImport" accept=".xlsx">
-<button class="primary" onclick="importExcel()">Import Payroll Excel</button>
-
-<table id="employeeTable">
-<tr>
-<th>Emp Code</th>
-<th>Name</th>
-<th>Designation</th>
-<th>UAN</th>
-<th>ESI</th>
-<th>Action</th>
-</tr>
-</table>
+    <table id="employeeTable"></table>
 </div>
 
 <div class="card hidden" id="payslipCard">
-<div class="payslip-title">Salary Payslip</div>
-<div id="payslipContent"></div>
-<br>
-<button class="primary" onclick="downloadPDF()">Download PDF</button>
-<button class="primary" onclick="window.print()">Print</button>
-<button class="primary" onclick="showDashboard()">Back</button>
-</div>
-
+    <button onclick="goBack()">⬅ Back</button>
+    <h3>Payslip</h3>
+    <div id="payslipContent"></div>
 </div>
 
 <script>
 
-let currentEmp=null;
-
-/* LOGIN */
-function login(){
-    let user=document.getElementById("username").value;
-    let pass=document.getElementById("password").value;
-
-    if(user==="Rudransh" && pass==="Rud@03"){
-        document.getElementById("loginPage").classList.add("hidden");
-        document.getElementById("sidebar").classList.remove("hidden");
-        document.getElementById("mainContent").classList.remove("hidden");
-        document.getElementById("topUser").innerText="Welcome, Admin";
-        loadEmployees();
-    }else{
-        alert("Invalid Credentials");
-    }
-}
-
-/* LOGOUT */
-function logout(){
-    location.reload();
-}
-
-/* IMPORT EXCEL */
 function importExcel(){
-    const file=document.getElementById("excelImport").files[0];
-    if(!file){alert("Select Excel file");return;}
 
-    const reader=new FileReader();
-    reader.onload=function(e){
-        const data=new Uint8Array(e.target.result);
-        const workbook=XLSX.read(data,{type:'array'});
-        const sheet=workbook.Sheets[workbook.SheetNames[0]];
+    const fileInput = document.getElementById("excelFile");
 
-        // Skip first 10 rows automatically
-        const rows=XLSX.utils.sheet_to_json(sheet,{range:10});
+    if(!fileInput.files.length){
+        alert("Please select Excel file");
+        return;
+    }
 
-        localStorage.setItem("payrollData",JSON.stringify(rows));
-        alert("Payroll Imported Successfully");
+    const reader = new FileReader();
+
+    reader.onload = function(e){
+
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, {type:"array"});
+        const sheet = workbook.Sheets[workbook.SheetNames[0]];
+        const json = XLSX.utils.sheet_to_json(sheet, {defval:""});
+
+        localStorage.setItem("payrollData", JSON.stringify(json));
+
         loadEmployees();
     };
-    reader.readAsArrayBuffer(file);
+
+    reader.readAsArrayBuffer(fileInput.files[0]);
 }
 
-/* LOAD EMPLOYEES */
 function loadEmployees(){
-    const data=JSON.parse(localStorage.getItem("payrollData"))||[];
-    const table=document.getElementById("employeeTable");
 
-    table.innerHTML=`<tr>
-<th>Emp Code</th>
-<th>Name</th>
-<th>Designation</th>
-<th>UAN</th>
-<th>ESI</th>
-<th>Action</th>
-</tr>`;
+    const data = JSON.parse(localStorage.getItem("payrollData")) || [];
+    const table = document.getElementById("employeeTable");
+
+    table.innerHTML = `
+    <tr>
+        <th>Emp Code</th>
+        <th>Name</th>
+        <th>Designation</th>
+        <th>UAN</th>
+        <th>ESI</th>
+        <th>Action</th>
+    </tr>`;
+
+    if(data.length === 0) return;
+
+    const keys = Object.keys(data[0]);
+
+    const empKey = keys.find(k => k.toLowerCase().includes("emp"));
+    const nameKey = keys.find(k => k.toLowerCase().includes("name"));
+    const desKey = keys.find(k => k.toLowerCase().includes("design"));
+    const uanKey = keys.find(k => k.toLowerCase().includes("uan"));
+    const esiKey = keys.find(k => k.toLowerCase().includes("esi"));
 
     data.forEach(emp=>{
-        const row=document.createElement("tr");
-        row.innerHTML=`
-<td>${emp["Emp Code"]||""}</td>
-<td>${emp["Name"]||""}</td>
-<td>${emp["Designation"]||""}</td>
-<td>${emp["UAN No"]||""}</td>
-<td>${emp["ESI No"]||""}</td>
-<td><button class="primary viewBtn" data-code="${emp["Emp Code"]}">View</button></td>
-`;
-        table.appendChild(row);
-    });
 
-    document.querySelectorAll(".viewBtn").forEach(btn=>{
-        btn.addEventListener("click",function(){
-            viewPayslip(this.getAttribute("data-code"));
-        });
+        const row = document.createElement("tr");
+
+        row.innerHTML = `
+        <td>${emp[empKey] || ""}</td>
+        <td>${emp[nameKey] || ""}</td>
+        <td>${emp[desKey] || ""}</td>
+        <td>${emp[uanKey] || ""}</td>
+        <td>${emp[esiKey] || ""}</td>
+        <td><button onclick="viewPayslip('${emp[empKey]}')">View</button></td>
+        `;
+
+        table.appendChild(row);
     });
 }
 
-/* VIEW PAYSLIP */
 function viewPayslip(code){
-    const data=JSON.parse(localStorage.getItem("payrollData"))||[];
-    const emp=data.find(e=>e["Emp Code"]==code);
-    if(!emp)return;
 
-    currentEmp=emp;
+    const data = JSON.parse(localStorage.getItem("payrollData")) || [];
+    const emp = data.find(e => Object.values(e).includes(code));
 
-    let html="<table>";
+    if(!emp) return;
+
+    let html = "<table>";
+
     Object.keys(emp).forEach(key=>{
-        let val=emp[key];
-        if(typeof val==="number") val=Math.floor(val);
-        html+=`<tr><td><b>${key}</b></td><td>${val}</td></tr>`;
+
+        let value = emp[key];
+
+        if(typeof value === "number"){
+            value = Math.floor(value);
+        }
+
+        html += `
+        <tr>
+            <td><b>${key}</b></td>
+            <td>${value}</td>
+        </tr>`;
     });
-    html+="</table>";
+
+    html += "</table>";
 
     document.getElementById("dashboardCard").classList.add("hidden");
     document.getElementById("payslipCard").classList.remove("hidden");
-    document.getElementById("payslipContent").innerHTML=html;
+    document.getElementById("payslipContent").innerHTML = html;
 }
 
-/* SHOW DASHBOARD */
-function showDashboard(){
-    document.getElementById("payslipCard").classList.add("hidden");
+function goBack(){
     document.getElementById("dashboardCard").classList.remove("hidden");
+    document.getElementById("payslipCard").classList.add("hidden");
 }
 
-/* PDF DOWNLOAD */
-function downloadPDF(){
-    const { jsPDF } = window.jspdf;
-    const doc=new jsPDF();
-    doc.text("Rudransh Enterprise Payroll - Payslip",10,10);
-    doc.text(document.getElementById("payslipContent").innerText,10,20);
-    doc.save("Payslip.pdf");
-}
+window.onload = loadEmployees;
 
 </script>
 
