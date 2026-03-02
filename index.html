@@ -71,135 +71,125 @@ tr.net-row{background:#ffbf00;font-weight:bold;}
 </div>
 
 <script>
-let employees = [];
-let monthData = {};
-let rolePage = document.getElementById("rolePage");
-let adminLogin = document.getElementById("adminLogin");
-let adminDash = document.getElementById("adminDash");
-let empTable = document.getElementById("empTable").getElementsByTagName("tbody")[0];
-let monthSelect = document.getElementById("monthSelect");
-let empSlip = document.getElementById("empSlip");
+let employees=[], monthData={};
+let rolePage=document.getElementById("rolePage");
+let adminLogin=document.getElementById("adminLogin");
+let adminDash=document.getElementById("adminDash");
+let empTable=document.getElementById("empTable").getElementsByTagName("tbody")[0];
+let monthSelect=document.getElementById("monthSelect");
+let empSlip=document.getElementById("empSlip");
 
 // Role selection
-document.getElementById("roleNextBtn").onclick = () => {
-  let role = document.getElementById("roleSelect").value;
-  if (role === "Admin") { rolePage.classList.add("hidden"); adminLogin.classList.remove("hidden"); }
-  else if (role === "Employee") { rolePage.classList.add("hidden"); empDash.classList.remove("hidden"); }
+document.getElementById("roleNextBtn").onclick=()=>{
+  let role=document.getElementById("roleSelect").value;
+  if(role==="Admin"){rolePage.classList.add("hidden");adminLogin.classList.remove("hidden");}
+  else if(role==="Employee"){rolePage.classList.add("hidden");empDash.classList.remove("hidden");}
   else alert("Select Role");
 };
 
-// Admin Login
-document.getElementById("loginAdminBtn").onclick = () => {
-  if (document.getElementById("adminPass").value === "Rud@03") {
+// Admin login
+document.getElementById("loginAdminBtn").onclick=()=>{
+  if(document.getElementById("adminPass").value==="Rud@03"){
     adminLogin.classList.add("hidden");
     adminDash.classList.remove("hidden");
   } else alert("Invalid Password");
 };
 
-// Logout
-function logout() { location.reload(); }
+function logout(){location.reload();}
 
-// Excel date to JS date
-function excelDateToJSDate(serial) { return new Date(Math.round((serial - 25569) * 86400 * 1000)); }
+function excelDateToJSDate(serial){return new Date(Math.round((serial-25569)*86400*1000));}
 
-// Normalize month to Jan-26 format
-function parseExcelMonth(val) {
-  if (!val) return "Unknown";
-  val = val.toString().trim();
-  val = val.replace(/^Wages[-]?/i, '');
-  let m = val.match(/([A-Za-z]+)[- ]?(\d{2,4})/);
-  if (m) {
-    let monthStr = m[1].slice(0,3);
-    let yearStr = m[2].length==2 ? "20"+m[2] : m[2];
-    return monthStr+"-"+yearStr.slice(2);
-  }
-  if (!isNaN(val)) return formatMonth(excelDateToJSDate(Number(val)));
+// Normalize month
+function parseMonth(val){
+  if(!val) return "Unknown";
+  val = val.toString().trim().replace(/^Wages[-]?/i,'');
+  let m=val.match(/([A-Za-z]+)[- ]?(\d{2,4})/);
+  if(m){let mon=m[1].slice(0,3); let yr=m[2].length==2?"20"+m[2]:m[2]; return mon+"-"+yr.slice(2);}
+  if(!isNaN(val)) return formatMonth(excelDateToJSDate(Number(val)));
   return val;
 }
 
-function formatMonth(date){ 
-  let months=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]; 
-  return months[date.getMonth()] + "-" + String(date.getFullYear()).slice(2); 
-}
+function formatMonth(date){let months=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];return months[date.getMonth()]+"-"+String(date.getFullYear()).slice(2);}
 
-// XLSX Import
-document.getElementById("excelFile").onchange = function(e){
-  let file = e.target.files[0];
-  if(!file) return;
-  let reader = new FileReader();
-  reader.onload = function(ev){
-    let data = new Uint8Array(ev.target.result);
-    let wb = XLSX.read(data,{type:'array',cellDates:true});
-    employees = []; monthData = {};
+// Import XLSX
+document.getElementById("excelFile").onchange=function(e){
+  let file=e.target.files[0]; if(!file) return;
+  let reader=new FileReader();
+  reader.onload=function(ev){
+    let data=new Uint8Array(ev.target.result);
+    let wb=XLSX.read(data,{type:'array',cellDates:true});
+    employees=[]; monthData={};
+
     wb.SheetNames.forEach(sheet=>{
-      let sheetName = sheet.trim();
-      let parts = sheetName.split("-");
-      let project = parts[0].trim();
-      let location = parts.slice(1).join("-").trim() || "Main";
+      let pageName=sheet.trim(); // Full sheet name
+      let dashIndex=pageName.indexOf("-");
+      let project= dashIndex>=0 ? pageName.slice(0,dashIndex).trim() : pageName;
+      let location= dashIndex>=0 ? pageName.slice(dashIndex+1).trim() : "Main";
 
-      let rows = XLSX.utils.sheet_to_json(wb.Sheets[sheet],{header:1});
+      let rows=XLSX.utils.sheet_to_json(wb.Sheets[sheet],{header:1});
       if(rows.length<2) return;
-      let headers = rows[0].map(h=>h.toString().toLowerCase());
+      let headers=rows[0].map(h=>h.toString().toLowerCase());
 
-      let codeCol = headers.indexOf("emp code");
-      let nameCol = headers.indexOf("name");
-      let desigCol = headers.indexOf("designation");
-      let monthCol = headers.indexOf("month");
-      let mDaysCol = headers.indexOf("m days");
-      let pDaysCol = headers.indexOf("p days");
-      let basicCol = headers.indexOf("basic");
-      let hraCol = headers.indexOf("hra");
-      let allowCol = headers.indexOf("allowance");
-      let bonusCol = headers.indexOf("bonus");
-      let pfCol = headers.indexOf("pf");
-      let esiCol = headers.indexOf("esi");
-      let netCol = headers.indexOf("net");
+      let codeCol=headers.indexOf("emp code");
+      let nameCol=headers.indexOf("name");
+      let desigCol=headers.indexOf("designation");
+      let monthCol=headers.indexOf("month");
+      let mDaysCol=headers.indexOf("m days");
+      let pDaysCol=headers.indexOf("p days");
+      let basicCol=headers.indexOf("basic");
+      let hraCol=headers.indexOf("hra");
+      let allowCol=headers.indexOf("allowance");
+      let bonusCol=headers.indexOf("bonus");
+      let pfCol=headers.indexOf("pf");
+      let esiCol=headers.indexOf("esi");
+      let netCol=headers.indexOf("net");
 
       for(let i=1;i<rows.length;i++){
         let r=rows[i]; if(r.length>1){
-          let rawMonth = monthCol>=0 ? r[monthCol] : "";
-          let monthVal = rawMonth instanceof Date ? formatMonth(rawMonth) : parseExcelMonth(rawMonth);
+          let rawMonth=monthCol>=0?r[monthCol]:"";
+          let monthVal= rawMonth instanceof Date ? formatMonth(rawMonth) : parseMonth(rawMonth);
 
-          let empObj = {
-            code: codeCol>=0?r[codeCol]:"", 
-            name: nameCol>=0?r[nameCol]:"", 
-            desig: desigCol>=0?r[desigCol]:"", 
+          let emp={
+            code: codeCol>=0?r[codeCol]:"",
+            name: nameCol>=0?r[nameCol]:"",
+            desig: desigCol>=0?r[desigCol]:"",
             project: project,
             location: location,
             month: monthVal,
-            mDays: mDaysCol>=0?r[mDaysCol]:"", 
-            pDays: pDaysCol>=0?r[pDaysCol]:"", 
+            mDays: mDaysCol>=0?r[mDaysCol]:"",
+            pDays: pDaysCol>=0?r[pDaysCol]:"",
             basic: basicCol>=0?r[basicCol]||0:0,
             hra: hraCol>=0?r[hraCol]||0:0,
             allow: allowCol>=0?r[allowCol]||0:0,
             bonus: bonusCol>=0?r[bonusCol]||0:0,
             pf: pfCol>=0?r[pfCol]||0:0,
             esi: esiCol>=0?r[esiCol]||0:0,
-            net: netCol>=0?r[netCol]||0:0
+            net: netCol>=0?r[netCol]||0:0,
+            pageName: pageName
           };
-          employees.push(empObj);
-          monthData[monthVal] = monthData[monthVal] || [];
-          monthData[monthVal].push(empObj);
+          employees.push(emp);
+          monthData[monthVal]=monthData[monthVal]||[];
+          monthData[monthVal].push(emp);
         }
       }
     });
     renderMonthDropdown();
     renderTable();
     alert("Excel imported successfully!");
-  }
+  };
   reader.readAsArrayBuffer(file);
 };
 
 // Render table
 function renderTable(){
-  let html = "";
+  let html="";
   employees.forEach(e=>{
-    html += `<tr>
+    html+=`<tr>
     <td><input type="checkbox" data-month="${e.month}" data-code="${e.code}"></td>
     <td>${e.code}</td><td>${e.name}</td><td>${e.desig}</td><td>${e.project}</td><td>${e.location}</td><td>${e.month}</td>
     </tr>`;
   });
-  empTable.innerHTML = html;
+  empTable.innerHTML=html;
 }
 
 // Month dropdown
@@ -213,9 +203,9 @@ function renderMonthDropdown(){
 // Payslip HTML
 function slipHTML(e){
   function f(n){return n?Math.round(n):0;}
-  let gross = f(e.basic)+f(e.hra)+f(e.allow)+f(e.bonus);
-  let deductions = f(e.pf)+f(e.esi);
-  let net = f(e.net);
+  let gross=f(e.basic)+f(e.hra)+f(e.allow)+f(e.bonus);
+  let deductions=f(e.pf)+f(e.esi);
+  let net=f(e.net);
   return `<div class="payslip">
   <div class="payslip-header"><h2>Rudransh Enterprises</h2>
   <h4>Project: ${e.project} | Location: ${e.location}</h4></div>
@@ -241,39 +231,39 @@ function slipHTML(e){
 }
 
 // Generate PDF
-document.getElementById("generateBtn").onclick = () => {
-  let selMonth = monthSelect.value;
-  if(!selMonth){ alert("Select Month"); return; }
-  let checks = document.querySelectorAll(`input[type='checkbox']:checked[data-month='${selMonth}']`);
-  if(checks.length===0){ alert("Select at least one employee"); return; }
+document.getElementById("generateBtn").onclick=()=>{
+  let selMonth=monthSelect.value;
+  if(!selMonth){alert("Select Month"); return;}
+  let checks=document.querySelectorAll(`input[type='checkbox']:checked[data-month='${selMonth}']`);
+  if(checks.length===0){alert("Select at least one employee"); return;}
   checks.forEach(c=>{
-    let code = c.getAttribute("data-code");
-    let emp = employees.find(e=>e.code===code && e.month===selMonth);
+    let code=c.getAttribute("data-code");
+    let emp=employees.find(e=>e.code===code && e.month===selMonth);
     if(emp) generatePDF(emp);
   });
 };
 
-// Employee Dashboard View
+// Employee view
 document.getElementById("viewEmpSlipBtn").onclick=()=>{
-  let code = document.getElementById("empCodeInput").value.trim();
-  if(!code){ alert("Enter Emp Code"); return;}
-  let emp = employees.find(e=>e.code===code);
-  if(emp){ empSlip.innerHTML = slipHTML(emp); }
-  else alert("Employee not found or Excel not imported by Admin yet.");
+  let code=document.getElementById("empCodeInput").value.trim();
+  if(!code){alert("Enter Emp Code"); return;}
+  let emp=employees.find(e=>e.code===code);
+  if(emp){empSlip.innerHTML=slipHTML(emp);}
+  else alert("Employee not found or Excel not imported.");
 };
 
-// PDF Generation
+// PDF
 async function generatePDF(emp){
-  const { jsPDF } = window.jspdf;
-  let doc = new jsPDF('p','pt','a4');
-  let div = document.createElement('div');
+  const { jsPDF }=window.jspdf;
+  let doc=new jsPDF('p','pt','a4');
+  let div=document.createElement('div');
   div.style.width="800px"; div.style.background="#fff"; div.style.color="#000";
-  div.innerHTML = slipHTML(emp);
+  div.innerHTML=slipHTML(emp);
   div.style.position="absolute"; div.style.left="-9999px";
   document.body.appendChild(div);
-  await doc.html(div, {
-    callback: function(pdf){ pdf.save(emp.code+"_Payslip.pdf"); div.remove(); },
-    x:20, y:20, html2canvas:{scale:1, backgroundColor:"#fff"}
+  await doc.html(div,{
+    callback:function(pdf){pdf.save(emp.code+"_Payslip.pdf"); div.remove();},
+    x:20,y:20, html2canvas:{scale:1, backgroundColor:"#fff"}
   });
 }
 </script>
