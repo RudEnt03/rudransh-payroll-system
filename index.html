@@ -2,11 +2,12 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Rudransh Payroll System - Colored F&F</title>
+<title>Rudransh Payroll System - Final F&F</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
 body{margin:0;font-family:Segoe UI;background:linear-gradient(135deg,#0b1c2d,#000814);color:white;}
+header{background:#001f3f;color:#ffd700;text-align:center;padding:15px;font-size:24px;font-weight:bold;position:sticky;top:0;z-index:1000;}
 .glass{background:rgba(255,255,255,0.08);backdrop-filter:blur(12px);border-radius:15px;padding:25px;margin:30px auto;width:90%;max-width:950px;}
 button{background:linear-gradient(45deg,#d4af37,#b8962e);color:#000;padding:10px 18px;border:none;border-radius:6px;margin:5px;cursor:pointer;font-weight:bold;}
 button:hover{opacity:0.8;}
@@ -14,7 +15,7 @@ button:hover{opacity:0.8;}
 table{width:100%;border-collapse:collapse;color:black;background:white;margin-top:15px;}
 th,td{border:1px solid #ddd;padding:8px;text-align:center;}
 th{background:#001f3f;color:#ffd700;}
-.payslip{background:white;color:black;padding:25px;position:relative;border-radius:12px;margin-bottom:30px;box-shadow:0 4px 10px rgba(0,0,0,0.3);}
+.payslip{background:white;color:black;padding:25px;position:relative;border-radius:12px;margin-bottom:30px;box-shadow:0 4px 10px rgba(0,0,0,0.3);page-break-inside:avoid;}
 .payslip-header{text-align:center;margin-bottom:15px;}
 .payslip-header h2{margin:2px;color:#001f3f;}
 .payslip-header h4{margin:2px;color:#d4af37;font-weight:normal;}
@@ -30,6 +31,8 @@ tr.net-row{background:#ffbf00;font-weight:bold;}
 </style>
 </head>
 <body>
+
+<header>Rudransh Enterprises</header>
 
 <div id="rolePage" class="glass">
 <h3>Select Login Role</h3>
@@ -63,6 +66,8 @@ tr.net-row{background:#ffbf00;font-weight:bold;}
 
 <div id="empDash" class="glass hidden">
 <h3>Employee Dashboard</h3>
+<input id="empCodeInput" type="text" placeholder="Enter Emp Code">
+<button id="viewEmpSlipBtn">View Payslip</button>
 <button onclick="logout()">Logout</button>
 <div id="empSlip"></div>
 </div>
@@ -81,6 +86,7 @@ let empSlip=document.getElementById("empSlip");
 document.getElementById("roleNextBtn").onclick=()=>{
   let role=document.getElementById("roleSelect").value;
   if(role==="Admin"){ rolePage.classList.add("hidden"); adminLogin.classList.remove("hidden"); }
+  else if(role==="Employee"){ rolePage.classList.add("hidden"); document.getElementById("empDash").classList.remove("hidden"); }
   else alert("Select Role");
 };
 
@@ -138,7 +144,7 @@ document.getElementById("excelFile").onchange=function(e){
 
       let locParts = sheetName.split("-");
       let project = locParts[0];
-      let location = locParts.slice(1).join("-"); // everything after first dash
+      let location = locParts.slice(1).join("-");
 
       for(let i=1;i<rows.length;i++){
         let r=rows[i]; if(r.length>5){
@@ -193,7 +199,16 @@ document.getElementById("generateBtn").onclick=()=>{
   });
 };
 
-// Payslip HTML (Colorful with all components)
+// Employee Dashboard View
+document.getElementById("viewEmpSlipBtn").onclick=()=>{
+  let code = document.getElementById("empCodeInput").value.trim();
+  if(!code){ alert("Enter Emp Code"); return;}
+  let emp = employees.find(e=>e.code===code);
+  if(emp){ empSlip.innerHTML = slipHTML(emp); }
+  else alert("Employee not found or Excel not imported by Admin yet.");
+};
+
+// Payslip HTML
 function slipHTML(e){
   function f(n){return n===0?"":Math.round(n);}
   let gross = f(e.basic)+f(e.hra)+f(e.allow)+f(e.bonus);
@@ -220,7 +235,7 @@ function slipHTML(e){
   </div>`;
 }
 
-// PDF Generation using jsPDF.html() for full color
+// PDF Generation
 function generatePDF(emp){
   const {jsPDF} = window.jspdf;
   let doc = new jsPDF('p','pt','a4');
