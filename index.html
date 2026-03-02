@@ -91,6 +91,8 @@ td{border:1px solid #ddd;padding:8px;text-align:center;}
 </div>
 
 <script>
+document.addEventListener("DOMContentLoaded", function(){
+
 // ----------- DOM References -----------
 const rolePage = document.getElementById("rolePage");
 const adminLogin = document.getElementById("adminLogin");
@@ -150,11 +152,11 @@ renderSlip(emp);
 }
 
 // ----------- Logout & Reset -----------
-function logout(){ location.reload(); }
-function resetBind(){ localStorage.removeItem("binds"); alert("Binding Reset"); }
+window.logout = ()=>{ location.reload(); }
+window.resetBind = ()=>{ localStorage.removeItem("binds"); alert("Binding Reset"); }
 
 // ----------- XLSX Import -----------
-function importExcel(event){
+window.importExcel = function(event){
   let file = event.target.files[0];
   if(!file) return;
   let reader = new FileReader();
@@ -240,10 +242,10 @@ return `<div class="payslip">
 </div>`;
 }
 function renderSlip(emp){ empSlip.innerHTML = slipHTML(emp); }
-function viewEmp(code){ let emp = employees.find(e=>e.code===code); let w = window.open(""); w.document.write(slipHTML(emp)); w.print(); }
+window.viewEmp = function(code){ let emp = employees.find(e=>e.code===code); let w = window.open(""); w.document.write(slipHTML(emp)); w.print(); }
 
 // ----------- Generate PDF -----------
-function generatePDF(code){
+window.generatePDF = function(code){
 let emp = employees.find(e=>e.code===code);
 const {jsPDF} = window.jspdf;
 let doc = new jsPDF();
@@ -278,8 +280,9 @@ doc.save(emp.code+"_Payslip.pdf");
 }
 
 // ----------- Bulk PDF -----------
-function bulkPDF(){ let checks = document.querySelectorAll("input[type='checkbox']:checked"); checks.forEach(c=>generatePDF(c.value)); }
+window.bulkPDF = function(){ let checks = document.querySelectorAll("input[type='checkbox']:checked"); checks.forEach(c=>generatePDF(c.value)); }
 
+}); // DOMContentLoaded end
 </script>
 </body>
 </html>
