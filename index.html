@@ -97,15 +97,6 @@ document.getElementById("loginAdminBtn").onclick=()=>{
 
 function logout(){location.reload();}
 
-// Normalize month
-function parseMonth(val){
-  if(!val) return "Unknown";
-  val=val.toString().trim().replace(/^Wages[-]?/i,'');
-  let m=val.match(/([A-Za-z]+)[- ]?(\d{2,4})/);
-  if(m){let mon=m[1].slice(0,3);let yr=m[2].length==2?"20"+m[2]:m[2];return mon+"-"+yr.slice(2);}
-  return val;
-}
-
 // Import XLSX
 document.getElementById("excelFile").onchange=function(e){
   let file=e.target.files[0]; if(!file) return;
@@ -116,7 +107,7 @@ document.getElementById("excelFile").onchange=function(e){
     employees=[]; monthData={};
 
     wb.SheetNames.forEach(sheet=>{
-      let pageName=sheet.trim(); // Sheet name as page name
+      let pageName=sheet.trim();
       let dashIndex=pageName.indexOf("-");
       let project=dashIndex>=0?pageName.slice(0,dashIndex).trim():pageName;
       let location=dashIndex>=0?pageName.slice(dashIndex+1).trim():"Main";
@@ -124,6 +115,7 @@ document.getElementById("excelFile").onchange=function(e){
       let rows=XLSX.utils.sheet_to_json(wb.Sheets[sheet],{header:1});
       if(rows.length<2) return;
       let headers=rows[0].map(h=>h.toString().toLowerCase());
+
       let codeCol=headers.indexOf("emp code");
       let nameCol=headers.indexOf("name");
       let desigCol=headers.indexOf("designation");
@@ -132,14 +124,14 @@ document.getElementById("excelFile").onchange=function(e){
       let hraCol=headers.indexOf("hra");
       let allowCol=headers.indexOf("allowance");
       let bonusCol=headers.indexOf("bonus");
-      let pfCol=headers.indexOf("pf");
-      let esiCol=headers.indexOf("esi");
-      let netCol=headers.indexOf("net");
+      let pfCol=headers.findIndex(h=>h.includes("pf"));
+      let esiCol=headers.findIndex(h=>h.includes("esi"));
+      let netCol=headers.indexOf("net in hand");
 
       for(let i=1;i<rows.length;i++){
         let r=rows[i]; if(r.length>1){
-          let rawMonth=monthCol>=0?r[monthCol]:"";
-          let monthVal=rawMonth instanceof Date?formatMonth(rawMonth):parseMonth(rawMonth);
+          let empMonth=monthCol>=0?r[monthCol]:"";
+          empMonth=empMonth instanceof Date?empMonth.toLocaleDateString('en-US',{month:'short',year:'2-digit'}):empMonth.toString().trim();
           let emp={
             code:codeCol>=0?r[codeCol]:"",
             name:nameCol>=0?r[nameCol]:"",
@@ -147,7 +139,7 @@ document.getElementById("excelFile").onchange=function(e){
             pageName:pageName,
             project:project,
             location:location,
-            month:monthVal,
+            month:empMonth,
             basic:basicCol>=0?r[basicCol]||0:0,
             hra:hraCol>=0?r[hraCol]||0:0,
             allow:allowCol>=0?r[allowCol]||0:0,
@@ -157,8 +149,8 @@ document.getElementById("excelFile").onchange=function(e){
             net:netCol>=0?r[netCol]||0:0
           };
           employees.push(emp);
-          monthData[monthVal]=monthData[monthVal]||[];
-          monthData[monthVal].push(emp);
+          monthData[emp.month]=monthData[emp.month]||[];
+          monthData[emp.month].push(emp);
         }
       }
     });
