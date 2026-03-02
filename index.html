@@ -19,8 +19,6 @@ th{background:#001f3f;color:#ffd700;}
 .payslip-header{text-align:center;margin-bottom:15px;}
 .payslip-header h2{margin:2px;color:#001f3f;}
 .payslip-header h4{margin:2px;color:#d4af37;font-weight:normal;}
-.flex{display:flex;justify-content:space-between;margin-top:15px;}
-.section{width:48%;}
 .net{background:#ffd700;color:#000;padding:12px;text-align:center;font-weight:bold;margin-top:20px;font-size:18px;border-radius:6px;}
 .footer{text-align:center;font-size:12px;margin-top:20px;color:#444;}
 table.payslip-table{width:100%;border-collapse:collapse;margin-top:10px;}
@@ -137,7 +135,7 @@ document.getElementById("excelFile").onchange = function(e){
       let sheetName = sheet.trim();
       let parts = sheetName.split("-");
       let project = parts[0].trim();
-      let sheetLocation = parts.slice(1).join("-").trim() || "Main";
+      let location = parts.slice(1).join("-").trim() || "Main";
 
       let rows = XLSX.utils.sheet_to_json(wb.Sheets[sheet],{header:1});
       if(rows.length<2) return;
@@ -156,23 +154,18 @@ document.getElementById("excelFile").onchange = function(e){
       let pfCol = headers.indexOf("pf");
       let esiCol = headers.indexOf("esi");
       let netCol = headers.indexOf("net");
-      let locationCol = headers.indexOf("location");
 
       for(let i=1;i<rows.length;i++){
         let r=rows[i]; if(r.length>1){
           let rawMonth = monthCol>=0 ? r[monthCol] : "";
           let monthVal = rawMonth instanceof Date ? formatMonth(rawMonth) : parseExcelMonth(rawMonth);
 
-          let rawLocation = locationCol>=0 ? r[locationCol] : "";
-          let empLocation = rawLocation && rawLocation.toString().trim() && !rawLocation.toString().startsWith("Wages")
-                            ? rawLocation.toString().trim() : sheetLocation;
-
           let empObj = {
             code: codeCol>=0?r[codeCol]:"", 
             name: nameCol>=0?r[nameCol]:"", 
             desig: desigCol>=0?r[desigCol]:"", 
             project: project,
-            location: empLocation,
+            location: location,
             month: monthVal,
             mDays: mDaysCol>=0?r[mDaysCol]:"", 
             pDays: pDaysCol>=0?r[pDaysCol]:"", 
