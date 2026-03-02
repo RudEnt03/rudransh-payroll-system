@@ -10,117 +10,23 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
 <style>
-body{
-margin:0;
-font-family:Segoe UI;
-background:linear-gradient(135deg,#0b1c2d,#000814);
-color:white;
-}
-
-.header{
-background:linear-gradient(90deg,#000814,#001d3d);
-padding:15px;
-text-align:center;
-box-shadow:0 4px 20px rgba(0,0,0,0.6);
-}
-
-.header img{
-height:60px;
-}
-
-.glass{
-background:rgba(255,255,255,0.08);
-backdrop-filter:blur(12px);
-border-radius:15px;
-padding:25px;
-margin:30px auto;
-width:90%;
-max-width:950px;
-box-shadow:0 8px 30px rgba(0,0,0,0.6);
-}
-
-button{
-background:linear-gradient(45deg,#d4af37,#b8962e);
-border:none;
-padding:10px 18px;
-margin:6px;
-border-radius:8px;
-font-weight:bold;
-cursor:pointer;
-transition:0.3s;
-}
-
-button:hover{
-transform:translateY(-2px);
-box-shadow:0 4px 15px rgba(212,175,55,0.6);
-}
-
-input{
-padding:8px;
-margin:6px;
-border-radius:6px;
-border:none;
-}
-
+body{margin:0;font-family:Segoe UI;background:linear-gradient(135deg,#0b1c2d,#000814);color:white;}
+.header{background:linear-gradient(90deg,#000814,#001d3d);padding:15px;text-align:center;box-shadow:0 4px 20px rgba(0,0,0,0.6);}
+.header img{height:60px;}
+.glass{background:rgba(255,255,255,0.08);backdrop-filter:blur(12px);border-radius:15px;padding:25px;margin:30px auto;width:90%;max-width:950px;box-shadow:0 8px 30px rgba(0,0,0,0.6);}
+button{background:linear-gradient(45deg,#d4af37,#b8962e);border:none;padding:10px 18px;margin:6px;border-radius:8px;font-weight:bold;cursor:pointer;transition:0.3s;}
+button:hover{transform:translateY(-2px);box-shadow:0 4px 15px rgba(212,175,55,0.6);}
+input{padding:8px;margin:6px;border-radius:6px;border:none;}
 .hidden{display:none;}
-
-table{
-width:100%;
-border-collapse:collapse;
-margin-top:15px;
-background:white;
-color:black;
-border-radius:8px;
-overflow:hidden;
-display:block;
-overflow-x:auto;
-}
-
-th{
-background:#001f3f;
-color:#d4af37;
-padding:10px;
-}
-
-td{
-border:1px solid #ddd;
-padding:8px;
-text-align:center;
-}
-
-.payslip{
-background:white;
-color:black;
-padding:25px;
-position:relative;
-}
-
-.watermark{
-position:absolute;
-top:35%;
-left:50%;
-transform:translate(-50%,-50%);
-opacity:0.07;
-width:300px;
-}
-
+table{width:100%;border-collapse:collapse;margin-top:15px;background:white;color:black;border-radius:8px;overflow:hidden;display:block;overflow-x:auto;}
+th{background:#001f3f;color:#d4af37;padding:10px;}
+td{border:1px solid #ddd;padding:8px;text-align:center;}
+.payslip{background:white;color:black;padding:25px;position:relative;}
+.watermark{position:absolute;top:35%;left:50%;transform:translate(-50%,-50%);opacity:0.07;width:300px;}
 .flex{display:flex;justify-content:space-between;margin-top:15px}
 .section{width:48%}
-
-.net{
-background:#d4af37;
-padding:12px;
-text-align:center;
-font-weight:bold;
-margin-top:20px;
-font-size:18px;
-}
-
-.footer{
-text-align:center;
-font-size:12px;
-margin-top:20px;
-}
+.net{background:#d4af37;padding:12px;text-align:center;font-weight:bold;margin-top:20px;font-size:18px;}
+.footer{text-align:center;font-size:12px;margin-top:20px;}
 </style>
 </head>
 
@@ -133,8 +39,8 @@ margin-top:20px;
 <!-- ROLE PAGE -->
 <div id="rolePage" class="glass" style="text-align:center">
 <h3>Select Login</h3>
-<button onclick="showAdmin()">Admin Login</button>
-<button onclick="showEmp()">Employee Login</button>
+<button id="btnAdminLogin">Admin Login</button>
+<button id="btnEmpLogin">Employee Login</button>
 </div>
 
 <!-- ADMIN LOGIN -->
@@ -142,7 +48,7 @@ margin-top:20px;
 <h3>Admin Login</h3>
 <input id="adminId" placeholder="Admin ID"><br>
 <input id="adminPass" type="password" placeholder="Password"><br>
-<button onclick="adminLogin()">Login</button>
+<button id="loginAdminBtn">Login</button>
 </div>
 
 <!-- EMP LOGIN -->
@@ -150,7 +56,7 @@ margin-top:20px;
 <h3>Employee Login (Android Only)</h3>
 <input id="empId" placeholder="Employee Code"><br>
 <input id="empPass" placeholder="Password"><br>
-<button onclick="empLogin()">Login</button>
+<button id="loginEmpBtn">Login</button>
 </div>
 
 <!-- ADMIN DASHBOARD -->
@@ -185,10 +91,23 @@ margin-top:20px;
 </div>
 
 <script>
+// ----------- DOM References -----------
+const rolePage = document.getElementById("rolePage");
+const adminLogin = document.getElementById("adminLogin");
+const empLogin = document.getElementById("empLogin");
+const adminDash = document.getElementById("adminDash");
+const empDash = document.getElementById("empDash");
+const empSlip = document.getElementById("empSlip");
+const logoImg = document.getElementById("logoImg");
+const btnAdminLogin = document.getElementById("btnAdminLogin");
+const btnEmpLogin = document.getElementById("btnEmpLogin");
+const loginAdminBtn = document.getElementById("loginAdminBtn");
+const loginEmpBtn = document.getElementById("loginEmpBtn");
+
 let employees = [];
 let currentEmp = null;
 
-// ---------- Utility ----------
+// ----------- Utility Functions -----------
 function toInt(val){ return Math.round(Number(val)||0); }
 function formatNum(n){ return n.toLocaleString(); }
 function hideAll(){
@@ -199,42 +118,42 @@ adminDash.classList.add("hidden");
 empDash.classList.add("hidden");
 }
 
-// ---------- Show Pages ----------
-function showAdmin(){ hideAll(); adminLogin.classList.remove("hidden"); }
-function showEmp(){ hideAll(); empLogin.classList.remove("hidden"); }
+// ----------- Show Pages -----------
+btnAdminLogin.onclick = ()=>{ hideAll(); adminLogin.classList.remove("hidden"); }
+btnEmpLogin.onclick = ()=>{ hideAll(); empLogin.classList.remove("hidden"); }
 
-// ---------- Admin Login ----------
-function adminLogin(){
-if(adminId.value==="Admin" && adminPass.value==="Rud@03"){
-  hideAll();
-  adminDash.classList.remove("hidden");
+// ----------- Admin Login -----------
+loginAdminBtn.onclick = ()=>{
+if(document.getElementById("adminId").value==="Admin" && document.getElementById("adminPass").value==="Rud@03"){
+  hideAll(); adminDash.classList.remove("hidden");
 }else alert("Invalid Admin");
 }
 
-// ---------- Employee Login ----------
-function empLogin(){
+// ----------- Employee Login -----------
+loginEmpBtn.onclick = ()=>{
+let empIdVal = document.getElementById("empId").value;
+let empPassVal = document.getElementById("empPass").value;
+
 if(!navigator.userAgent.toLowerCase().includes("android")){ alert("Android Only"); return; }
-if(empId.value!==empPass.value){ alert("ID & Pass must be same"); return; }
+if(empIdVal!==empPassVal){ alert("ID & Pass must be same"); return; }
 
 let binds = JSON.parse(localStorage.getItem("binds")||"{}");
-if(binds[empId.value] && binds[empId.value]!==navigator.userAgent){
-  alert("Device already bound to another employee"); return;
-}
-binds[empId.value] = navigator.userAgent;
+if(binds[empIdVal] && binds[empIdVal]!==navigator.userAgent){ alert("Device already bound to another employee"); return; }
+binds[empIdVal] = navigator.userAgent;
 localStorage.setItem("binds", JSON.stringify(binds));
 
-let emp = employees.find(e=>e.code===empId.value);
+let emp = employees.find(e=>e.code===empIdVal);
 if(!emp){ alert("Employee not found"); return; }
 currentEmp = emp;
 hideAll(); empDash.classList.remove("hidden");
 renderSlip(emp);
 }
 
-// ---------- Logout & Reset ----------
+// ----------- Logout & Reset -----------
 function logout(){ location.reload(); }
 function resetBind(){ localStorage.removeItem("binds"); alert("Binding Reset"); }
 
-// ---------- XLSX Import ----------
+// ----------- XLSX Import -----------
 function importExcel(event){
   let file = event.target.files[0];
   if(!file) return;
@@ -245,7 +164,6 @@ function importExcel(event){
     let sheetName = workbook.SheetNames[0];
     let sheet = workbook.Sheets[sheetName];
     let rows = XLSX.utils.sheet_to_json(sheet,{header:1});
-
     employees=[];
     for(let i=1;i<rows.length;i++){
       let r = rows[i];
@@ -272,7 +190,7 @@ function importExcel(event){
   reader.readAsArrayBuffer(file);
 }
 
-// ---------- Render Table ----------
+// ----------- Render Table -----------
 function renderTable(){
   let tbody = document.querySelector("#empTable tbody");
   tbody.innerHTML = employees.map(e=>`
@@ -290,102 +208,78 @@ function renderTable(){
     </tr>`).join("");
 }
 
-// ---------- Payslip HTML ----------
+// ----------- Payslip HTML -----------
 function slipHTML(e){
-  return `
-  <div class="payslip">
-    <img src="logo.png" class="watermark">
-    <h3 style="text-align:center">Payslip</h3>
-    <p><b>Emp Code:</b> ${e.code}</p>
-    <p><b>Name:</b> ${e.name}</p>
-    <p><b>Designation:</b> ${e.desig}</p>
-    <p><b>UAN:</b> ${e.uan} | <b>ESI:</b> ${e.esi}</p>
-
-    <div class="flex">
-      <div class="section">
-        <h4>Earnings</h4>
-        <table width="100%" border="0">
-          <tr><td>Basic</td><td>${formatNum(e.basic)}</td></tr>
-          <tr><td>HRA</td><td>${formatNum(e.hra)}</td></tr>
-          <tr><td>Allowance</td><td>${formatNum(e.allow)}</td></tr>
-          <tr><td>Bonus</td><td>${formatNum(e.bonus)}</td></tr>
-        </table>
-      </div>
-      <div class="section">
-        <h4>Deductions</h4>
-        <table width="100%" border="0">
-          <tr><td>PF</td><td>${formatNum(e.pf)}</td></tr>
-          <tr><td>ESI</td><td>${formatNum(e.esid)}</td></tr>
-        </table>
-      </div>
-    </div>
-
-    <div class="net">Net Salary: ${formatNum(e.net)}</div>
-    <div class="footer">Computer Generated – No Signature Required</div>
-  </div>`;
+return `<div class="payslip">
+<img src="logo.png" class="watermark">
+<h3 style="text-align:center">Payslip</h3>
+<p><b>Emp Code:</b> ${e.code}</p>
+<p><b>Name:</b> ${e.name}</p>
+<p><b>Designation:</b> ${e.desig}</p>
+<p><b>UAN:</b> ${e.uan} | <b>ESI:</b> ${e.esi}</p>
+<div class="flex">
+<div class="section">
+<h4>Earnings</h4>
+<table width="100%" border="0">
+<tr><td>Basic</td><td>${formatNum(e.basic)}</td></tr>
+<tr><td>HRA</td><td>${formatNum(e.hra)}</td></tr>
+<tr><td>Allowance</td><td>${formatNum(e.allow)}</td></tr>
+<tr><td>Bonus</td><td>${formatNum(e.bonus)}</td></tr>
+</table>
+</div>
+<div class="section">
+<h4>Deductions</h4>
+<table width="100%" border="0">
+<tr><td>PF</td><td>${formatNum(e.pf)}</td></tr>
+<tr><td>ESI</td><td>${formatNum(e.esid)}</td></tr>
+</table>
+</div>
+</div>
+<div class="net">Net Salary: ${formatNum(e.net)}</div>
+<div class="footer">Computer Generated – No Signature Required</div>
+</div>`;
 }
+function renderSlip(emp){ empSlip.innerHTML = slipHTML(emp); }
+function viewEmp(code){ let emp = employees.find(e=>e.code===code); let w = window.open(""); w.document.write(slipHTML(emp)); w.print(); }
 
-function renderSlip(emp){
-  empSlip.innerHTML = slipHTML(emp);
-}
-
-// ---------- View in new window ----------
-function viewEmp(code){
-  let emp = employees.find(e=>e.code===code);
-  let w = window.open("");
-  w.document.write(slipHTML(emp));
-  w.print();
-}
-
-// ---------- Generate PDF ----------
+// ----------- Generate PDF -----------
 function generatePDF(code){
-  let emp = employees.find(e=>e.code===code);
-  const {jsPDF} = window.jspdf;
-  let doc = new jsPDF();
-
-  // Logo Base64
-  let img = document.getElementById("logoImg");
-  let canvas = document.createElement("canvas");
-  canvas.width = img.naturalWidth; canvas.height = img.naturalHeight;
-  let ctx = canvas.getContext("2d"); ctx.drawImage(img,0,0);
-  let imgData = canvas.toDataURL("image/png");
-
-  doc.addImage(imgData,"PNG",80,5,50,20);
-  doc.setFontSize(12);
-  doc.text("Payslip",90,35);
-
-  doc.text("Emp Code: "+emp.code,20,50);
-  doc.text("Name: "+emp.name,20,60);
-  doc.text("Designation: "+emp.desig,20,70);
-  doc.text("UAN: "+emp.uan+"  ESI: "+emp.esi,20,80);
-
-  // Table like layout
-  let startY=90;
-  doc.setFontSize(11);
-  doc.text("Earnings",30,startY-5);
-  doc.text("Deductions",120,startY-5);
-
-  let earnings = [["Basic",emp.basic],["HRA",emp.hra],["Allowance",emp.allow],["Bonus",emp.bonus]];
-  let deductions = [["PF",emp.pf],["ESI",emp.esid]];
-  for(let i=0;i<4;i++){
-    let y=startY + i*10;
-    if(earnings[i]) doc.text(`${earnings[i][0]}: ${formatNum(earnings[i][1])}`,30,y);
-    if(deductions[i]) doc.text(`${deductions[i][0]}: ${formatNum(deductions[i][1])}`,120,y);
-  }
-
-  doc.setFontSize(14);
-  doc.text("Net Salary: "+formatNum(emp.net),70,startY+50);
-  doc.setFontSize(10);
-  doc.text("Computer Generated – No Signature Required",40,startY+65);
-
-  doc.save(emp.code+"_Payslip.pdf");
+let emp = employees.find(e=>e.code===code);
+const {jsPDF} = window.jspdf;
+let doc = new jsPDF();
+let canvas = document.createElement("canvas");
+canvas.width = logoImg.naturalWidth;
+canvas.height = logoImg.naturalHeight;
+canvas.getContext("2d").drawImage(logoImg,0,0);
+let imgData = canvas.toDataURL("image/png");
+doc.addImage(imgData,"PNG",80,5,50,20);
+doc.setFontSize(12);
+doc.text("Payslip",90,35);
+doc.text("Emp Code: "+emp.code,20,50);
+doc.text("Name: "+emp.name,20,60);
+doc.text("Designation: "+emp.desig,20,70);
+doc.text("UAN: "+emp.uan+"  ESI: "+emp.esid,20,80);
+let startY=90;
+doc.setFontSize(11);
+doc.text("Earnings",30,startY-5);
+doc.text("Deductions",120,startY-5);
+let earnings = [["Basic",emp.basic],["HRA",emp.hra],["Allowance",emp.allow],["Bonus",emp.bonus]];
+let deductions = [["PF",emp.pf],["ESI",emp.esid]];
+for(let i=0;i<4;i++){
+let y=startY+i*10;
+if(earnings[i]) doc.text(`${earnings[i][0]}: ${formatNum(earnings[i][1])}`,30,y);
+if(deductions[i]) doc.text(`${deductions[i][0]}: ${formatNum(deductions[i][1])}`,120,y);
+}
+doc.setFontSize(14);
+doc.text("Net Salary: "+formatNum(emp.net),70,startY+50);
+doc.setFontSize(10);
+doc.text("Computer Generated – No Signature Required",40,startY+65);
+doc.save(emp.code+"_Payslip.pdf");
 }
 
-// ---------- Bulk PDF ----------
-function bulkPDF(){
-  let checks = document.querySelectorAll("input[type='checkbox']:checked");
-  checks.forEach(c=>generatePDF(c.value));
-}
+// ----------- Bulk PDF -----------
+function bulkPDF(){ let checks = document.querySelectorAll("input[type='checkbox']:checked"); checks.forEach(c=>generatePDF(c.value)); }
+
 </script>
 </body>
 </html>
