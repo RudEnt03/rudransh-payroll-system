@@ -2,29 +2,51 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Rudransh Payroll System - Month +1 Fix</title>
+<title>Rudransh Payroll System - Enhanced Payslip</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
 body{margin:0;font-family:Segoe UI;background:#0b1c2d;color:white;}
 header{background:#001f3f;color:#ffd700;text-align:center;padding:15px;font-size:24px;font-weight:bold;}
-.glass{background:rgba(255,255,255,0.08);backdrop-filter:blur(12px);border-radius:12px;padding:20px;margin:20px auto;width:90%;max-width:900px;}
+.glass{background:rgba(255,255,255,0.08);backdrop-filter:blur(12px);border-radius:12px;padding:20px;margin:20px auto;width:90%;max-width:1000px;}
 button{background:#d4af37;color:#000;padding:8px 14px;border:none;border-radius:6px;margin:4px;cursor:pointer;font-weight:bold;}
 button:hover{opacity:0.8;}
+.hidden{display:none;}
 table{width:100%;border-collapse:collapse;color:black;background:white;margin-top:15px;}
 th,td{border:1px solid #ddd;padding:8px;text-align:center;}
 th{background:#001f3f;color:#ffd700;}
+input, select{padding:6px;margin:4px;border-radius:4px;border:none;}
 </style>
 </head>
 <body>
 
 <header>Rudransh Payroll System</header>
 
-<div class="glass">
+<!-- Role Selection -->
+<div id="rolePage" class="glass">
+<h3>Select Role</h3>
+<select id="roleSelect">
+<option value="">--Select Role--</option>
+<option value="Admin">Admin</option>
+<option value="Employee">Employee</option>
+</select>
+<button id="roleNextBtn">Next</button>
+</div>
+
+<!-- Admin Login -->
+<div id="adminLogin" class="glass hidden">
+<h3>Admin Login</h3>
+<input id="adminPass" type="password" placeholder="Password">
+<button id="loginAdminBtn">Login</button>
+</div>
+
+<!-- Admin Dashboard -->
+<div id="adminDash" class="glass hidden">
 <h3>Admin Dashboard</h3>
 <input type="file" id="excelFile" accept=".xlsx,.xls">
 <select id="monthSelect"><option value="">--Select Month--</option></select>
 <button id="generateBtn">Generate Payslip(s)</button>
+<button onclick="logout()">Logout</button>
 <table id="empTable">
 <thead>
 <tr>
@@ -35,113 +57,178 @@ th{background:#001f3f;color:#ffd700;}
 </table>
 </div>
 
+<!-- Employee Dashboard -->
+<div id="empDash" class="glass hidden">
+<h3>Employee Dashboard</h3>
+<input id="empCodeInput" type="text" placeholder="Enter Emp Code">
+<button id="viewEmpSlipBtn">View Payslip</button>
+<button onclick="logout()">Logout</button>
+<div id="empSlip"></div>
+</div>
+
 <script>
-let employees = [], monthData = {};
-const empTable = document.getElementById("empTable").getElementsByTagName("tbody")[0];
-const monthSelect = document.getElementById("monthSelect");
+let employees=[], monthData={};
+const rolePage=document.getElementById("rolePage");
+const adminLogin=document.getElementById("adminLogin");
+const adminDash=document.getElementById("adminDash");
+const empDash=document.getElementById("empDash");
+const empTable=document.getElementById("empTable").getElementsByTagName("tbody")[0];
+const monthSelect=document.getElementById("monthSelect");
+const empSlip=document.getElementById("empSlip");
 
-// ===== FIX: Add +1 month to Excel dates before display =====
+// ===== Role Selection =====
+document.getElementById("roleNextBtn").onclick = () => {
+  const role = document.getElementById("roleSelect").value;
+  if(role==="Admin"){ rolePage.classList.add("hidden"); adminLogin.classList.remove("hidden"); }
+  else if(role==="Employee"){ rolePage.classList.add("hidden"); empDash.classList.remove("hidden"); }
+  else alert("Select Role");
+};
+
+// ===== Admin Login =====
+document.getElementById("loginAdminBtn").onclick = () => {
+  if(document.getElementById("adminPass").value==="Rud@03"){
+    adminLogin.classList.add("hidden");
+    adminDash.classList.remove("hidden");
+  } else alert("Invalid Password");
+};
+
+function logout(){ location.reload(); }
+
+// ===== Helper Functions =====
 function fixMonth(cell){
-    if(typeof cell === "string") return cell.trim(); // already text
+    if(typeof cell==="string") return cell.trim();
     let date;
-    if(cell instanceof Date) date = new Date(cell);       // JS Date
-    else if(typeof cell === "number"){                  // Excel serial number
-        const d = XLSX.SSF.parse_date_code(cell);
-        date = new Date(d.y, d.m-1, 1);
-    } else return String(cell).trim();
+    if(cell instanceof Date) date=new Date(cell);
+    else if(typeof cell==="number"){ const d=XLSX.SSF.parse_date_code(cell); date=new Date(d.y,d.m-1,1); }
+    else return String(cell).trim();
+    date.setMonth(date.getMonth()+1);
+    return date.toLocaleString('en-US',{month:'short',year:'2-digit'});
+}
 
-    // Add +1 month
-    date.setMonth(date.getMonth() + 1);
-
-    return date.toLocaleString('en-US',{month:'short', year:'2-digit'});
+function formatRupee(val){
+    if(!val || Number(val)===0) return "";
+    return "₹"+Math.round(val).toLocaleString('en-IN');
 }
 
 // ===== Excel Import =====
-document.getElementById("excelFile").onchange = function(e){
-    const file = e.target.files[0]; if(!file) return;
-    const reader = new FileReader();
-    reader.onload = function(ev){
-        const data = new Uint8Array(ev.target.result);
-        const wb = XLSX.read(data,{type:'array',cellDates:true});
-        employees = []; monthData = {};
+document.getElementById("excelFile").onchange=function(e){
+    const file=e.target.files[0]; if(!file) return;
+    const reader=new FileReader();
+    reader.onload=function(ev){
+        const data=new Uint8Array(ev.target.result);
+        const wb=XLSX.read(data,{type:'array',cellDates:true});
+        employees=[]; monthData={};
 
         wb.SheetNames.forEach(sheet=>{
-            const rows = XLSX.utils.sheet_to_json(wb.Sheets[sheet],{header:1,defval:""});
+            const rows=XLSX.utils.sheet_to_json(wb.Sheets[sheet],{header:1,defval:""});
             if(rows.length<2) return;
-
-            const headers = rows[0].map(h=>h.toString().trim().toLowerCase());
-            const codeCol = headers.findIndex(h=>h.includes("emp") && h.includes("code"));
-            const nameCol = headers.findIndex(h=>h.includes("name"));
-            const monthCol = headers.findIndex(h=>h.includes("month"));
-            const netCol = headers.findIndex(h=>h.includes("net"));
-            if(codeCol===-1||nameCol===-1||monthCol===-1||netCol===-1){alert("Missing headers"); return;}
+            const headers=rows[0].map(h=>h.toString().trim().toLowerCase());
+            const codeCol=headers.findIndex(h=>h.includes("emp") && h.includes("code"));
+            const nameCol=headers.findIndex(h=>h.includes("name"));
+            const monthCol=headers.findIndex(h=>h.includes("month"));
+            const netCol=headers.findIndex(h=>h.includes("net"));
+            if(codeCol===-1||nameCol===-1||monthCol===-1||netCol===-1){ alert("Missing headers"); return; }
 
             for(let i=1;i<rows.length;i++){
-                const r = rows[i]; if(r.length>0){
-                    const empMonth = fixMonth(r[monthCol]); // <-- +1 month applied here
-                    const emp = {
-                        code: r[codeCol] || "",
-                        name: r[nameCol] || "",
-                        month: empMonth,
-                        net: r[netCol] || 0
+                const r=rows[i]; if(r.length>0){
+                    const empMonth=fixMonth(r[monthCol]);
+                    const empObj={
+                        code:r[codeCol]||"",
+                        name:r[nameCol]||"",
+                        month:empMonth,
+                        net:r[netCol]||0,
+                        fullData: r
                     };
-                    employees.push(emp);
-                    monthData[empMonth] = monthData[empMonth] || [];
-                    monthData[empMonth].push(emp);
+                    employees.push(empObj);
+                    monthData[empMonth]=monthData[empMonth]||[];
+                    monthData[empMonth].push(empObj);
                 }
             }
         });
-
-        renderTable();
-        renderMonthDropdown();
-        alert("Excel imported! Dashboard months fixed (+1).");
+        renderTable(); renderMonthDropdown();
+        alert("Excel imported with +1 month fix!");
     };
     reader.readAsArrayBuffer(file);
 };
 
 // ===== Render Table =====
 function renderTable(){
-    let html = "";
+    let html="";
     employees.forEach(e=>{
         html+=`<tr>
         <td><input type="checkbox" data-month="${e.month}" data-code="${e.code}"></td>
-        <td>${e.code}</td><td>${e.name}</td><td>${e.month}</td><td>${e.net}</td>
+        <td>${e.code}</td><td>${e.name}</td><td>${e.month}</td><td>${formatRupee(e.net)}</td>
         </tr>`;
     });
-    empTable.innerHTML = html;
+    empTable.innerHTML=html;
 }
 
 // ===== Render Month Dropdown =====
 function renderMonthDropdown(){
-    monthSelect.innerHTML = "<option value=''>--Select Month--</option>";
+    monthSelect.innerHTML="<option value=''>--Select Month--</option>";
     Object.keys(monthData).sort().forEach(m=>{
-        monthSelect.innerHTML += `<option value='${m}'>${m}</option>`;
+        monthSelect.innerHTML+=`<option value='${m}'>${m}</option>`;
     });
 }
 
-// ===== Filter Table by Month =====
-monthSelect.onchange = function(){
-    const sel = this.value;
-    const rows = empTable.getElementsByTagName('tr');
-    for(let i=0;i<rows.length;i++){
-        const td = rows[i].getElementsByTagName('td')[3];
-        if(td) rows[i].style.display = (sel === "" || td.innerText === sel) ? "" : "none";
-    }
+// ===== Employee View =====
+document.getElementById("viewEmpSlipBtn").onclick = ()=>{
+    const code=document.getElementById("empCodeInput").value.trim();
+    if(!code){ alert("Enter Emp Code"); return; }
+    const emp=employees.find(e=>e.code===code);
+    if(emp){
+        empSlip.innerHTML=generatePayslipHTML(emp);
+    } else alert("Employee not found or Excel not imported.");
 };
 
+// ===== Generate Payslip HTML =====
+function generatePayslipHTML(emp){
+    const headers=["Sl No","Emp Code","Name","Designation","UAN No","ESI No","Month","M Days","P Days","Basic","HRA","Allowance","Leave","Bonus","Gross","PF@12%","ESI@0.75%","LWF","Total In Hand","Advance Paid","Net In Hand"];
+    const earnings=["Basic","HRA","Allowance","Leave","Bonus","Gross"];
+    const deductions=["PF@12%","ESI@0.75%","LWF","Advance Paid"];
+    const data={};
+    emp.fullData.forEach((v,i)=>{ data[headers[i]]=v; });
+
+    let earnHTML="", dedHTML="";
+    earnings.forEach(k=>{
+        if(k in data) earnHTML+=`<tr><td>${k}</td><td>${formatRupee(data[k])}</td></tr>`;
+    });
+    deductions.forEach(k=>{
+        if(k in data) dedHTML+=`<tr><td>${k}</td><td>${formatRupee(data[k])}</td></tr>`;
+    });
+
+    const net=formatRupee(data["Net In Hand"]||emp.net);
+
+    return `<div style="padding:20px;background:white;color:black;border-radius:12px;width:600px;margin:20px auto;font-family:Segoe UI;">
+        <h2 style="background:#001f3f;color:#ffd700;padding:10px;text-align:center;">Rudransh Payroll - Payslip</h2>
+        <table style="width:100%;border-collapse:collapse;margin-top:10px;">
+        <tr><td colspan="2"><b>Emp Code:</b> ${emp.code}</td><td colspan="2"><b>Name:</b> ${emp.name}</td></tr>
+        <tr><td colspan="2"><b>Designation:</b> ${data["Designation"]||""}</td><td colspan="2"><b>Month:</b> ${emp.month}</td></tr>
+        </table>
+        <div style="display:flex;margin-top:20px;">
+        <table style="flex:1;border-collapse:collapse;margin-right:10px;"><tr><th style="background:#001f3f;color:#ffd700;">Earnings</th><th style="background:#001f3f;color:#ffd700;">Amount</th></tr>${earnHTML}</table>
+        <table style="flex:1;border-collapse:collapse;margin-left:10px;"><tr><th style="background:#001f3f;color:#ffd700;">Deductions</th><th style="background:#001f3f;color:#ffd700;">Amount</th></tr>${dedHTML}</table>
+        </div>
+        <h3 style="text-align:right;color:#001f3f;">Net In Hand: ${net}</h3>
+        </div>`;
+}
+
 // ===== PDF Generation =====
-document.getElementById("generateBtn").onclick = () => {
-    const selMonth = monthSelect.value;
+document.getElementById("generateBtn").onclick = ()=>{
+    const selMonth=monthSelect.value;
     if(!selMonth){ alert("Select Month"); return; }
-    const checks = document.querySelectorAll(`input[type='checkbox']:checked[data-month='${selMonth}']`);
+    const checks=document.querySelectorAll(`input[type='checkbox']:checked[data-month='${selMonth}']`);
     if(checks.length===0){ alert("Select at least one employee"); return; }
     checks.forEach(c=>{
-        const code = c.getAttribute("data-code");
-        const emp = employees.find(e=>e.code===code && e.month===selMonth);
+        const code=c.getAttribute("data-code");
+        const emp=employees.find(e=>e.code===code && e.month===selMonth);
         if(emp){
             const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-            doc.text(`Emp Code: ${emp.code}\nName: ${emp.name}\nMonth: ${emp.month}\nNet Salary: ${emp.net}`, 20,20);
+            const doc = new jsPDF('p','pt','a4');
+            const div=document.createElement("div");
+            div.innerHTML=generatePayslipHTML(emp);
+            // Simple PDF text extraction (you can enhance with html2canvas later)
+            doc.text(`Emp Code: ${emp.code}\nName: ${emp.name}\nMonth: ${emp.month}\nNet In Hand: ${formatRupee(emp.net)}`, 40,40);
             doc.save(emp.code+"_Payslip.pdf");
         }
     });
