@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Rudransh Payroll System - Month Fix UTC</title>
+<title>Rudransh Payroll System - Month +1 Fix</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
@@ -40,21 +40,20 @@ let employees = [], monthData = {};
 const empTable = document.getElementById("empTable").getElementsByTagName("tbody")[0];
 const monthSelect = document.getElementById("monthSelect");
 
-// ===== FIX: Convert Excel Month to text ignoring timezone =====
-function convertMonth(cell){
+// ===== FIX: Add +1 month to Excel dates before display =====
+function fixMonth(cell){
     if(typeof cell === "string") return cell.trim(); // already text
-    if(cell instanceof Date){
-        const year = cell.getFullYear();
-        const month = cell.getMonth();
-        const d = new Date(Date.UTC(year, month, 1)); // first day of month UTC
-        return d.toLocaleString('en-US',{month:'short',year:'2-digit',timeZone:'UTC'});
-    }
-    if(typeof cell === 'number'){
+    let date;
+    if(cell instanceof Date) date = new Date(cell);       // JS Date
+    else if(typeof cell === "number"){                  // Excel serial number
         const d = XLSX.SSF.parse_date_code(cell);
-        const date = new Date(Date.UTC(d.y,d.m-1,1));
-        return date.toLocaleString('en-US',{month:'short',year:'2-digit',timeZone:'UTC'});
-    }
-    return String(cell).trim();
+        date = new Date(d.y, d.m-1, 1);
+    } else return String(cell).trim();
+
+    // Add +1 month
+    date.setMonth(date.getMonth() + 1);
+
+    return date.toLocaleString('en-US',{month:'short', year:'2-digit'});
 }
 
 // ===== Excel Import =====
@@ -79,7 +78,7 @@ document.getElementById("excelFile").onchange = function(e){
 
             for(let i=1;i<rows.length;i++){
                 const r = rows[i]; if(r.length>0){
-                    const empMonth = convertMonth(r[monthCol]);
+                    const empMonth = fixMonth(r[monthCol]); // <-- +1 month applied here
                     const emp = {
                         code: r[codeCol] || "",
                         name: r[nameCol] || "",
@@ -95,7 +94,7 @@ document.getElementById("excelFile").onchange = function(e){
 
         renderTable();
         renderMonthDropdown();
-        alert("Excel imported! Months now match Excel exactly.");
+        alert("Excel imported! Dashboard months fixed (+1).");
     };
     reader.readAsArrayBuffer(file);
 };
