@@ -34,7 +34,6 @@ tr.net-row{background:#ffbf00;font-weight:bold;}
 
 <header>Rudransh Enterprises</header>
 
-<!-- Role Selection -->
 <div id="rolePage" class="glass">
 <h3>Select Login Role</h3>
 <select id="roleSelect">
@@ -45,14 +44,12 @@ tr.net-row{background:#ffbf00;font-weight:bold;}
 <button id="roleNextBtn">Next</button>
 </div>
 
-<!-- Admin Login -->
 <div id="adminLogin" class="glass hidden">
 <h3>Admin Login</h3>
 <input id="adminPass" type="password" placeholder="Password">
 <button id="loginAdminBtn">Login</button>
 </div>
 
-<!-- Admin Dashboard -->
 <div id="adminDash" class="glass hidden">
 <h3>Admin Dashboard</h3>
 <input type="file" id="excelFile" accept=".xlsx">
@@ -67,7 +64,6 @@ tr.net-row{background:#ffbf00;font-weight:bold;}
 </table>
 </div>
 
-<!-- Employee Dashboard -->
 <div id="empDash" class="glass hidden">
 <h3>Employee Dashboard</h3>
 <input id="empCodeInput" type="text" placeholder="Enter Emp Code">
@@ -112,21 +108,14 @@ function excelDateToJSDate(serial){ return new Date(Math.round((serial - 25569) 
 function parseExcelMonth(val){
   if(!val) return "Unknown";
   val = val.toString().trim();
-
-  // Remove "Wages-" prefix if exists
   val = val.replace(/^Wages[-]?/i,'');
-
-  // Handle Jan26, Jan-26, January 2026, etc.
   let m = val.match(/([A-Za-z]+)[- ]?(\d{2,4})/);
   if(m){
-    let monthStr = m[1].slice(0,3); // Jan, Feb, Mar
+    let monthStr = m[1].slice(0,3);
     let yearStr = m[2].length==2 ? "20"+m[2] : m[2];
-    return monthStr+"-"+yearStr.slice(2); // e.g., Jan-26
+    return monthStr+"-"+yearStr.slice(2);
   }
-
-  // Numeric: treat as Excel serial
   if(!isNaN(val)) return formatMonth(excelDateToJSDate(Number(val)));
-
   return val;
 }
 
@@ -146,9 +135,9 @@ document.getElementById("excelFile").onchange=function(e){
     employees=[]; monthData={};
     wb.SheetNames.forEach(sheet=>{
       let sheetName=sheet.trim();
-      let parts = sheetName.split("-");
-      let project = parts[0].trim();
-      let sheetLocation = parts.slice(1).join("-").trim() || "Main";
+      let parts=sheetName.split("-");
+      let project=parts[0].trim();
+      let sheetLocation=parts.slice(1).join("-").trim() || "Main";
 
       let rows=XLSX.utils.sheet_to_json(wb.Sheets[sheet],{header:1});
       if(rows.length<2) return;
@@ -164,31 +153,27 @@ document.getElementById("excelFile").onchange=function(e){
       let pfCol=headers.indexOf("pf");
       let esiCol=headers.indexOf("esi");
       let netCol=headers.indexOf("net");
+      let codeCol=headers.indexOf("emp code");
+      let nameCol=headers.indexOf("name");
+      let desigCol=headers.indexOf("designation");
       let locationCol=headers.indexOf("location");
 
       for(let i=1;i<rows.length;i++){
         let r=rows[i]; if(r.length>1){
-          // Parse Month
           let rawMonth = monthCol>=0 ? r[monthCol] : "";
-          let monthVal = "";
-          if(rawMonth instanceof Date){
-            monthVal = formatMonth(rawMonth);
-          } else {
-            monthVal = parseExcelMonth(rawMonth);
-          }
+          let monthVal = rawMonth instanceof Date ? formatMonth(rawMonth) : parseExcelMonth(rawMonth);
 
-          // Parse Location
           let rawLocation = locationCol>=0 ? r[locationCol] : "";
           let empLocation = rawLocation && rawLocation.toString().trim() && !rawLocation.toString().startsWith("Wages")
                             ? rawLocation.toString().trim() : sheetLocation;
 
           let empObj={
-            code:r[1]||"",
-            name:r[2]||"",
-            desig:r[3]||"",
-            project: project,
-            location: empLocation,
-            month: monthVal,
+            code:codeCol>=0?r[codeCol]:"", 
+            name:nameCol>=0?r[nameCol]:"", 
+            desig:desigCol>=0?r[desigCol]:"", 
+            project:project,
+            location:empLocation,
+            month:monthVal,
             mDays:mDaysCol>=0?r[mDaysCol]:"", 
             pDays:pDaysCol>=0?r[pDaysCol]:"", 
             basic:basicCol>=0?r[basicCol]||0:0,
@@ -217,7 +202,7 @@ function renderTable(){
   let html = "";
   employees.forEach(e=>{
     html += `<tr>
-    <td><input type="checkbox" data-month="${e.month}"></td>
+    <td><input type="checkbox" data-month="${e.month}" data-code="${e.code}"></td>
     <td>${e.code}</td><td>${e.name}</td><td>${e.desig}</td><td>${e.project}</td><td>${e.location}</td><td>${e.month}</td>
     </tr>`;
   });
@@ -269,9 +254,9 @@ document.getElementById("generateBtn").onclick=()=>{
   let checks=document.querySelectorAll(`input[type='checkbox']:checked[data-month='${selMonth}']`);
   if(checks.length===0){ alert("Select at least one employee"); return;}
   checks.forEach(c=>{
-    let tr=c.parentNode.parentNode;
-    let code=tr.children[1].textContent;
-    generatePDF(employees.find(e=>e.code===code && e.month===selMonth));
+    let code=c.getAttribute("data-code");
+    let emp=employees.find(e=>e.code===code && e.month===selMonth);
+    if(emp) generatePDF(emp);
   });
 };
 
