@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Rudransh Payroll System - Month Fix (Final)</title>
+<title>Rudransh Payroll System - Month Fix</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
@@ -45,16 +45,14 @@ const monthSelect=document.getElementById("monthSelect");
 function parseMonth(cell){
     if(typeof cell==="string") return cell.trim(); // Already text
     if(cell instanceof Date){
-        // Extract month+year in UTC to avoid timezone shift
-        const month = cell.toLocaleString('en-US',{month:'short',year:'2-digit',timeZone:'UTC'});
-        return month;
+        // Convert Date to "MMM-YY" in UTC
+        return cell.toLocaleString('en-US',{month:'short',year:'2-digit',timeZone:'UTC'});
     }
     if(typeof cell==='number'){
         // Excel serial number
         const date = XLSX.SSF.parse_date_code(cell);
-        const month = new Date(Date.UTC(date.y,date.m-1,1))
+        return new Date(Date.UTC(date.y,date.m-1,1))
             .toLocaleString('en-US',{month:'short',year:'2-digit',timeZone:'UTC'});
-        return month;
     }
     return String(cell).trim();
 }
@@ -97,7 +95,7 @@ document.getElementById("excelFile").onchange = function(e){
 
         renderTable();
         renderMonthDropdown();
-        alert("Excel imported! Month fix applied locally.");
+        alert("Excel imported! Month fixed locally.");
     };
     reader.readAsArrayBuffer(file);
 };
