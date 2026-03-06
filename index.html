@@ -1,167 +1,71 @@
 <!DOCTYPE html>
+  document.getElementById('totalEmployees').textContent = data.length;
+  const totalNet = data.reduce((acc, e) => acc + e.basic + e.hra - e.deductions, 0);
+  document.getElementById('monthSummary').textContent = '₹' + totalNet.toLocaleString();
+}
 
-<html>
-<head>
-<meta charset="UTF-8">
-<title>Rudransh Payroll v6 Ultimate</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-<style>
-body{font-family:Arial;background:#f4f6fb;margin:0;}
-header{background:#0b2a4a;color:white;text-align:center;padding:16px;font-size:22px;}
-.container{padding:20px;}
-.card{background:white;padding:20px;border-radius:6px;box-shadow:0 3px 10px rgba(0,0,0,.15);margin-bottom:20px;}
-input,select{padding:7px;margin:6px;}
-button{background:#0b2a4a;color:white;border:none;padding:9px 14px;cursor:pointer;}
-button:hover{background:#1a3d6d;}
-.footer{background:#0b2a4a;color:white;text-align:center;padding:10px;font-size:12px;}
-.hidden{display:none;}
-</style>
-</head>
-<body>
-<header>RUDRANSH PAYROLL SYSTEM v6 Ultimate</header>
-<div class="container" id="loginCard">
-<div class="card">
-<h3>Admin / Employee Login</h3>
-<input type="text" id="username" placeholder="Username"><br>
-<input type="password" id="password" placeholder="Password"><br>
-<button onclick="login()">Login</button>
-</div>
-</div>
-<div class="container hidden" id="mainCard">
-<div class="card">
-<h3>Upload Payroll & Logo</h3>
-<input type="file" id="excelFile"><br><br>
-<input type="file" id="logoFile"><br><br>
-<select id="monthList"></select><br><br>
-<input id="empCode" placeholder="Employee Code"><br><br>
-<button onclick="generatePayslip()">Generate Payslip</button>
-<button onclick="downloadAllPayslips()">Download All Payslips (ZIP)</button>
-</div>
-<div class="card">
-<h3>PF / ESI / TDS</h3>
-<button onclick="generatePF()">Generate PF ECR</button>
-<button onclick="generateESI()">Generate ESI Return</button>
-<button onclick="generateTDS()">Generate TDS Report</button>
-</div>
-</div>
-<div class="footer">© 2026 Rudransh Enterprises. All rights reserved.</div>
-<script>
-let payrollData=[],logoData='',currentUser='',deviceBound=false;
-function login(){
-  const u=document.getElementById('username').value,p=document.getElementById('password').value,users={'admin':'admin123'};
-  if(users[u]&&users[u]===p){currentUser=u;alert('Login success!');bindDevice();}else alert('Invalid username or password');
+renderTable(employees);
+
+// PDF Generation for single employee
+async function generatePDF(empCode) {
+  const emp = employees.find(e => e.code === empCode);
+  if (!emp) return;
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  doc.setFontSize(16);
+  doc.text('Payslip', 105, 20, null, null, 'center');
+  doc.setFontSize(12);
+  doc.text(`Employee Code: ${emp.code}`, 20, 40);
+  doc.text(`Name: ${emp.name}`, 20, 50);
+  doc.text(`Department: ${emp.dept}`, 20, 60);
+  doc.text(`Basic: ₹${emp.basic}`, 20, 70);
+  doc.text(`HRA: ₹${emp.hra}`, 20, 80);
+  doc.text(`Deductions: ₹${emp.deductions}`, 20, 90);
+  doc.text(`Net Pay: ₹${emp.basic + emp.hra - emp.deductions}`, 20, 100);
+  doc.save(`${emp.code}_payslip.pdf`);
 }
-function bindDevice(){deviceBound=true;document.getElementById('loginCard').classList.add('hidden');document.getElementById('mainCard').classList.remove('hidden');}
-document.getElementById('logoFile').addEventListener('change',function(){
-  let r=new FileReader();
-  r.onload=function(e){logoData=e.target.result;};
-  r.readAsDataURL(this.files[0]);
+
+// Generate all PDFs and ZIP
+document.getElementById('generateAllPDF').addEventListener('click', async () => {
+  for (const emp of employees) { await generatePDF(emp.code); }
 });
-document.getElementById('excelFile').addEventListener('change',function(e){
-  let r=new FileReader();
-  r.onload=function(e){
-    let data=new Uint8Array(e.target.result),wb=XLSX.read(data,{type:'array'}),all=[];
-    wb.SheetNames.forEach(sheet=>{
-      let rows=XLSX.utils.sheet_to_json(wb.Sheets[sheet],{defval:''}),parts=sheet.split('-'),project=parts[0],location=parts.slice(1).join('-');
-      rows.forEach(r=>{
-        let m=r['Month'];
-        if(typeof m==='number'){
-          let d=XLSX.SSF.parse_date_code(m),dt=new Date(d.y,d.m-1,d.d);
-          m=dt.toLocaleString('en',{month:'short'})+'-'+String(dt.getFullYear()).slice(-2);
-        }
-        r.Month=m;r.Project=project;r.Location=location;
-      });
-      all=all.concat(rows);
-    });
-    payrollData=all;
-    loadMonths();
-  };
-  r.readAsArrayBuffer(this.files[0]);
-});
-function loadMonths(){
-  let l=document.getElementById('monthList');
-  l.innerHTML='';
-  [...new Set(payrollData.map(r=>r.Month))].forEach(m=>{
-    let o=document.createElement('option');
-    o.value=m;o.text=m;l.appendChild(o);
-  });
-}
-function money(v){return(!v||v==0||isNaN(v))?'₹0':'₹'+Number(v).toLocaleString('en-IN');}
-function generatePayslip(){
-  let e=document.getElementById('empCode').value,m=document.getElementById('monthList').value,r=payrollData.find(r=>r['Emp Code']==e&&r.Month==m);
-  if(!r){alert('Employee not found');return}
-  createPDF(r);
-}
-function createPDF(emp){
-  const {jsPDF}=window.jspdf;
-  let doc=new jsPDF(),y=20;
-  if(logoData) doc.addImage(logoData,'PNG',15,10,30,15);
-  doc.setFontSize(18); doc.text('Rudransh Enterprises',70,20);
-  doc.setFontSize(13); doc.text('Employee Payslip',80,28);
-  doc.setFontSize(11);
-  doc.text('Month : '+emp.Month,20,45);
-  doc.text('Emp Code : '+emp['Emp Code'],20,55);
-  doc.text('Name : '+emp['Name'],20,63);
-  doc.text('Designation : '+emp['Designation'],20,71);
-  doc.text('UAN : '+emp['UAN No'],120,55);
-  doc.text('ESI : '+emp['ESI No'],120,63);
-  doc.text('Project : '+emp.Project,120,71);
-  doc.text('Location : '+emp.Location,120,79);
-  y=95;
-  doc.rect(20,y,80,8); doc.rect(100,y,80,8);
-  doc.text('EARNINGS',50,y+6); doc.text('DEDUCTIONS',125,y+6);
-  y+=10;
-  const earnings=['Basic','HRA','Allowance','Bonus','Incentive','Overtime','Other Allowances','Transport','Medical','Special Pay'];
-  const deductions=['PF@12%','ESI@.75%','LWF','Advance Paid','PT','TDS','Other Deductions','Loan','Absence Deduction','Penalty'];
-  y=generateRows(doc,emp,earnings,deductions,y);
-  doc.text('Gross Salary : '+money(emp['Gross']),20,y+15);
-  doc.setFontSize(14); doc.text('Net Salary : '+money(emp['Net In Hand']),20,y+27);
-  doc.setFontSize(9);
-  doc.text('Computer generated payslip – signature not required',20,270);
-  doc.text('© 2026 Rudransh Enterprises. All rights reserved.',50,285);
-  doc.save(emp['Emp Code']+'_'+emp.Month+'.pdf');
-}
-function generateRows(doc,emp,earnings,deductions,y){
-  for(let i=0;i<earnings.length;i++){doc.text(earnings[i],22,y);doc.text(money(emp[earnings[i]]),70,y);y+=8;}
-  for(let i=0;i<deductions.length;i++){doc.text(deductions[i],102,y-80+i*8);doc.text(money(emp[deductions[i]]),150,y-80+i*8);}
-  return y;
-}
-async function downloadAllPayslips(){
-  if(payrollData.length===0){alert('No payroll data');return}
-  const {jsPDF}=window.jspdf,zip=new JSZip();
-  for(const emp of payrollData){
-    let doc=new jsPDF(),y=20;
-    if(logoData) doc.addImage(logoData,'PNG',15,10,30,15);
-    doc.setFontSize(18); doc.text('Rudransh Enterprises',70,20);
-    doc.setFontSize(13); doc.text('Employee Payslip',80,28);
-    doc.setFontSize(11);
-    doc.text('Month : '+emp.Month,20,45);
-    doc.text('Emp Code : '+emp['Emp Code'],20,55);
-    doc.text('Name : '+emp['Name'],20,63);
-    doc.text('Designation : '+emp['Designation'],20,71);
-    doc.text('UAN : '+emp['UAN No'],120,55);
-    doc.text('ESI : '+emp['ESI No'],120,63);
-    doc.text('Project : '+emp.Project,120,71);
-    doc.text('Location : '+emp.Location,120,79);
-    y=95;
-    doc.rect(20,y,80,8); doc.rect(100,y,80,8);
-    doc.text('EARNINGS',50,y+6); doc.text('DEDUCTIONS',125,y+6);
-    y+=10;
-    y=generateRows(doc,emp,['Basic','HRA','Allowance','Bonus','Incentive','Overtime','Other Allowances','Transport','Medical','Special Pay'],['PF@12%','ESI@.75%','LWF','Advance Paid','PT','TDS','Other Deductions','Loan','Absence Deduction','Penalty'],y);
-    doc.text('Gross Salary : '+money(emp['Gross']),20,y+15);
-    doc.setFontSize(14); doc.text('Net Salary : '+money(emp['Net In Hand']),20,y+27);
-    doc.setFontSize(9);
-    doc.text('Computer generated payslip – signature not required',20,270);
-    doc.text('© 2026 Rudransh Enterprises. All rights reserved.',50,285);
-    zip.file(emp['Emp Code']+'_'+emp.Month+'.pdf',doc.output('arraybuffer'));
+
+document.getElementById('downloadZIP').addEventListener('click', async () => {
+  const zip = new JSZip();
+  const { jsPDF } = window.jspdf;
+  for (const emp of employees) {
+    const doc = new jsPDF();
+    doc.setFontSize(16);
+    doc.text('Payslip', 105, 20, null, null, 'center');
+    doc.setFontSize(12);
+    doc.text(`Employee Code: ${emp.code}`, 20, 40);
+    doc.text(`Name: ${emp.name}`, 20, 50);
+    doc.text(`Department: ${emp.dept}`, 20, 60);
+    doc.text(`Basic: ₹${emp.basic}`, 20, 70);
+    doc.text(`HRA: ₹${emp.hra}`, 20, 80);
+    doc.text(`Deductions: ₹${emp.deductions}`, 20, 90);
+    doc.text(`Net Pay: ₹${emp.basic + emp.hra - emp.deductions}`, 20, 100);
+    const pdfData = doc.output('arraybuffer');
+    zip.file(`${emp.code}_payslip.pdf`, pdfData);
   }
-  zip.generateAsync({type:'blob'}).then(c=>{let a=document.createElement('a');a.href=URL.createObjectURL(c);a.download='Payslips.zip';a.click();});
-}
-function generatePF(){alert('PF ECR placeholder');}
-function generateESI(){alert('ESI Return placeholder');}
-function generateTDS(){alert('TDS Report placeholder');}
+  zip.generateAsync({ type: 'blob' }).then(content => {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(content);
+    a.download = 'Payslips.zip';
+    a.click();
+  });
+});
+
+// Search by Employee Code
+document.getElementById('searchEmp').addEventListener('input', (e) => {
+  const filtered = employees.filter(emp => emp.code.toLowerCase().includes(e.target.value.toLowerCase()));
+  renderTable(filtered);
+});
+
+// Excel Upload Placeholder
+document.getElementById('excelUpload').addEventListener('change', (e) => {
+  alert('Excel upload functionality placeholder. Replace with SheetJS parsing for real data.');
+});
 </script>
 </body>
 </html>
