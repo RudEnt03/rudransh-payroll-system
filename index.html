@@ -11,12 +11,12 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
 <style>
-body { font-family: Arial, sans-serif; margin:0; padding:0; }
+body { font-family: Arial,sans-serif; margin:0; padding:0; background:#f3f3f3;}
 header { background:#003366; color:#fff; padding:15px; text-align:center; font-size:22px; }
 section { padding:20px; }
-input, button { padding:8px; font-size:14px; }
+input, button { padding:8px; font-size:14px; margin:5px 0;}
 button { cursor:pointer; }
-#loginBox, #dashboard, #payslipView { display:none; }
+#loginBox, #importBox, #dashboard, #payslipView { display:none; }
 table { border-collapse:collapse; width:100%; margin-top:10px; }
 th, td { border:1px solid #000; padding:6px; text-align:center; }
 .footerNote { font-size:11px; color:#555; text-align:center; margin-top:10px; }
@@ -26,29 +26,33 @@ th, td { border:1px solid #000; padding:6px; text-align:center; }
 
 <header>RUDRANSH PAYROLL SYSTEM v6 - Ultimate</header>
 
+<!-- LOGIN -->
 <section id="loginBox">
     <h2>Login</h2>
-    <input type="text" id="username" placeholder="Username"><br><br>
-    <input type="password" id="password" placeholder="Password"><br><br>
+    <input type="text" id="username" placeholder="Emp Code / Admin"><br>
+    <input type="password" id="password" placeholder="Emp Code / Admin Pass"><br>
     <button onclick="doLogin()">Login</button>
 </section>
 
+<!-- IMPORT EXCEL (Admin only) -->
 <section id="importBox">
     <h2>Import Excel Payroll Sheet</h2>
-    <input type="file" id="excelFile" accept=".xlsx, .xls"><br><br>
+    <input type="file" id="excelFile" accept=".xlsx, .xls"><br>
     <button onclick="loadExcel()">Load Sheet</button>
 </section>
 
+<!-- DASHBOARD -->
 <section id="dashboard">
     <h2>Employee Dashboard</h2>
     <table id="empTable">
         <thead>
-            <tr><th>ID</th><th>Name</th><th>Project</th><th>Action</th></tr>
+            <tr><th>Emp Code</th><th>Name</th><th>Project</th><th>Action</th></tr>
         </thead>
         <tbody></tbody>
     </table>
 </section>
 
+<!-- PAYSLIP VIEW -->
 <section id="payslipView">
     <button onclick="backToDash()">← Back to Dashboard</button>
     <div id="payslipPreview"></div>
@@ -56,35 +60,48 @@ th, td { border:1px solid #000; padding:6px; text-align:center; }
 </section>
 
 <script>
-// === DATA STORAGE ===
+// === GLOBALS ===
 let payrollData = [];
 let currentUser = null;
+let isAdmin = false;
 
-// === LOGIN SYSTEM ===
+// === LOGIN ===
 function doLogin() {
     const u = document.getElementById("username").value.trim();
     const p = document.getElementById("password").value.trim();
 
-    // Hardcoded — change as needed
-    if (u === "admin" && p === "admin123") {
-        document.getElementById("loginBox").style.display = "none";
-        document.getElementById("importBox").style.display = "block";
+    // Admin credentials (hardcoded)
+    if(u === "admin" && p === "Rud@03") {
+        isAdmin = true;
+        document.getElementById("loginBox").style.display="none";
+        document.getElementById("importBox").style.display="block";
         return;
     }
-    alert("Invalid credentials!");
+
+    // Employee login (Emp Code = password)
+    const emp = payrollData.find(e => e.EmpCode === u && p === u);
+    if(emp) {
+        currentUser = emp;
+        isAdmin = false;
+        document.getElementById("loginBox").style.display="none";
+        viewPayslip(emp);
+        return;
+    }
+
+    alert("Invalid login!");
 }
 
-// === EXCEL LOAD ===
+// === LOAD EXCEL (Admin only) ===
 function loadExcel() {
     const fileInput = document.getElementById("excelFile");
-    if (!fileInput.files.length) return alert("Select Excel file");
+    if(!fileInput.files.length) return alert("Select Excel file");
     const reader = new FileReader();
-    reader.onload = function(e) {
+    reader.onload = function(e){
         const data = e.target.result;
-        const wb = XLSX.read(data, { type:"binary" });
+        const wb = XLSX.read(data,{ type:"binary" });
         const sheet = wb.Sheets[wb.SheetNames[0]];
         payrollData = XLSX.utils.sheet_to_json(sheet, { defval:"" });
-        alert("Excel loaded: " + payrollData.length + " records");
+        alert("Excel Loaded: "+payrollData.length+" records");
         showDashboard();
     };
     reader.readAsBinaryString(fileInput.files[0]);
@@ -92,87 +109,87 @@ function loadExcel() {
 
 // === DASHBOARD ===
 function showDashboard() {
-    document.getElementById("importBox").style.display = "none";
-    document.getElementById("dashboard").style.display = "block";
+    document.getElementById("importBox").style.display="none";
+    document.getElementById("dashboard").style.display="block";
     const tbody = document.getElementById("empTable").querySelector("tbody");
     tbody.innerHTML = "";
-    payrollData.forEach((e, i) => {
+    payrollData.forEach(emp => {
         const row = document.createElement("tr");
         row.innerHTML = `
-            <td>${e.ID || i+1}</td>
-            <td>${e.Name}</td>
-            <td>${e.Project}</td>
-            <td><button onclick='viewPayslip(${i})'>View Payslip</button></td>`;
+            <td>${emp.EmpCode}</td>
+            <td>${emp.Name}</td>
+            <td>${emp.Project}</td>
+            <td><button onclick='viewPayslipFromCode("${emp.EmpCode}")'>View Payslip</button></td>`;
         tbody.appendChild(row);
     });
 }
 
 // === PAYSLIP PREVIEW ===
-function viewPayslip(idx) {
-    const emp = payrollData[idx];
-    document.getElementById("dashboard").style.display = "none";
+function viewPayslipFromCode(empCode){
+    const emp = payrollData.find(e=>e.EmpCode===empCode);
+    viewPayslip(emp);
+}
+
+function viewPayslip(emp){
+    document.getElementById("dashboard").style.display="none";
+    document.getElementById("payslipView").style.display="block";
     const container = document.getElementById("payslipPreview");
+
+    const gross = Number(emp.Basic||0)+Number(emp.HRA||0)+Number(emp.Allowance||0)+Number(emp.Bonus||0);
+    const totalDed = Number(emp.PF||0)+Number(emp.ESI_Deduction||0)+Number(emp.Advance||0);
+    const netPay = gross - totalDed;
+
     container.innerHTML = `
-<div style="padding:10px; border:1px solid #000;">
+<div style="padding:10px; border:1px solid #000; width:210mm; margin:auto;">
     <h2 style="text-align:center;">Payslip for: ${emp.Name}</h2>
-
     <table>
-        <tr>
-            <td><strong>Employee ID</strong></td><td>${emp.ID}</td>
-            <td><strong>Project</strong></td><td>${emp.Project}</td>
-        </tr>
-        <tr>
-            <td><strong>UAN</strong></td><td>${emp.UAN}</td>
-            <td><strong>ESI</strong></td><td>${emp.ESI}</td>
-        </tr>
-        <tr>
-            <td><strong>M Days</strong></td><td>${emp.MDays}</td>
-            <td><strong>P Days</strong></td><td>${emp.PDays}</td>
-        </tr>
+        <tr><td><strong>Emp Code:</strong> ${emp.EmpCode}</td><td><strong>Project:</strong> ${emp.Project}</td></tr>
+        <tr><td><strong>UAN:</strong> ${emp.UAN}</td><td><strong>ESI:</strong> ${emp.ESI}</td></tr>
+        <tr><td><strong>M Days:</strong> ${emp.MDays}</td><td><strong>P Days:</strong> ${emp.PDays}</td></tr>
+        <tr><td><strong>Location:</strong> ${emp.Location}</td><td></td></tr>
     </table>
-
     <table>
         <tr><th>EARNINGS</th><th>AMOUNT</th></tr>
         <tr><td>Basic</td><td>${emp.Basic}</td></tr>
         <tr><td>HRA</td><td>${emp.HRA}</td></tr>
         <tr><td>Allowance</td><td>${emp.Allowance}</td></tr>
         <tr><td>Bonus</td><td>${emp.Bonus}</td></tr>
-        <tr><th>GROSS</th><th>${emp.Gross}</th></tr>
+        <tr><th>GROSS</th><th>${gross}</th></tr>
     </table>
-
     <table>
         <tr><th>DEDUCTIONS</th><th>AMOUNT</th></tr>
         <tr><td>PF</td><td>${emp.PF}</td></tr>
         <tr><td>ESI</td><td>${emp.ESI_Deduction}</td></tr>
         <tr><td>Advance</td><td>${emp.Advance}</td></tr>
-        <tr><th>TOTAL DEDUCTIONS</th><th>${emp.TotalDeductions}</th></tr>
+        <tr><th>TOTAL DEDUCTIONS</th><th>${totalDed}</th></tr>
     </table>
-
-    <h3 style="text-align:center;">Net Pay: ${emp.NetPay}</h3>
+    <h3 style="text-align:center;">Net Pay: ${netPay}</h3>
     <div class="footerNote">This is a computer generated payslip. No signature required.</div>
 </div>`;
-    document.getElementById("payslipView").style.display = "block";
 }
 
-// === VIEW SWITCHING ===
-function backToDash() {
-    document.getElementById("payslipView").style.display = "none";
-    document.getElementById("dashboard").style.display = "block";
+// === BACK BUTTON ===
+function backToDash(){
+    document.getElementById("payslipView").style.display="none";
+    if(isAdmin) document.getElementById("dashboard").style.display="block";
 }
 
-// === PDF DOWNLOAD ===
-function downloadPayslipPDF() {
+// === PDF EXPORT ===
+function downloadPayslipPDF(){
     const element = document.getElementById("payslipPreview");
-    const opt = {
-        margin: [0.2,0.2,0.2,0.2],
-        filename: 'Payslip.pdf',
-        image: { type:'jpeg', quality:1 },
-        html2canvas: { scale:2, scrollY:0 },
-        jsPDF: { unit:'in', format:'a4', orientation:'portrait' },
-        pagebreak:{ mode:['css','legacy'] }
-    };
-    html2pdf().set(opt).from(element).save();
+    html2pdf().set({
+        margin:[0.2,0.2,0.2,0.2],
+        filename:'Payslip.pdf',
+        image:{type:'jpeg', quality:1},
+        html2canvas:{scale:2, scrollY:0},
+        jsPDF:{unit:'in', format:'a4', orientation:'portrait'},
+        pagebreak:{mode:['css','legacy']}
+    }).from(element).save();
 }
+
+// === INITIAL DISPLAY ===
+document.getElementById("loginBox").style.display="block";
+
 </script>
 
 </body>
