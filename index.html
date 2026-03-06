@@ -13,15 +13,15 @@
 body{
 font-family:Arial;
 margin:0;
-background:#f3f5fb;
+background:#f4f6fb;
 }
 
 header{
 background:#0b2a4a;
 color:white;
-padding:18px;
-font-size:22px;
+padding:15px;
 text-align:center;
+font-size:22px;
 }
 
 .container{
@@ -36,37 +36,21 @@ border-radius:6px;
 box-shadow:0 2px 8px rgba(0,0,0,.2);
 }
 
+input,select{
+padding:6px;
+margin:5px;
+}
+
 button{
 background:#1a73e8;
-border:none;
 color:white;
-padding:10px 14px;
-margin:5px;
+border:none;
+padding:8px 12px;
 cursor:pointer;
 }
 
 button:hover{
 background:#0b5ed7;
-}
-
-input,select{
-padding:6px;
-margin:6px;
-}
-
-table{
-width:100%;
-border-collapse:collapse;
-}
-
-th,td{
-border:1px solid #ccc;
-padding:6px;
-font-size:13px;
-}
-
-th{
-background:#e7eef9;
 }
 
 .footer{
@@ -118,7 +102,7 @@ Password
 
 <div class="card">
 
-<h3>Admin Dashboard</h3>
+<h3>Admin Panel</h3>
 
 Upload Payroll Excel
 <input type="file" id="excelFile">
@@ -140,17 +124,7 @@ Employee Code
 
 <br>
 
-<button onclick="viewDB()">View Payroll</button>
-<button onclick="singlePayslip()">Generate Payslip</button>
-<button onclick="bulkPayslip()">Bulk Payslips</button>
-<button onclick="removeMonth()">Remove Month</button>
-
-</div>
-
-<div class="card">
-
-<h3>Payroll Data</h3>
-<table id="payrollTable"></table>
+<button onclick="generatePayslip()">Generate Payslip</button>
 
 </div>
 
@@ -208,8 +182,8 @@ if(r=="Admin"){
 document.getElementById("userid").value="Admin"
 document.getElementById("userid").disabled=true
 }else{
-document.getElementById("userid").value=""
 document.getElementById("userid").disabled=false
+document.getElementById("userid").value=""
 }
 
 }
@@ -217,8 +191,8 @@ document.getElementById("userid").disabled=false
 function login(){
 
 let role=document.getElementById("role").value
-let id=document.getElementById("userid").value
 let pass=document.getElementById("password").value
+let id=document.getElementById("userid").value
 
 if(role=="Admin"){
 
@@ -240,7 +214,7 @@ let device=localStorage.getItem("deviceBind")
 if(!device){
 localStorage.setItem("deviceBind",id)
 }else if(device!=id){
-alert("This device is already bound to another employee")
+alert("Device already bound to another employee")
 return
 }
 
@@ -293,14 +267,11 @@ let m=r["Month"]
 if(typeof m==="number"){
 
 let d=XLSX.SSF.parse_date_code(m)
+
 let date=new Date(d.y,d.m-1,d.d)
 
 m=date.toLocaleString('en',{month:'short'})+"-"+String(date.getFullYear()).slice(-2)
 
-}
-
-if(typeof m==="string"){
-m=m.trim()
 }
 
 r.Month=m
@@ -333,11 +304,7 @@ let list=document.getElementById("monthList")
 
 list.innerHTML=""
 
-let months=Object.keys(payrollDB)
-
-months.sort()
-
-months.forEach(m=>{
+Object.keys(payrollDB).forEach(m=>{
 
 let o=document.createElement("option")
 
@@ -345,43 +312,6 @@ o.value=m
 o.text=m
 
 list.appendChild(o)
-
-})
-
-}
-
-function viewDB(){
-
-let m=document.getElementById("monthList").value
-let data=payrollDB[m]
-
-let table=document.getElementById("payrollTable")
-
-table.innerHTML=""
-
-if(!data) return
-
-let head="<tr>"
-
-Object.keys(data[0]).forEach(k=>{
-head+="<th>"+k+"</th>"
-})
-
-head+="</tr>"
-
-table.innerHTML=head
-
-data.forEach(r=>{
-
-let row="<tr>"
-
-Object.values(r).forEach(v=>{
-row+="<td>"+v+"</td>"
-})
-
-row+="</tr>"
-
-table.innerHTML+=row
 
 })
 
@@ -395,9 +325,32 @@ return "₹"+Number(v).toLocaleString("en-IN")
 
 }
 
+function generatePayslip(){
+
+let month=document.getElementById("monthList").value
+let emp=document.getElementById("empSearch").value
+
+let data=payrollDB[month].find(e=>e[COL.emp]==emp)
+
+createPayslip(data,month)
+
+}
+
+function employeePayslip(){
+
+let emp=localStorage.getItem("deviceBind")
+let month=Object.keys(payrollDB).slice(-1)[0]
+
+let data=payrollDB[month].find(e=>e[COL.emp]==emp)
+
+createPayslip(data,month)
+
+}
+
 function createPayslip(emp,month){
 
 const {jsPDF}=window.jspdf
+
 let doc=new jsPDF()
 
 if(logoData){
@@ -442,55 +395,6 @@ doc.text("Computer generated payslip – signature not required",20,270)
 doc.text("© 2026 Rudransh Enterprises. All rights reserved.",45,285)
 
 doc.save(emp[COL.emp]+"_"+month+".pdf")
-
-}
-
-function singlePayslip(){
-
-let m=document.getElementById("monthList").value
-let emp=document.getElementById("empSearch").value
-
-let data=payrollDB[m].find(e=>e[COL.emp]==emp)
-
-if(!data){
-alert("Employee not found")
-return
-}
-
-createPayslip(data,m)
-
-}
-
-function bulkPayslip(){
-
-let m=document.getElementById("monthList").value
-
-payrollDB[m].forEach(e=>{
-createPayslip(e,m)
-})
-
-}
-
-function employeePayslip(){
-
-let emp=localStorage.getItem("deviceBind")
-let m=Object.keys(payrollDB).slice(-1)[0]
-
-let data=payrollDB[m].find(e=>e[COL.emp]==emp)
-
-createPayslip(data,m)
-
-}
-
-function removeMonth(){
-
-let m=document.getElementById("monthList").value
-
-delete payrollDB[m]
-
-localStorage.setItem("payrollDB",JSON.stringify(payrollDB))
-
-loadMonths()
 
 }
 
