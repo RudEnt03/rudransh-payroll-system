@@ -95,57 +95,55 @@
   </div>
 
   <!-- Payslip Preview -->
-  <div class="mt-6 bg-white p-6 rounded-lg shadow-lg border max-w-2xl mx-auto">
-    <!-- Header -->
-    <div class="flex justify-between items-center border-b pb-4 mb-4">
-      <img id="previewLogo" src="" alt="Company Logo" class="h-16">
-      <div class="text-right">
-        <h2 class="text-2xl font-bold">Rudransh Pvt. Ltd.</h2>
-        <p>Month: <span id="previewMonth">-</span></p>
-        <p>Employee Code: <span id="previewEmpCode">-</span></p>
+  <div class="mt-6 bg-white p-6 rounded-lg shadow-lg">
+    <h3 class="text-lg font-semibold mb-3">Payslip Preview</h3>
+    <div id="payslipPreview" class="border rounded p-4 bg-gray-50">
+      <div class="flex justify-between mb-4 items-center">
+        <img id="previewLogo" src="" alt="Company Logo" class="h-12">
+        <div>
+          <h2 class="text-xl font-bold">Rudransh Pvt. Ltd.</h2>
+          <p>Month: <span id="previewMonth">-</span></p>
+        </div>
       </div>
-    </div>
-
-    <!-- Earnings & Deductions -->
-    <div class="grid grid-cols-2 gap-4 mb-4">
-      <div>
-        <h4 class="font-semibold mb-2 text-gray-700 border-b pb-1">Earnings</h4>
-        <table class="w-full text-sm">
-          <thead>
-            <tr class="bg-gray-200">
-              <th class="px-2 py-1 text-left">Description</th>
-              <th class="px-2 py-1 text-right">Amount</th>
-            </tr>
-          </thead>
-          <tbody id="earningsTable" class="divide-y divide-gray-200"></tbody>
-        </table>
+      <div class="grid grid-cols-2 gap-4 mb-4">
+        <div>
+          <p><strong>Employee Code:</strong> <span id="previewEmpCode">-</span></p>
+          <p><strong>Name:</strong> <span id="previewName">-</span></p>
+          <p><strong>Designation:</strong> <span id="previewDesignation">-</span></p>
+          <p><strong>UAN No:</strong> <span id="previewUAN">-</span></p>
+          <p><strong>ESI No:</strong> <span id="previewESINo">-</span></p>
+          <p><strong>Project:</strong> <span id="previewProject">-</span></p>
+          <p><strong>Location:</strong> <span id="previewLocation">-</span></p>
+        </div>
+        <div>
+          <p><strong>M Days:</strong> <span id="previewMDays">-</span></p>
+          <p><strong>P Days:</strong> <span id="previewPDays">-</span></p>
+        </div>
       </div>
-      <div>
-        <h4 class="font-semibold mb-2 text-gray-700 border-b pb-1">Deductions</h4>
-        <table class="w-full text-sm">
-          <thead>
-            <tr class="bg-gray-200">
-              <th class="px-2 py-1 text-left">Description</th>
-              <th class="px-2 py-1 text-right">Amount</th>
-            </tr>
-          </thead>
-          <tbody id="deductionsTable" class="divide-y divide-gray-200"></tbody>
-        </table>
+
+      <div class="grid grid-cols-2 gap-4 mb-4">
+        <div>
+          <h4 class="font-semibold mb-2">Earnings</h4>
+          <table class="w-full text-sm border border-gray-300">
+            <tbody id="earningsTable"></tbody>
+          </table>
+        </div>
+        <div>
+          <h4 class="font-semibold mb-2">Deductions</h4>
+          <table class="w-full text-sm border border-gray-300">
+            <tbody id="deductionsTable"></tbody>
+          </table>
+        </div>
       </div>
-    </div>
 
-    <!-- Totals -->
-    <div class="flex justify-between items-center border-t pt-3 mt-3 text-lg font-bold text-green-700">
-      <div>Net Pay</div>
-      <div>₹<span id="netPay">0</span></div>
+      <div class="text-right font-bold text-lg text-green-700 mb-2">
+        Net Pay: ₹<span id="netPay">0</span>
+      </div>
+      <div class="text-center text-sm text-gray-600 mt-2">
+        This is a computer generated payslip. No signature required.
+      </div>
+      <button id="downloadPDF" class="mt-2 bg-green-600 text-white py-2 px-4 rounded hover:bg-green-700">Download PDF</button>
     </div>
-
-    <!-- Footer -->
-    <div class="mt-6 text-right text-sm text-gray-500">
-      Authorized Signatory
-    </div>
-
-    <button id="downloadPDF" class="mt-4 bg-green-600 text-white py-2 px-4 rounded hover:bg-green-700">Download PDF</button>
   </div>
 </div>
 
@@ -176,7 +174,7 @@ document.getElementById('logoUpload').addEventListener('change', e=>{
   reader.readAsDataURL(e.target.files[0]);
 });
 
-// Excel Import with raw numbers
+// Excel Import
 document.getElementById('excelUpload').addEventListener('change', async e => {
   const file = e.target.files[0];
   if (!file) return;
@@ -184,20 +182,32 @@ document.getElementById('excelUpload').addEventListener('change', async e => {
   const workbook = XLSX.read(data);
   const sheetName = workbook.SheetNames[0];
   const worksheet = workbook.Sheets[sheetName];
-  const rawEmployees = XLSX.utils.sheet_to_json(worksheet, { defval: 0, raw: true });
+  const rawEmployees = XLSX.utils.sheet_to_json(worksheet, { defval: 0 });
 
+  const [project, location] = sheetName.split(" - ");
+  
   employees = rawEmployees.map(emp => ({
     code: (emp['Emp Code'] || "").toString().trim(),
     name: (emp['Name'] || "").toString().trim(),
-    basic: Number(emp['Basic'] || 0),
-    hra: Number(emp['HRA'] || 0),
-    allowance: Number(emp['Allowance'] || 0),
-    bonus: Number(emp['Bonus'] || 0),
-    pf: Number(emp['PF@12%'] || 0),
-    esi: Number(emp['ESI@.75%'] || 0),
-    lwf: Number(emp['LWF'] || 0),
-    netpay: Number(emp['Basic'] || 0) + Number(emp['HRA'] || 0) + Number(emp['Allowance'] || 0) + Number(emp['Bonus'] || 0)
-             - (Number(emp['PF@12%'] || 0) + Number(emp['ESI@.75%'] || 0) + Number(emp['LWF'] || 0))
+    designation: (emp['Designation'] || "").toString().trim(),
+    uan: (emp['UAN No'] || "").toString().trim(),
+    esiNo: (emp['ESI No'] || "").toString().trim(),
+    mDays: emp['M Days'] || 0,
+    pDays: emp['P Days'] || 0,
+    basic: parseFloat(emp['Basic'] || 0),
+    hra: parseFloat(emp['HRA'] || 0),
+    allowance: parseFloat(emp['Allowance'] || 0),
+    leave: parseFloat(emp['Leave'] || 0),
+    bonus: parseFloat(emp['Bonus'] || 0),
+    gross: parseFloat(emp['Gross'] || 0),
+    pf: parseFloat(emp['PF@12%'] || 0),
+    esi: parseFloat(emp['ESI@.75%'] || 0),
+    lwf: parseFloat(emp['LWF'] || 0),
+    advance: parseFloat(emp['Advance Paid'] || 0),
+    total: parseFloat(emp['Total In Hand'] || 0),
+    net: parseFloat(emp['Net In Hand'] || 0),
+    project: project || "",
+    location: location || ""
   }));
 
   document.getElementById('totalEmployees').textContent = employees.length;
@@ -213,26 +223,33 @@ function updatePayslip(empCode, month){
     console.log("Available codes:", employees.map(e=>e.code));
     return alert('Employee not found! Check Excel import and code.');
   }
+
   document.getElementById('previewEmpCode').textContent = emp.code;
+  document.getElementById('previewName').textContent = emp.name;
+  document.getElementById('previewDesignation').textContent = emp.designation;
+  document.getElementById('previewUAN').textContent = emp.uan;
+  document.getElementById('previewESINo').textContent = emp.esiNo;
+  document.getElementById('previewProject').textContent = emp.project;
+  document.getElementById('previewLocation').textContent = emp.location;
+  document.getElementById('previewMDays').textContent = emp.mDays;
+  document.getElementById('previewPDays').textContent = emp.pDays;
   document.getElementById('previewMonth').textContent = month;
 
   // Earnings
   const earnTable = document.getElementById('earningsTable');
   earnTable.innerHTML = '';
-  [['Basic',emp.basic],['HRA',emp.hra],['Allowance',emp.allowance],['Bonus',emp.bonus]].forEach(([k,v])=>{
-    if(v!==undefined) earnTable.innerHTML+=`<tr><td class="px-2 py-1 text-left">${k}</td><td class="px-2 py-1 text-right">₹${v.toFixed(2)}</td></tr>`;
+  [['Basic',emp.basic],['HRA',emp.hra],['Allowance',emp.allowance],['Leave',emp.leave],['Bonus',emp.bonus],['Gross',emp.gross]].forEach(([k,v])=>{
+    if(v!==undefined) earnTable.innerHTML+=`<tr class="border-b"><td class="px-2 py-1 font-medium">${k}</td><td class="px-2 py-1">₹${v}</td></tr>`;
   });
 
   // Deductions
   const dedTable = document.getElementById('deductionsTable');
   dedTable.innerHTML = '';
-  [['PF@12%',emp.pf],['ESI@.75%',emp.esi],['LWF',emp.lwf]].forEach(([k,v])=>{
-    if(v!==undefined) dedTable.innerHTML+=`<tr><td class="px-2 py-1 text-left">${k}</td><td class="px-2 py-1 text-right">₹${v.toFixed(2)}</td></tr>`;
+  [['PF',emp.pf],['ESI',emp.esi],['LWF',emp.lwf],['Advance Paid',emp.advance]].forEach(([k,v])=>{
+    if(v!==undefined) dedTable.innerHTML+=`<tr class="border-b"><td class="px-2 py-1 font-medium">${k}</td><td class="px-2 py-1">₹${v}</td></tr>`;
   });
 
-  // Net Pay
-  const net = emp.basic + emp.hra + emp.allowance + emp.bonus - (emp.pf + emp.esi + emp.lwf);
-  document.getElementById('netPay').textContent = net.toFixed(2);
+  document.getElementById('netPay').textContent = emp.net;
 }
 
 // Generate Payslip Button
@@ -277,6 +294,8 @@ document.getElementById('downloadPDF').addEventListener('click', ()=>{
 
   doc.setFontSize(14); doc.setTextColor(0,128,0);
   doc.text(`Net Pay: ₹${netPay}`, 105, y+15, null, null, "center");
+  doc.setFontSize(10); doc.setTextColor(100);
+  doc.text("This is a computer generated payslip. No signature required.", 105, y+25, null, null, "center");
   doc.save(`${empCode}_${month}.pdf`);
 });
 
@@ -286,8 +305,7 @@ document.getElementById('bulkZip').addEventListener('click', ()=>{
   const zip = new JSZip();
   const month = document.getElementById('monthSelect').value;
   employees.forEach(emp=>{
-    const net = emp.basic + emp.hra + emp.allowance + emp.bonus - (emp.pf + emp.esi + emp.lwf);
-    const content = `Payslip for ${emp.name} (${emp.code})\nBasic: ₹${emp.basic}\nHRA: ₹${emp.hra}\nAllowance: ₹${emp.allowance}\nBonus: ₹${emp.bonus}\nPF@12%: ₹${emp.pf}\nESI@.75%: ₹${emp.esi}\nLWF: ₹${emp.lwf}\nNet Pay: ₹${net.toFixed(2)}`;
+    const content = `Payslip for ${emp.name}\nProject: ${emp.project}\nLocation: ${emp.location}\nBasic: ₹${emp.basic}\nHRA: ₹${emp.hra}\nAllowance: ₹${emp.allowance}\nLeave: ₹${emp.leave}\nBonus: ₹${emp.bonus}\nGross: ₹${emp.gross}\nPF: ₹${emp.pf}\nESI: ₹${emp.esi}\nLWF: ₹${emp.lwf}\nAdvance Paid: ₹${emp.advance}\nTotal In Hand: ₹${emp.total}\nNet In Hand: ₹${emp.net}\n\nThis is a computer generated payslip. No signature required.`;
     zip.file(`${emp.code}_${month}.txt`, content);
   });
   zip.generateAsync({type:"blob"}).then(content=>{
