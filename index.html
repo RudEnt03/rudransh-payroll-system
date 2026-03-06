@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta charset="UTF-8">
 
+<meta charset="UTF-8">
 <title>Rudransh Payroll System</title>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -19,8 +19,8 @@ background:#f4f6fb;
 header{
 background:#0c2d48;
 color:white;
+padding:15px;
 text-align:center;
-padding:18px;
 font-size:22px;
 }
 
@@ -33,16 +33,16 @@ background:white;
 padding:20px;
 margin-bottom:20px;
 border-radius:6px;
-box-shadow:0 2px 8px rgba(0,0,0,.15);
+box-shadow:0 2px 8px rgba(0,0,0,.2);
 }
 
 button{
 background:#1976d2;
-border:none;
 color:white;
+border:none;
 padding:10px 14px;
 cursor:pointer;
-margin:4px;
+margin:5px;
 }
 
 button:hover{
@@ -51,7 +51,7 @@ background:#0d47a1;
 
 input,select{
 padding:6px;
-margin:4px;
+margin:5px;
 }
 
 table{
@@ -73,14 +73,13 @@ background:#e8eef7;
 background:#0c2d48;
 color:white;
 text-align:center;
-padding:12px;
+padding:10px;
 font-size:12px;
-margin-top:30px;
 }
 
 </style>
-</head>
 
+</head>
 
 <body>
 
@@ -129,7 +128,7 @@ Upload Payroll Excel
 Upload Company Logo
 <input type="file" id="logoFile">
 
-<br><br>
+<br>
 
 Select Month
 <select id="monthList"></select>
@@ -139,7 +138,7 @@ Select Month
 Employee Code
 <input id="empSearch">
 
-<br><br>
+<br>
 
 <button onclick="viewDB()">View Payroll</button>
 <button onclick="singlePayslip()">Generate Payslip</button>
@@ -150,11 +149,9 @@ Employee Code
 
 </div>
 
-
 <div class="card">
 
 <h3>Payroll Data</h3>
-
 <table id="payrollTable"></table>
 
 </div>
@@ -181,14 +178,33 @@ Employee Code
 © 2026 Rudransh Enterprises. All rights reserved.
 </div>
 
-
-
 <script>
 
 let payrollDB=JSON.parse(localStorage.getItem("payrollDB")||"{}")
 let logoData=localStorage.getItem("companyLogo")||""
 
-let detectedColumns={}
+let col={
+emp:"Emp Code",
+name:"Name",
+designation:"Designation",
+uan:"UAN No",
+esino:"ESI No",
+month:"Month",
+mdays:"M Days",
+pdays:"P Days",
+basic:"Basic",
+hra:"HRA",
+allow:"Allowance",
+leave:"Leave",
+bonus:"Bonus",
+gross:"Gross",
+pf:"PF@12%",
+esi:"ESI@.75%",
+lwf:"LWF",
+total:"Total In Hand",
+advance:"Advance Paid",
+net:"Net In Hand"
+}
 
 function roleChange(){
 
@@ -203,8 +219,6 @@ document.getElementById("userid").disabled=false
 }
 
 }
-
-
 
 function login(){
 
@@ -222,9 +236,7 @@ document.getElementById("adminPanel").style.display="block"
 loadMonths()
 
 }else{
-
-alert("Wrong Admin Password")
-
+alert("Wrong password")
 }
 
 }else{
@@ -232,15 +244,10 @@ alert("Wrong Admin Password")
 let device=localStorage.getItem("deviceBind")
 
 if(!device){
-
 localStorage.setItem("deviceBind",id)
-
 }else if(device!=id){
-
-alert("This device already bound to another employee")
-
+alert("Device already bound to another employee")
 return
-
 }
 
 document.getElementById("loginBox").style.display="none"
@@ -249,26 +256,6 @@ document.getElementById("empPanel").style.display="block"
 }
 
 }
-
-
-
-function parseMonth(value){
-
-if(typeof value==="number"){
-
-let d=XLSX.SSF.parse_date_code(value)
-
-let date=new Date(d.y,d.m-1,d.d)
-
-return date.toLocaleString('en',{month:'short'})+"-"+String(date.getFullYear()).slice(-2)
-
-}
-
-return value
-
-}
-
-
 
 document.getElementById("logoFile").addEventListener("change",function(){
 
@@ -285,8 +272,6 @@ reader.readAsDataURL(this.files[0])
 
 })
 
-
-
 document.getElementById("excelFile").addEventListener("change",function(e){
 
 let reader=new FileReader()
@@ -302,34 +287,6 @@ let rows=XLSX.utils.sheet_to_json(wb.Sheets[sheet],{defval:""})
 
 if(rows.length==0) return
 
-
-/* detect column names automatically */
-
-let headers=Object.keys(rows[0])
-
-headers.forEach(h=>{
-
-let k=h.toLowerCase()
-
-if(k.includes("emp")) detectedColumns.emp=h
-if(k.includes("name")) detectedColumns.name=h
-if(k.includes("month")) detectedColumns.month=h
-if(k.includes("basic")) detectedColumns.basic=h
-if(k.includes("hra")) detectedColumns.hra=h
-if(k.includes("allow")) detectedColumns.allow=h
-if(k.includes("bonus")) detectedColumns.bonus=h
-if(k.includes("gross")) detectedColumns.gross=h
-if(k.includes("pf")) detectedColumns.pf=h
-if(k.includes("esi")) detectedColumns.esi=h
-if(k.includes("lwf")) detectedColumns.lwf=h
-if(k.includes("advance")) detectedColumns.advance=h
-if(k.includes("net")) detectedColumns.net=h
-if(k.includes("uan")) detectedColumns.uan=h
-if(k.includes("esi no")) detectedColumns.esino=h
-
-})
-
-
 let parts=sheet.split("-")
 
 let project=parts[0]
@@ -337,7 +294,18 @@ let location=parts.slice(1).join("-")
 
 rows.forEach(r=>{
 
-r.Month=parseMonth(r[detectedColumns.month])
+let m=r[col.month]
+
+if(typeof m==="number"){
+
+let d=XLSX.SSF.parse_date_code(m)
+let date=new Date(d.y,d.m-1,d.d)
+
+m=date.toLocaleString('en',{month:'short'})+"-"+String(date.getFullYear()).slice(-2)
+
+}
+
+r.Month=m
 r.Project=project
 r.Location=location
 
@@ -361,8 +329,6 @@ reader.readAsArrayBuffer(this.files[0])
 
 })
 
-
-
 function loadMonths(){
 
 let list=document.getElementById("monthList")
@@ -378,8 +344,6 @@ list.add(o)
 })
 
 }
-
-
 
 function viewDB(){
 
@@ -418,8 +382,6 @@ table.innerHTML+=row
 
 }
 
-
-
 function money(v){
 
 if(!v||isNaN(v)||v==0) return ""
@@ -428,12 +390,9 @@ return "₹"+Number(v).toLocaleString("en-IN")
 
 }
 
-
-
 function createPayslip(emp,month){
 
 const {jsPDF}=window.jspdf
-
 let doc=new jsPDF()
 
 if(logoData){
@@ -448,72 +407,49 @@ doc.text("Employee Payslip",85,30)
 
 doc.text("Month : "+month,20,45)
 
-doc.text("Emp Code : "+emp[detectedColumns.emp],20,55)
-doc.text("Name : "+emp[detectedColumns.name],20,65)
+doc.text("Emp Code : "+emp[col.emp],20,55)
+doc.text("Name : "+emp[col.name],20,65)
 
 doc.text("Project : "+emp.Project,120,55)
 doc.text("Location : "+emp.Location,120,65)
 
-doc.text("UAN : "+(emp[detectedColumns.uan]||""),20,75)
-doc.text("ESI : "+(emp[detectedColumns.esino]||""),120,75)
+doc.text("UAN : "+emp[col.uan],20,75)
+doc.text("ESI : "+emp[col.esino],120,75)
 
-doc.setFontSize(11)
+doc.text("Basic "+money(emp[col.basic]),20,100)
+doc.text("HRA "+money(emp[col.hra]),20,110)
+doc.text("Allowance "+money(emp[col.allow]),20,120)
+doc.text("Bonus "+money(emp[col.bonus]),20,130)
 
-let y=100
+doc.text("PF "+money(emp[col.pf]),120,100)
+doc.text("ESI "+money(emp[col.esi]),120,110)
+doc.text("LWF "+money(emp[col.lwf]),120,120)
+doc.text("Advance "+money(emp[col.advance]),120,130)
 
-doc.text("EARNINGS",20,y)
-doc.text("DEDUCTIONS",120,y)
-
-y+=10
-
-doc.text("Basic "+money(emp[detectedColumns.basic]),20,y)
-doc.text("PF "+money(emp[detectedColumns.pf]),120,y)
-
-y+=10
-
-doc.text("HRA "+money(emp[detectedColumns.hra]),20,y)
-doc.text("ESI "+money(emp[detectedColumns.esi]),120,y)
-
-y+=10
-
-doc.text("Allowance "+money(emp[detectedColumns.allow]),20,y)
-doc.text("LWF "+money(emp[detectedColumns.lwf]),120,y)
-
-y+=10
-
-doc.text("Bonus "+money(emp[detectedColumns.bonus]),20,y)
-doc.text("Advance "+money(emp[detectedColumns.advance]),120,y)
-
-doc.text("Gross : "+money(emp[detectedColumns.gross]),20,170)
+doc.text("Gross : "+money(emp[col.gross]),20,160)
 
 doc.setFontSize(14)
-
-doc.text("NET PAY : "+money(emp[detectedColumns.net]),20,190)
+doc.text("NET PAY : "+money(emp[col.net]),20,190)
 
 doc.setFontSize(9)
-
 doc.text("Computer generated payslip – signature not required",20,270)
 
 doc.text("© 2026 Rudransh Enterprises. All rights reserved.",45,285)
 
-doc.save(emp[detectedColumns.emp]+"_"+month+".pdf")
+doc.save(emp[col.emp]+"_"+month+".pdf")
 
 }
-
-
 
 function singlePayslip(){
 
 let m=document.getElementById("monthList").value
 let emp=document.getElementById("empSearch").value
 
-let data=payrollDB[m].find(e=>e[detectedColumns.emp]==emp)
+let data=payrollDB[m].find(e=>e[col.emp]==emp)
 
 createPayslip(data,m)
 
 }
-
-
 
 function bulkPayslip(){
 
@@ -525,20 +461,16 @@ createPayslip(e,m)
 
 }
 
-
-
 function employeePayslip(){
 
 let emp=localStorage.getItem("deviceBind")
 let m=Object.keys(payrollDB).slice(-1)[0]
 
-let data=payrollDB[m].find(e=>e[detectedColumns.emp]==emp)
+let data=payrollDB[m].find(e=>e[col.emp]==emp)
 
 createPayslip(data,m)
 
 }
-
-
 
 function generatePF(){
 
@@ -547,24 +479,17 @@ let m=document.getElementById("monthList").value
 let txt=""
 
 payrollDB[m].forEach(e=>{
-
-txt+=e[detectedColumns.uan]+"#~#"+e[detectedColumns.name]+"#~#"+e[detectedColumns.pf]+"\n"
-
+txt+=e[col.uan]+"#~#"+e[col.name]+"#~#"+e[col.pf]+"\n"
 })
 
 let blob=new Blob([txt])
-
 let a=document.createElement("a")
 
 a.href=URL.createObjectURL(blob)
-
 a.download="PF_ECR.txt"
-
 a.click()
 
 }
-
-
 
 function generateESI(){
 
@@ -578,8 +503,6 @@ XLSX.utils.book_append_sheet(wb,ws,"ESI")
 XLSX.writeFile(wb,"ESI_Return.xlsx")
 
 }
-
-
 
 function removeMonth(){
 
