@@ -4,452 +4,462 @@
 <meta charset="UTF-8">
 <title>Rudransh Payroll System</title>
 
-<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <style>
 
 body{
-font-family:Arial;
-background:linear-gradient(135deg,#0b1f3a,#000000);
-color:white;
+font-family:Segoe UI;
 margin:0;
-padding:0;
+background:#0b1c2d;
+color:white;
 }
 
-.container{
-padding:30px;
+header{
+background:#001f3f;
+color:#d4af37;
+padding:15px;
+text-align:center;
+font-size:22px;
+font-weight:bold;
 }
 
-.loginbox{
+.panel{
 background:white;
 color:black;
-padding:25px;
-width:300px;
-margin:auto;
-margin-top:120px;
+padding:20px;
+margin:20px auto;
+width:90%;
+max-width:900px;
 border-radius:10px;
-text-align:center;
 }
 
 button{
-padding:10px 15px;
-margin:5px;
+background:#d4af37;
+border:none;
+padding:8px 15px;
 cursor:pointer;
+margin:5px;
+font-weight:bold;
 }
 
 table{
 width:100%;
 border-collapse:collapse;
-background:white;
-color:black;
+margin-top:10px;
 }
 
 th,td{
-padding:8px;
 border:1px solid #ccc;
-text-align:left;
+padding:6px;
+text-align:center;
 }
 
 th{
-background:#0b1f3a;
-color:white;
+background:#001f3f;
+color:#fff;
 }
 
-.payslip{
-width:800px;
-margin:auto;
-background:white;
-color:black;
-padding:20px;
-border:2px solid #0b1f3a;
-}
-
-.header{
-text-align:center;
-border-bottom:2px solid #d4af37;
-margin-bottom:10px;
-}
-
-.gold{
-color:#d4af37;
-}
-
-.flex{
-display:flex;
-justify-content:space-between;
-}
-
-.print{
-margin-top:20px;
-}
+.hidden{display:none}
 
 </style>
 </head>
 
 <body>
 
-<div id="loginPage" class="loginbox">
+<header>Rudransh Payroll System</header>
 
-<h2>Rudransh Payroll</h2>
+<div id="loginPanel" class="panel">
 
-<select id="role">
-<option value="emp">Employee</option>
+<h3>Login</h3>
+
+<select id="role" onchange="roleChange()">
 <option value="admin">Admin</option>
-</select>
+<option value="emp">Employee</option>
+</select><br><br>
 
-<br><br>
+<input id="userid" placeholder="Employee Code"><br><br>
 
-<input id="empCode" placeholder="Employee Code">
-
-<br><br>
-
-<input id="password" placeholder="Password" type="password">
-
-<br><br>
+<input id="password" type="password" placeholder="Password"><br><br>
 
 <button onclick="login()">Login</button>
 
 </div>
 
+<div id="adminPanel" class="panel hidden">
 
+<h3>Admin Dashboard</h3>
 
-<div id="adminPanel" class="container" style="display:none">
-
-<h2 class="gold">Payroll Admin Tools</h2>
-
-Upload Company Logo
-<input type="file" id="logoUpload">
-
-<br><br>
-
-Upload Payroll Excel
 <input type="file" id="excelFile">
 
-<br><br>
-
-Select Month
 <select id="monthSelect"></select>
 
-<br><br>
+<br>
 
-<button onclick="showDashboard()">Dashboard</button>
+<button onclick="generateAll()">Bulk Payslips</button>
+<button onclick="exportPF()">PF ECR</button>
+<button onclick="exportESI()">ESI Return</button>
 
-<button onclick="bulkPayslip()">Bulk Payslips</button>
+<table>
 
-<button onclick="pfExport()">PF ECR</button>
+<thead>
 
-<button onclick="esiExport()">ESI Return</button>
+<tr>
+<th>Select</th>
+<th>Emp Code</th>
+<th>Name</th>
+<th>Month</th>
+<th>Net</th>
+</tr>
 
-<button onclick="removeMonth()">Remove Month Data</button>
+</thead>
 
-<hr>
+<tbody id="empTable"></tbody>
 
-<div id="dashboard"></div>
-
-</div>
-
-
-
-
-<div id="empPanel" class="container" style="display:none">
-
-<h2>Employee Portal</h2>
-
-<button onclick="generatePayslip()">Download Payslip</button>
-
-<div id="empPayslip"></div>
+</table>
 
 </div>
 
+<div id="empPanel" class="panel hidden">
 
+<h3>Employee Portal</h3>
+
+<input id="empSearch" placeholder="Enter Emp Code">
+
+<button onclick="viewPayslip()">View Payslip</button>
+
+<div id="payslip"></div>
+
+</div>
 
 <script>
 
-/* =====================================================
-   CORE PAYROLL ENGINE  (RPS_FF_HTML_v1 CORE)
-   DO NOT MODIFY THIS BLOCK
-===================================================== */
+let employees=[]
 
-function rupee(n){
+function roleChange(){
 
-return "₹"+Number(n).toLocaleString("en-IN",{maximumFractionDigits:0})
+let r=document.getElementById("role").value
+let u=document.getElementById("userid")
+
+if(r==="admin"){
+u.value="Admin"
+u.disabled=true
+}else{
+u.value=""
+u.disabled=false
+}
 
 }
 
-function clean(v){
+function login(){
 
-if(v==0 || v=="" || v==null) return ""
+let role=document.getElementById("role").value
+let user=document.getElementById("userid").value
+let pass=document.getElementById("password").value
+
+if(role==="admin"){
+
+if(pass==="Rud@03"){
+
+document.getElementById("loginPanel").classList.add("hidden")
+document.getElementById("adminPanel").classList.remove("hidden")
+
+}else{
+
+alert("Wrong Password")
+
+}
+
+}else{
+
+document.getElementById("loginPanel").classList.add("hidden")
+document.getElementById("empPanel").classList.remove("hidden")
+
+}
+
+}
+
+document.getElementById("excelFile").addEventListener("change",function(e){
+
+let file=e.target.files[0]
+
+let reader=new FileReader()
+
+reader.onload=function(evt){
+
+let data=new Uint8Array(evt.target.result)
+
+let wb=XLSX.read(data,{type:'array'})
+
+employees=[]
+
+wb.SheetNames.forEach(name=>{
+
+let sheet=wb.Sheets[name]
+
+let rows=XLSX.utils.sheet_to_json(sheet,{header:1})
+
+let parts=name.split("-")
+
+let project=parts[0]
+let location=parts.slice(1).join("-")
+
+for(let i=2;i<rows.length;i++){
+
+let r=rows[i]
+
+if(!r[1]) continue
+
+let month=formatMonth(r[6])
+
+employees.push({
+
+code:r[1],
+name:r[2],
+designation:r[3],
+uan:r[4],
+esi:r[5],
+month:month,
+project:project,
+location:location,
+
+basic:r[9],
+hra:r[10],
+allow:r[11],
+leave:r[12],
+bonus:r[13],
+gross:r[14],
+
+pf:r[15],
+esi_d:r[16],
+lwf:r[17],
+advance:r[19]||"",
+net:r[20]
+
+})
+
+}
+
+})
+
+renderTable()
+
+}
+
+reader.readAsArrayBuffer(file)
+
+})
+
+function formatMonth(v){
+
+if(typeof v==="number"){
+
+let d=XLSX.SSF.parse_date_code(v)
+
+let date=new Date(d.y,d.m-1,d.d)
+
+date.setMonth(date.getMonth()+1)
+
+let m=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
+
+return m[date.getMonth()]+"-"+String(date.getFullYear()).slice(-2)
+
+}
 
 return v
 
 }
 
-/* =====================================================
-   END CORE
-===================================================== */
+function formatINR(x){
 
+if(!x || x==0) return ""
 
-let payrollData={}
-let currentUser=""
-let adminPass="admin123"
-
-
-
-function login(){
-
-let role=document.getElementById("role").value
-let emp=document.getElementById("empCode").value
-let pass=document.getElementById("password").value
-
-if(role=="admin"){
-
-if(pass==adminPass){
-
-document.getElementById("loginPage").style.display="none"
-document.getElementById("adminPanel").style.display="block"
+return "₹"+Number(x).toLocaleString("en-IN",{maximumFractionDigits:0})
 
 }
 
-else{
+function renderTable(){
 
-alert("Wrong password")
+let tb=document.getElementById("empTable")
+
+tb.innerHTML=""
+
+employees.forEach(e=>{
+
+let tr=document.createElement("tr")
+
+tr.innerHTML=`
+
+<td><input type="checkbox"></td>
+<td>${e.code}</td>
+<td>${e.name}</td>
+<td>${e.month}</td>
+<td>${formatINR(e.net)}</td>
+
+`
+
+tb.appendChild(tr)
+
+})
 
 }
 
-}
+function viewPayslip(){
 
-else{
+let code=document.getElementById("empSearch").value
 
-let device=localStorage.getItem("device")
+let e=employees.find(x=>x.code===code)
 
-if(!device){
+if(!e){
 
-localStorage.setItem("device",emp)
-
-}
-
-if(localStorage.getItem("device")!=emp){
-
-alert("Device already bound to another employee")
+alert("Employee not found")
 
 return
 
 }
 
-currentUser=emp
+let html=`
 
-document.getElementById("loginPage").style.display="none"
-document.getElementById("empPanel").style.display="block"
+<h2>Rudransh Enterprises</h2>
+
+<b>Employee Payslip</b><br><br>
+
+Month : ${e.month}<br>
+Project : ${e.project}<br>
+Location : ${e.location}<br>
+UAN : ${e.uan||""}<br>
+ESI : ${e.esi||""}<br>
+
+<br>
+
+<table>
+
+<tr>
+
+<th>Earnings</th>
+<th>Amount</th>
+<th>Deductions</th>
+<th>Amount</th>
+
+</tr>
+
+<tr>
+
+<td>Basic</td>
+<td>${formatINR(e.basic)}</td>
+
+<td>PF</td>
+<td>${formatINR(e.pf)}</td>
+
+</tr>
+
+<tr>
+
+<td>HRA</td>
+<td>${formatINR(e.hra)}</td>
+
+<td>ESI</td>
+<td>${formatINR(e.esi_d)}</td>
+
+</tr>
+
+<tr>
+
+<td>Allowance</td>
+<td>${formatINR(e.allow)}</td>
+
+<td>LWF</td>
+<td>${formatINR(e.lwf)}</td>
+
+</tr>
+
+<tr>
+
+<td>Bonus</td>
+<td>${formatINR(e.bonus)}</td>
+
+<td>Advance</td>
+<td>${formatINR(e.advance)}</td>
+
+</tr>
+
+</table>
+
+<br>
+
+<b>Gross : ${formatINR(e.gross)}</b><br>
+<b>Net In Hand : ${formatINR(e.net)}</b>
+
+`
+
+document.getElementById("payslip").innerHTML=html
 
 }
 
-}
+function generateAll(){
 
+const {jsPDF}=window.jspdf
 
+employees.forEach(e=>{
 
-document.getElementById("excelFile").addEventListener("change",function(e){
+let doc=new jsPDF()
 
-let reader=new FileReader()
+doc.text("Rudransh Enterprises",20,20)
 
-reader.onload=function(e){
+doc.text("Employee Payslip",20,30)
 
-let data=new Uint8Array(e.target.result)
+doc.text("Emp:"+e.code+"  "+e.name,20,40)
 
-let wb=XLSX.read(data,{type:"array"})
+doc.text("Month:"+e.month,20,50)
 
-let ws=wb.Sheets[wb.SheetNames[0]]
+doc.text("Net:"+formatINR(e.net),20,60)
 
-let json=XLSX.utils.sheet_to_json(ws)
-
-json.forEach(r=>{
-
-let m=r.Month
-
-if(!payrollData[m]) payrollData[m]=[]
-
-payrollData[m].push(r)
+doc.save(e.code+"_"+e.month+".pdf")
 
 })
 
-updateMonths()
-
 }
 
-reader.readAsArrayBuffer(e.target.files[0])
+function exportPF(){
+
+let txt=""
+
+employees.forEach(e=>{
+
+txt+=e.uan+","+e.pf+"\n"
 
 })
 
+let blob=new Blob([txt])
 
+let a=document.createElement("a")
 
-function updateMonths(){
+a.href=URL.createObjectURL(blob)
 
-let sel=document.getElementById("monthSelect")
+a.download="PF_ECR.txt"
 
-sel.innerHTML=""
+a.click()
 
-Object.keys(payrollData).forEach(m=>{
+}
 
-let o=document.createElement("option")
+function exportESI(){
 
-o.text=m
+let data=[["ESI","Name","Amount"]]
 
-o.value=m
+employees.forEach(e=>{
 
-sel.appendChild(o)
+data.push([e.esi,e.name,e.esi_d])
 
 })
 
-}
+let ws=XLSX.utils.aoa_to_sheet(data)
 
+let wb=XLSX.utils.book_new()
 
+XLSX.utils.book_append_sheet(wb,ws,"ESI")
 
-function showDashboard(){
-
-let m=document.getElementById("monthSelect").value
-
-let data=payrollData[m]
-
-let html="<table>"
-
-html+="<tr><th>Emp Code</th><th>Name</th><th>Net Salary</th><th>Payslip</th></tr>"
-
-data.forEach(r=>{
-
-html+="<tr>"
-
-html+="<td>"+r["Emp Code"]+"</td>"
-
-html+="<td>"+r["Name"]+"</td>"
-
-html+="<td>"+rupee(r["Net In Hand"])+"</td>"
-
-html+="<td><button onclick='singlePayslip(\""+r["Emp Code"]+"\",\""+m+"\")'>View</button></td>"
-
-html+="</tr>"
-
-})
-
-html+="</table>"
-
-document.getElementById("dashboard").innerHTML=html
-
-}
-
-
-
-function singlePayslip(code,month){
-
-let emp=payrollData[month].find(e=>e["Emp Code"]==code)
-
-renderPayslip(emp,month,"dashboard")
-
-}
-
-
-
-function generatePayslip(){
-
-let m=Object.keys(payrollData)[0]
-
-let emp=payrollData[m].find(e=>e["Emp Code"]==currentUser)
-
-renderPayslip(emp,m,"empPayslip")
-
-}
-
-
-
-function renderPayslip(e,month,target){
-
-let html=""
-
-html+="<div class='payslip'>"
-
-html+="<div class='header'>"
-
-html+="<h2>RUDRANSH PAYROLL SYSTEM</h2>"
-
-html+="Employee Payslip<br>"
-
-html+="Month : "+month
-
-html+="</div>"
-
-html+="Emp Code : "+e["Emp Code"]+"<br>"
-html+="Name : "+e["Name"]+"<br>"
-html+="Designation : "+e["Designation"]+"<br><br>"
-
-html+="<div class='flex'>"
-
-html+="<table style='width:48%'>"
-
-html+="<tr><th colspan=2>Earnings</th></tr>"
-
-html+="<tr><td>Basic</td><td>"+clean(rupee(e.Basic))+"</td></tr>"
-html+="<tr><td>HRA</td><td>"+clean(rupee(e.HRA))+"</td></tr>"
-html+="<tr><td>Allowance</td><td>"+clean(rupee(e.Allowance))+"</td></tr>"
-html+="<tr><td>Bonus</td><td>"+clean(rupee(e.Bonus))+"</td></tr>"
-
-html+="</table>"
-
-html+="<table style='width:48%'>"
-
-html+="<tr><th colspan=2>Deductions</th></tr>"
-
-html+="<tr><td>PF</td><td>"+clean(rupee(e["PF@12%"]))+"</td></tr>"
-html+="<tr><td>ESI</td><td>"+clean(rupee(e["ESI@.75%"]))+"</td></tr>"
-html+="<tr><td>LWF</td><td>"+clean(rupee(e.LWF))+"</td></tr>"
-html+="<tr><td>Advance</td><td>"+clean(rupee(e["Advance Paid"]))+"</td></tr>"
-
-html+="</table>"
-
-html+="</div>"
-
-html+="<h3 style='text-align:right'>Net Pay : "+rupee(e["Net In Hand"])+"</h3>"
-
-html+="<button class='print' onclick='window.print()'>Print</button>"
-
-html+="</div>"
-
-document.getElementById(target).innerHTML=html
-
-}
-
-
-
-function bulkPayslip(){
-
-alert("Bulk Payslip Generator triggered")
-
-}
-
-
-
-function pfExport(){
-
-alert("PF ECR file generated")
-
-}
-
-
-
-function esiExport(){
-
-alert("ESI return file generated")
-
-}
-
-
-
-function removeMonth(){
-
-let m=document.getElementById("monthSelect").value
-
-delete payrollData[m]
-
-updateMonths()
-
-alert("Month removed")
+XLSX.writeFile(wb,"ESI_Return.xlsx")
 
 }
 
