@@ -12,13 +12,13 @@
 body{
 font-family:Arial;
 margin:0;
-background:#eef1f6;
+background:#f3f6fb;
 }
 
 header{
-background:#0b3c5d;
+background:#0c2d48;
 color:white;
-padding:15px;
+padding:16px;
 text-align:center;
 font-size:22px;
 }
@@ -30,9 +30,9 @@ padding:20px;
 .card{
 background:white;
 padding:20px;
-margin-bottom:20px;
 border-radius:6px;
-box-shadow:0 3px 8px rgba(0,0,0,0.15);
+box-shadow:0 2px 10px rgba(0,0,0,.15);
+margin-bottom:20px;
 }
 
 button{
@@ -50,13 +50,12 @@ background:#0d47a1;
 
 input,select{
 padding:6px;
-margin:4px;
+margin:5px;
 }
 
 table{
 width:100%;
 border-collapse:collapse;
-margin-top:10px;
 }
 
 th,td{
@@ -66,16 +65,16 @@ font-size:13px;
 }
 
 th{
-background:#e8edf3;
+background:#e9eef5;
 }
 
 .footer{
-text-align:center;
-background:#0b3c5d;
+background:#0c2d48;
 color:white;
+text-align:center;
 padding:12px;
 font-size:12px;
-margin-top:40px;
+margin-top:30px;
 }
 
 </style>
@@ -132,10 +131,16 @@ Upload Company Logo
 Select Month
 <select id="monthList"></select>
 
+<br>
+
+Employee Code
+<input id="empSearch">
+
 <br><br>
 
 <button onclick="viewDB()">View Payroll</button>
-<button onclick="generateAllPayslips()">Bulk Payslips</button>
+<button onclick="singlePayslip()">Generate Payslip</button>
+<button onclick="bulkPayslip()">Bulk Payslips</button>
 <button onclick="generatePF()">PF ECR</button>
 <button onclick="generateESI()">ESI Return</button>
 <button onclick="removeMonth()">Remove Month</button>
@@ -144,9 +149,7 @@ Select Month
 
 <div class="card">
 
-<h3>Payroll Database</h3>
-
-<input placeholder="Search employee" id="search" onkeyup="searchEmp()">
+<h3>Payroll Data</h3>
 
 <table id="payrollTable"></table>
 
@@ -161,7 +164,7 @@ Select Month
 
 <h3>Employee Portal</h3>
 
-<button onclick="downloadPayslip()">Download Payslip</button>
+<button onclick="employeePayslip()">Download Payslip</button>
 
 </div>
 
@@ -186,8 +189,8 @@ if(r=="Admin"){
 document.getElementById("userid").value="Admin"
 document.getElementById("userid").disabled=true
 }else{
-document.getElementById("userid").disabled=false
 document.getElementById("userid").value=""
+document.getElementById("userid").disabled=false
 }
 
 }
@@ -215,7 +218,7 @@ let device=localStorage.getItem("deviceBind")
 if(!device){
 localStorage.setItem("deviceBind",id)
 }else if(device!=id){
-alert("Device already bound with another employee")
+alert("Device already bound")
 return
 }
 
@@ -223,6 +226,21 @@ document.getElementById("loginBox").style.display="none"
 document.getElementById("empPanel").style.display="block"
 
 }
+
+}
+
+function parseMonth(v){
+
+if(typeof v==="number"){
+
+let d=XLSX.SSF.parse_date_code(v)
+let date=new Date(d.y,d.m-1,d.d)
+
+return date.toLocaleString('en',{month:'short'})+"-"+String(date.getFullYear()).slice(-2)
+
+}
+
+return v
 
 }
 
@@ -239,7 +257,6 @@ reader.readAsDataURL(this.files[0])
 
 })
 
-
 document.getElementById("excelFile").addEventListener("change",function(e){
 
 let reader=new FileReader()
@@ -247,26 +264,31 @@ let reader=new FileReader()
 reader.onload=function(e){
 
 let data=new Uint8Array(e.target.result)
-let workbook=XLSX.read(data,{type:'array'})
+let wb=XLSX.read(data,{type:'array'})
 
-workbook.SheetNames.forEach(sheet=>{
+wb.SheetNames.forEach(sheet=>{
 
-let rows=XLSX.utils.sheet_to_json(workbook.Sheets[sheet])
+let rows=XLSX.utils.sheet_to_json(wb.Sheets[sheet])
+
+if(rows.length==0) return
 
 let parts=sheet.split("-")
 let project=parts[0]
 let location=parts.slice(1).join("-")
 
 rows.forEach(r=>{
+
 r.Project=project
 r.Location=location
+r.Month=parseMonth(r.Month)
+
 })
 
-let month=rows[0].Month
+let m=rows[0].Month
 
-if(!payrollDB[month]) payrollDB[month]=[]
+if(!payrollDB[m]) payrollDB[m]=[]
 
-payrollDB[month]=payrollDB[month].concat(rows)
+payrollDB[m]=payrollDB[m].concat(rows)
 
 })
 
@@ -280,16 +302,17 @@ reader.readAsArrayBuffer(this.files[0])
 
 })
 
-
 function loadMonths(){
 
 let list=document.getElementById("monthList")
 list.innerHTML=""
 
 Object.keys(payrollDB).forEach(m=>{
+
 let o=document.createElement("option")
 o.text=m
 list.add(o)
+
 })
 
 }
@@ -298,6 +321,7 @@ function viewDB(){
 
 let m=document.getElementById("monthList").value
 let data=payrollDB[m]
+
 let table=document.getElementById("payrollTable")
 
 table.innerHTML=""
@@ -305,7 +329,11 @@ table.innerHTML=""
 if(!data) return
 
 let head="<tr>"
-Object.keys(data[0]).forEach(k=>{head+="<th>"+k+"</th>"})
+
+Object.keys(data[0]).forEach(k=>{
+head+="<th>"+k+"</th>"
+})
+
 head+="</tr>"
 
 table.innerHTML=head
@@ -313,7 +341,11 @@ table.innerHTML=head
 data.forEach(r=>{
 
 let row="<tr>"
-Object.values(r).forEach(v=>{row+="<td>"+v+"</td>"})
+
+Object.values(r).forEach(v=>{
+row+="<td>"+v+"</td>"
+})
+
 row+="</tr>"
 
 table.innerHTML+=row
@@ -324,7 +356,7 @@ table.innerHTML+=row
 
 function money(v){
 
-if(!v || v==0 || isNaN(v)) return ""
+if(!v||isNaN(v)||v==0) return ""
 
 return "₹"+Number(v).toLocaleString("en-IN")
 
@@ -340,14 +372,12 @@ if(logoData) doc.addImage(logoData,'PNG',10,10,30,15)
 doc.setFontSize(18)
 doc.text("Rudransh Enterprises",70,20)
 
-doc.setFontSize(13)
+doc.setFontSize(12)
 doc.text("Employee Payslip",85,30)
-
-doc.setFontSize(11)
 
 doc.text("Month : "+month,20,45)
 doc.text("Emp Code : "+emp["Emp Code"],20,55)
-doc.text("Employee : "+emp.Name,20,65)
+doc.text("Name : "+emp.Name,20,65)
 
 doc.text("Project : "+emp.Project,120,55)
 doc.text("Location : "+emp.Location,120,65)
@@ -355,24 +385,40 @@ doc.text("Location : "+emp.Location,120,65)
 doc.text("UAN : "+(emp["UAN No"]||""),20,75)
 doc.text("ESI : "+(emp["ESI No"]||""),120,75)
 
-doc.autoTable({
-startY:90,
-head:[["EARNINGS","Amount","DEDUCTIONS","Amount"]],
-body:[
-["Basic",money(emp.Basic),"PF",money(emp.PF)],
-["HRA",money(emp.HRA),"ESI",money(emp.ESI)],
-["Allowance",money(emp.Allowance),"LWF",money(emp.LWF)],
-["Bonus",money(emp.Bonus),"Advance",money(emp.Advance)]
-]
-})
+doc.setFontSize(11)
 
-doc.text("Gross : "+money(emp.Gross),20,160)
+let y=95
+
+doc.text("EARNINGS",20,y)
+doc.text("DEDUCTIONS",120,y)
+
+y+=10
+
+doc.text("Basic "+money(emp.Basic),20,y)
+doc.text("PF "+money(emp.PF),120,y)
+
+y+=10
+
+doc.text("HRA "+money(emp.HRA),20,y)
+doc.text("ESI "+money(emp.ESI),120,y)
+
+y+=10
+
+doc.text("Allowance "+money(emp.Allowance),20,y)
+doc.text("LWF "+money(emp.LWF),120,y)
+
+y+=10
+
+doc.text("Bonus "+money(emp.Bonus),20,y)
+doc.text("Advance "+money(emp.Advance),120,y)
+
+doc.text("Gross : "+money(emp.Gross),20,170)
 
 doc.setFontSize(14)
-doc.text("NET PAY : "+money(emp["Net In Hand"]),20,180)
+doc.text("NET PAY : "+money(emp["Net In Hand"]),20,190)
 
 doc.setFontSize(9)
-doc.text("Computer generated payslip – signature not required",20,260)
+doc.text("Computer generated payslip – signature not required",20,270)
 
 doc.text("© 2026 Rudransh Enterprises. All rights reserved.",45,285)
 
@@ -380,22 +426,35 @@ doc.save(emp["Emp Code"]+"_"+month+".pdf")
 
 }
 
-function generateAllPayslips(){
+function singlePayslip(){
 
 let m=document.getElementById("monthList").value
+let emp=document.getElementById("empSearch").value
 
-payrollDB[m].forEach(e=>createPayslip(e,m))
+let data=payrollDB[m].find(e=>e["Emp Code"]==emp)
+
+createPayslip(data,m)
 
 }
 
-function downloadPayslip(){
+function bulkPayslip(){
+
+let m=document.getElementById("monthList").value
+
+payrollDB[m].forEach(e=>{
+createPayslip(e,m)
+})
+
+}
+
+function employeePayslip(){
 
 let emp=localStorage.getItem("deviceBind")
-let month=Object.keys(payrollDB).slice(-1)[0]
+let m=Object.keys(payrollDB).slice(-1)[0]
 
-let data=payrollDB[month].find(e=>e["Emp Code"]==emp)
+let data=payrollDB[m].find(e=>e["Emp Code"]==emp)
 
-createPayslip(data,month)
+createPayslip(data,m)
 
 }
 
@@ -409,7 +468,12 @@ payrollDB[m].forEach(e=>{
 txt+=e["UAN No"]+"#~#"+e.Name+"#~#"+e.PF+"\n"
 })
 
-downloadFile(txt,"PF_ECR.txt")
+let blob=new Blob([txt])
+
+let a=document.createElement("a")
+a.href=URL.createObjectURL(blob)
+a.download="PF_ECR.txt"
+a.click()
 
 }
 
@@ -435,35 +499,6 @@ delete payrollDB[m]
 localStorage.setItem("payrollDB",JSON.stringify(payrollDB))
 
 loadMonths()
-
-document.getElementById("payrollTable").innerHTML=""
-
-}
-
-function downloadFile(data,name){
-
-let blob=new Blob([data])
-let a=document.createElement("a")
-
-a.href=URL.createObjectURL(blob)
-a.download=name
-a.click()
-
-}
-
-function searchEmp(){
-
-let val=document.getElementById("search").value.toLowerCase()
-
-let rows=document.querySelectorAll("#payrollTable tr")
-
-rows.forEach((r,i)=>{
-
-if(i==0) return
-
-r.style.display=r.innerText.toLowerCase().includes(val)?"":"none"
-
-})
 
 }
 
