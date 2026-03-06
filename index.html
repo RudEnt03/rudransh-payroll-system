@@ -1,71 +1,78 @@
 <!DOCTYPE html>
-  document.getElementById('totalEmployees').textContent = data.length;
-  const totalNet = data.reduce((acc, e) => acc + e.basic + e.hra - e.deductions, 0);
-  document.getElementById('monthSummary').textContent = '₹' + totalNet.toLocaleString();
-}
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ultimate Payroll Dashboard v6</title>
 
-renderTable(employees);
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
 
-// PDF Generation for single employee
-async function generatePDF(empCode) {
-  const emp = employees.find(e => e.code === empCode);
-  if (!emp) return;
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF();
-  doc.setFontSize(16);
-  doc.text('Payslip', 105, 20, null, null, 'center');
-  doc.setFontSize(12);
-  doc.text(`Employee Code: ${emp.code}`, 20, 40);
-  doc.text(`Name: ${emp.name}`, 20, 50);
-  doc.text(`Department: ${emp.dept}`, 20, 60);
-  doc.text(`Basic: ₹${emp.basic}`, 20, 70);
-  doc.text(`HRA: ₹${emp.hra}`, 20, 80);
-  doc.text(`Deductions: ₹${emp.deductions}`, 20, 90);
-  doc.text(`Net Pay: ₹${emp.basic + emp.hra - emp.deductions}`, 20, 100);
-  doc.save(`${emp.code}_payslip.pdf`);
-}
+  <!-- jsPDF & JSZip CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.0/jszip.min.js"></script>
 
-// Generate all PDFs and ZIP
-document.getElementById('generateAllPDF').addEventListener('click', async () => {
-  for (const emp of employees) { await generatePDF(emp.code); }
-});
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    .card { @apply p-4 bg-white rounded-lg shadow; }
+    .btn { @apply px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700; }
+    .table-fixed th, .table-fixed td { text-align: left; padding: 0.5rem; }
+  </style>
+</head>
+<body class="bg-gray-100">
 
-document.getElementById('downloadZIP').addEventListener('click', async () => {
-  const zip = new JSZip();
-  const { jsPDF } = window.jspdf;
-  for (const emp of employees) {
-    const doc = new jsPDF();
-    doc.setFontSize(16);
-    doc.text('Payslip', 105, 20, null, null, 'center');
-    doc.setFontSize(12);
-    doc.text(`Employee Code: ${emp.code}`, 20, 40);
-    doc.text(`Name: ${emp.name}`, 20, 50);
-    doc.text(`Department: ${emp.dept}`, 20, 60);
-    doc.text(`Basic: ₹${emp.basic}`, 20, 70);
-    doc.text(`HRA: ₹${emp.hra}`, 20, 80);
-    doc.text(`Deductions: ₹${emp.deductions}`, 20, 90);
-    doc.text(`Net Pay: ₹${emp.basic + emp.hra - emp.deductions}`, 20, 100);
-    const pdfData = doc.output('arraybuffer');
-    zip.file(`${emp.code}_payslip.pdf`, pdfData);
-  }
-  zip.generateAsync({ type: 'blob' }).then(content => {
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(content);
-    a.download = 'Payslips.zip';
-    a.click();
-  });
-});
+  <!-- Header -->
+  <header class="flex items-center justify-between p-4 bg-white shadow">
+    <div class="flex items-center space-x-4">
+      <img src="https://via.placeholder.com/50" alt="Logo" class="h-12 w-12">
+      <h1 class="text-2xl font-bold">Ultimate Payroll Dashboard v6</h1>
+    </div>
+    <div>
+      <input type="month" id="monthPicker" class="border p-2 rounded" />
+    </div>
+  </header>
 
-// Search by Employee Code
-document.getElementById('searchEmp').addEventListener('input', (e) => {
-  const filtered = employees.filter(emp => emp.code.toLowerCase().includes(e.target.value.toLowerCase()));
-  renderTable(filtered);
-});
+  <!-- Stats Cards -->
+  <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 p-4">
+    <div class="card">
+      <h2 class="text-gray-500">Total Employees</h2>
+      <p id="totalEmployees" class="text-3xl font-bold">10</p>
+    </div>
+    <div class="card">
+      <h2 class="text-gray-500">Payroll Processed</h2>
+      <p id="payrollProcessed" class="text-3xl font-bold">10</p>
+    </div>
+    <div class="card">
+      <h2 class="text-gray-500">Month Summary</h2>
+      <p id="monthSummary" class="text-3xl font-bold">₹0</p>
+    </div>
+  </div>
 
-// Excel Upload Placeholder
-document.getElementById('excelUpload').addEventListener('change', (e) => {
-  alert('Excel upload functionality placeholder. Replace with SheetJS parsing for real data.');
-});
-</script>
-</body>
+  <!-- Employee Table -->
+  <div class="p-4">
+    <div class="flex justify-between items-center mb-2">
+      <div>
+        <input type="text" id="searchEmp" placeholder="Search Employee Code" class="border p-2 rounded">
+        <input type="file" id="excelUpload" class="ml-2">
+      </div>
+      <div>
+        <button class="btn" id="generateAllPDF">Generate All Payslips</button>
+        <button class="btn" id="downloadZIP">Download ZIP</button>
+      </div>
+    </div>
+
+    <div class="overflow-x-auto bg-white rounded shadow">
+      <table class="table-fixed w-full">
+        <thead class="bg-gray-200">
+          <tr>
+            <th>Emp Code</th>
+            <th>Name</th>
+            <th>Department</th>
+            <th>Basic</th>
+            <th>HRA</th>
+            <th>Deductions</th>
+            <th>Net Pay</th>
+            <th>Action</th>
+          </tr>
+        </thead>
 </html>
