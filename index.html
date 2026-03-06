@@ -4,17 +4,20 @@
 <meta charset="UTF-8">
 <title>RUDRANSH PAYROLL SYSTEM v6 - Ultimate</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<!-- Excel Reader -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<!-- PDF Export -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
 <style>
 body { font-family: Arial,sans-serif; margin:0; padding:0; background:#f3f3f3; }
 header { background:#003366; color:#fff; padding:15px; text-align:center; font-size:22px; }
 section { padding:20px; }
-input, button { padding:8px; font-size:14px; margin:5px 0; }
+input, button { padding:8px; font-size:14px; margin:5px 0;}
 button { cursor:pointer; }
 #loginBox, #importBox, #dashboard, #payslipView { display:none; }
-table { border-collapse:collapse; width:100%; margin-top:10px; }
+table { border-collapse:collapse; width:100%; margin-top:10px;}
 th, td { border:1px solid #000; padding:6px; text-align:center; }
 .footerNote { font-size:11px; color:#555; text-align:center; margin-top:10px; }
 </style>
@@ -23,6 +26,7 @@ th, td { border:1px solid #000; padding:6px; text-align:center; }
 
 <header>RUDRANSH PAYROLL SYSTEM v6 - Ultimate</header>
 
+<!-- LOGIN -->
 <section id="loginBox">
     <h2>Login</h2>
     <input type="text" id="username" placeholder="Emp Code / Admin"><br>
@@ -30,12 +34,14 @@ th, td { border:1px solid #000; padding:6px; text-align:center; }
     <button onclick="doLogin()">Login</button>
 </section>
 
+<!-- IMPORT EXCEL (Admin only) -->
 <section id="importBox">
     <h2>Import Excel Payroll Sheet</h2>
     <input type="file" id="excelFile" accept=".xlsx, .xls"><br>
     <button onclick="loadExcel()">Load Sheet</button>
 </section>
 
+<!-- DASHBOARD -->
 <section id="dashboard">
     <h2>Employee Dashboard</h2>
     <table id="empTable">
@@ -46,13 +52,15 @@ th, td { border:1px solid #000; padding:6px; text-align:center; }
     </table>
 </section>
 
+<!-- PAYSLIP VIEW -->
 <section id="payslipView">
-    <button onclick="backToDash()">← Back</button>
+    <button onclick="backToDash()">← Back to Dashboard</button>
     <div id="payslipPreview"></div>
     <button onclick="downloadPayslipPDF()">Download PDF</button>
 </section>
 
 <script>
+// GLOBALS
 let payrollData=[];
 let currentUser=null;
 let isAdmin=false;
@@ -63,10 +71,23 @@ function doLogin(){
     const u=document.getElementById("username").value.trim();
     const p=document.getElementById("password").value.trim();
 
-    if(u==="admin" && p==="Rud@03"){ isAdmin=true; document.getElementById("loginBox").style.display="none"; document.getElementById("importBox").style.display="block"; return;}
+    // Admin login
+    if(u==="admin" && p==="Rud@03"){ 
+        isAdmin=true; 
+        document.getElementById("loginBox").style.display="none"; 
+        document.getElementById("importBox").style.display="block"; 
+        return;
+    }
 
+    // Employee login (Emp Code = password)
     const emp=payrollData.find(e=>e["Emp Code"]===u && u===p);
-    if(emp){ currentUser=emp; isAdmin=false; document.getElementById("loginBox").style.display="none"; viewPayslip(emp); return;}
+    if(emp){ 
+        currentUser=emp; 
+        isAdmin=false; 
+        document.getElementById("loginBox").style.display="none"; 
+        viewPayslip(emp); 
+        return;
+    }
     alert("Invalid login!");
 }
 
@@ -106,43 +127,50 @@ function viewPayslipFromCode(empCode){
     viewPayslip(emp);
 }
 
-// PAYSLIP
+// PAYSLIP (Enterprise Layout)
 function viewPayslip(emp){
     document.getElementById("dashboard").style.display="none";
     document.getElementById("payslipView").style.display="block";
-    const c=document.getElementById("payslipPreview");
+    const container=document.getElementById("payslipPreview");
 
-    c.innerHTML=`
-<div style="padding:15px;border:1px solid black;width:210mm;margin:auto">
-<h2 style="text-align:center">Payslip for: ${emp["Name"]}</h2>
-<table>
-<tr><td><b>Emp Code:</b> ${emp["Emp Code"]}</td><td><b>Designation:</b> ${emp["Designation"]}</td></tr>
-<tr><td><b>UAN No:</b> ${emp["UAN No"]}</td><td><b>ESI No:</b> ${emp["ESI No"]}</td></tr>
-<tr><td><b>M Days:</b> ${emp["M Days"]}</td><td><b>P Days:</b> ${emp["P Days"]}</td></tr>
-<tr><td><b>Project:</b> ${sheetName}</td><td><b>Location:</b> ${emp["Location"]||""}</td></tr>
-</table>
+    // defaults
+    const location = emp["Location"] || "-";
+    const advancePaid = emp["Advance Paid"] || 0;
 
-<table>
-<tr><th>EARNINGS</th><th>AMOUNT</th></tr>
-<tr><td>Basic</td><td>${emp["Basic"]}</td></tr>
-<tr><td>HRA</td><td>${emp["HRA"]}</td></tr>
-<tr><td>Allowance</td><td>${emp["Allowance"]}</td></tr>
-<tr><td>Leave</td><td>${emp["Leave"]}</td></tr>
-<tr><td>Bonus</td><td>${emp["Bonus"]}</td></tr>
-<tr><th>Gross</th><th>${emp["Gross"]}</th></tr>
-</table>
+    container.innerHTML=`
+<div style="padding:15px; border:2px solid #000; width:210mm; margin:auto; font-family: Arial, sans-serif;">
+    <h2 style="text-align:center; margin-bottom:10px;">Rudransh Pvt. Ltd.</h2>
+    <h3 style="text-align:center; margin-bottom:20px;">Payslip for: ${emp["Name"]}</h3>
 
-<table>
-<tr><th>DEDUCTIONS</th><th>AMOUNT</th></tr>
-<tr><td>PF @12%</td><td>${emp["PF@12%"]}</td></tr>
-<tr><td>ESI @0.75%</td><td>${emp["ESI@.75%"]}</td></tr>
-<tr><td>LWF</td><td>${emp["LWF"]}</td></tr>
-<tr><td>Advance Paid</td><td>${emp["Advance Paid"]}</td></tr>
-</table>
+    <table style="width:100%; margin-bottom:15px;">
+        <tr><td><b>Emp Code:</b> ${emp["Emp Code"]}</td><td><b>Designation:</b> ${emp["Designation"]}</td></tr>
+        <tr><td><b>UAN No:</b> ${emp["UAN No"]}</td><td><b>ESI No:</b> ${emp["ESI No"]}</td></tr>
+        <tr><td><b>M Days:</b> ${emp["M Days"]}</td><td><b>P Days:</b> ${emp["P Days"]}</td></tr>
+        <tr><td><b>Project:</b> ${sheetName}</td><td><b>Location:</b> ${location}</td></tr>
+    </table>
 
-<h3 style="text-align:center">Net Pay: ${emp["Net In Hand"]}</h3>
-<p style="text-align:center;font-size:11px">Generated by RUDRANSH PAYROLL SYSTEM v6 - ULTIMATE Edition | 2026</p>
-</div>`;
+    <table style="width:100%; border-collapse: collapse; margin-bottom:15px;">
+        <tr style="background:#ddd; font-weight:bold;"><th>EARNINGS</th><th>AMOUNT</th></tr>
+        <tr><td>Basic</td><td>${emp["Basic"]}</td></tr>
+        <tr><td>HRA</td><td>${emp["HRA"]}</td></tr>
+        <tr><td>Allowance</td><td>${emp["Allowance"]}</td></tr>
+        <tr><td>Leave</td><td>${emp["Leave"]}</td></tr>
+        <tr><td>Bonus</td><td>${emp["Bonus"]}</td></tr>
+        <tr style="font-weight:bold;"><td>Gross</td><td>${emp["Gross"]}</td></tr>
+    </table>
+
+    <table style="width:100%; border-collapse: collapse; margin-bottom:15px;">
+        <tr style="background:#ddd; font-weight:bold;"><th>DEDUCTIONS</th><th>AMOUNT</th></tr>
+        <tr><td>PF @12%</td><td>${emp["PF@12%"]}</td></tr>
+        <tr><td>ESI @0.75%</td><td>${emp["ESI@.75%"]}</td></tr>
+        <tr><td>LWF</td><td>${emp["LWF"]}</td></tr>
+        <tr><td>Advance Paid</td><td>${advancePaid}</td></tr>
+    </table>
+
+    <h3 style="text-align:center; margin-top:20px;">Net Pay: ${emp["Net In Hand"]}</h3>
+    <p style="text-align:center; font-size:11px; margin-top:15px;">Generated by RUDRANSH PAYROLL SYSTEM v6 - ULTIMATE Edition | 2026</p>
+</div>
+`;
 }
 
 // BACK
@@ -153,7 +181,14 @@ function backToDash(){
 
 // PDF
 function downloadPayslipPDF(){
-    html2pdf().set({margin:[0.2,0.2,0.2,0.2],filename:'Payslip.pdf',image:{type:'jpeg',quality:1},html2canvas:{scale:2,scrollY:0},jsPDF:{unit:'in',format:'a4',orientation:'portrait'},pagebreak:{mode:['css','legacy']}}).from(document.getElementById("payslipPreview")).save();
+    html2pdf().set({
+        margin:[0.2,0.2,0.2,0.2],
+        filename:'Payslip.pdf',
+        image:{type:'jpeg',quality:1},
+        html2canvas:{scale:2,scrollY:0},
+        jsPDF:{unit:'in',format:'a4',orientation:'portrait'},
+        pagebreak:{mode:['css','legacy']}
+    }).from(document.getElementById("payslipPreview")).save();
 }
 
 // INIT
