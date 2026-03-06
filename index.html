@@ -7,11 +7,11 @@
 
 <!-- Tailwind CSS -->
 <script src="https://cdn.tailwindcss.com"></script>
-<!-- SheetJS for Excel -->
+<!-- SheetJS -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<!-- jsPDF for PDF generation -->
+<!-- jsPDF -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<!-- JSZip for bulk download -->
+<!-- JSZip -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.0/jszip.min.js"></script>
 </head>
 <body class="bg-gray-100 font-sans">
@@ -67,7 +67,7 @@
       </div>
       <div class="mb-3">
         <label class="block mb-1 font-medium">Employee Code</label>
-        <input type="text" id="empCodeInput" placeholder="E001" class="w-full border rounded px-3 py-2">
+        <input type="text" id="empCodeInput" placeholder="ATL0018" class="w-full border rounded px-3 py-2">
       </div>
       <button id="generatePayslip" class="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700">Generate Payslip</button>
     </div>
@@ -127,12 +127,10 @@
 </div>
 
 <script>
-// Global variables
+// Global Variables
 let employees = [];
 let payslipsGenerated = 0;
 let zipDownloads = 0;
-
-// Update Last Update Timestamp
 document.getElementById('lastUpdate').textContent = new Date().toLocaleString();
 
 // Login
@@ -144,49 +142,57 @@ document.getElementById('loginBtn').addEventListener('click', ()=>{
     document.getElementById('dashboard').classList.remove('hidden');
   } else alert('Enter credentials!');
 });
-
-// Logout
 document.getElementById('logoutBtn').addEventListener('click', ()=>{
   document.getElementById('dashboard').classList.add('hidden');
   document.getElementById('loginPanel').classList.remove('hidden');
 });
 
-// Company Logo Upload
-document.getElementById('logoUpload').addEventListener('change', (e)=>{
+// Logo Upload
+document.getElementById('logoUpload').addEventListener('change', e=>{
   const reader = new FileReader();
-  reader.onload = function(event){ document.getElementById('previewLogo').src = event.target.result; }
+  reader.onload = event => document.getElementById('previewLogo').src = event.target.result;
   reader.readAsDataURL(e.target.files[0]);
 });
 
-// Excel Import
-document.getElementById('excelUpload').addEventListener('change', async (e)=>{
+// Excel Import with header normalization
+document.getElementById('excelUpload').addEventListener('change', async e=>{
   const file = e.target.files[0];
   if(!file) return;
   const data = await file.arrayBuffer();
   const workbook = XLSX.read(data);
   const sheetName = workbook.SheetNames[0];
   const worksheet = workbook.Sheets[sheetName];
-  employees = XLSX.utils.sheet_to_json(worksheet, {defval:0}); // convert to JS array
+  const rawEmployees = XLSX.utils.sheet_to_json(worksheet, {defval:0});
+
+  employees = rawEmployees.map(emp=>{
+    const normalized = {};
+    for(const key in emp){
+      normalized[key.trim().toLowerCase()] = emp[key];
+    }
+    return normalized;
+  });
+
   document.getElementById('totalEmployees').textContent = employees.length;
-  alert('Excel Imported Successfully!');
+  alert('Excel Imported Successfully! Check console with console.log(employees)');
+  console.log(employees);
 });
 
-// Update Payslip Preview
+// Update Payslip
 function updatePayslip(empCode, month){
-  const emp = employees.find(e=>e.code==empCode);
+  const emp = employees.find(e => e.code == empCode);
   if(!emp) return alert('Employee not found! Check Excel import and code.');
-  
+
   document.getElementById('previewEmpCode').textContent = emp.code;
   document.getElementById('previewMonth').textContent = month;
 
-  // Earnings table
+  // Earnings
   const earnTable = document.getElementById('earningsTable');
   earnTable.innerHTML = '';
   ['basic','hra'].forEach(k=>{
     if(emp[k]!==undefined) earnTable.innerHTML+=`<tr class="border-b"><td class="px-2 py-1">${k.toUpperCase()}</td><td class="px-2 py-1">₹${emp[k]}</td></tr>`;
   });
 
-  // Deductions table
+  // Deductions
   const dedTable = document.getElementById('deductionsTable');
   dedTable.innerHTML = '';
   ['deductions'].forEach(k=>{
@@ -197,7 +203,7 @@ function updatePayslip(empCode, month){
   document.getElementById('netPay').textContent = net;
 }
 
-// Generate Payslip Button
+// Generate Payslip
 document.getElementById('generatePayslip').addEventListener('click', ()=>{
   const empCode = document.getElementById('empCodeInput').value.trim();
   const month = document.getElementById('monthSelect').value;
@@ -219,7 +225,6 @@ document.getElementById('downloadPDF').addEventListener('click', ()=>{
   doc.setFontSize(12);
   doc.text(`Payslip for: ${empCode} - ${month}`, 105, 25, null, null, "center");
 
-  // Earnings
   let y = 35;
   doc.text("Earnings", 20, y);
   y+=7;
@@ -229,8 +234,7 @@ document.getElementById('downloadPDF').addEventListener('click', ()=>{
     y+=7;
   });
 
-  // Deductions
-  y = 35;
+  y=35;
   doc.text("Deductions", 110, y);
   y+=7;
   const dedRows = Array.from(document.querySelectorAll("#deductionsTable tr")).map(r=>[r.cells[0].innerText,r.cells[1].innerText]);
@@ -244,7 +248,7 @@ document.getElementById('downloadPDF').addEventListener('click', ()=>{
   doc.save(`${empCode}_${month}.pdf`);
 });
 
-// Bulk ZIP Download
+// Bulk ZIP
 document.getElementById('bulkZip').addEventListener('click', ()=>{
   if(employees.length==0) return alert('Import Excel first!');
   const zip = new JSZip();
@@ -254,7 +258,7 @@ document.getElementById('bulkZip').addEventListener('click', ()=>{
     const content = `Payslip for ${emp.name}\nBasic: ₹${emp.basic}\nHRA: ₹${emp.hra}\nDeductions: ₹${emp.deductions}\nNet Pay: ₹${net}`;
     zip.file(`${emp.code}_${month}.txt`, content);
   });
-  zip.generateAsync({type:"blob"}).then(function(content){
+  zip.generateAsync({type:"blob"}).then(content=>{
     const a = document.createElement('a');
     a.href = URL.createObjectURL(content);
     a.download = `Payslips_${month}.zip`;
