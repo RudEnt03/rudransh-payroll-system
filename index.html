@@ -4,11 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Rudransh Payroll System v6 Ultimate</title>
-<!-- Tailwind CSS CDN -->
+
+<!-- Tailwind CSS -->
 <script src="https://cdn.tailwindcss.com"></script>
-<!-- jsPDF CDN -->
+<!-- SheetJS for Excel -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<!-- jsPDF for PDF generation -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<!-- JSZip CDN -->
+<!-- JSZip for bulk download -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.0/jszip.min.js"></script>
 </head>
 <body class="bg-gray-100 font-sans">
@@ -95,7 +98,7 @@
   <div class="mt-6 bg-white p-6 rounded-lg shadow-lg">
     <h3 class="text-lg font-semibold mb-3">Payslip Preview</h3>
     <div id="payslipPreview" class="border rounded p-4 bg-gray-50">
-      <div class="flex justify-between mb-4">
+      <div class="flex justify-between mb-4 items-center">
         <img id="previewLogo" src="" alt="Company Logo" class="h-12">
         <div>
           <h2 class="text-xl font-bold">Rudransh Pvt. Ltd.</h2>
@@ -105,76 +108,96 @@
       </div>
       <div class="grid grid-cols-2 gap-4 mb-4">
         <div>
-          <h4 class="font-semibold">Earnings</h4>
+          <h4 class="font-semibold mb-2">Earnings</h4>
           <table class="w-full text-sm border">
             <tbody id="earningsTable"></tbody>
           </table>
         </div>
         <div>
-          <h4 class="font-semibold">Deductions</h4>
+          <h4 class="font-semibold mb-2">Deductions</h4>
           <table class="w-full text-sm border">
             <tbody id="deductionsTable"></tbody>
           </table>
         </div>
       </div>
-      <div class="text-right font-bold text-lg">Net Pay: ₹<span id="netPay">0</span></div>
+      <div class="text-right font-bold text-lg text-green-700">Net Pay: ₹<span id="netPay">0</span></div>
       <button id="downloadPDF" class="mt-4 bg-green-600 text-white py-2 px-4 rounded hover:bg-green-700">Download PDF</button>
     </div>
   </div>
 </div>
 
 <script>
-// Sample 200 employees
-const employees = [];
-for(let i=1;i<=200;i++){
-  employees.push({
-    code: 'E'+i.toString().padStart(3,'0'),
-    name: 'Employee '+i,
-    basic: Math.floor(Math.random()*40000)+20000,
-    hra: Math.floor(Math.random()*15000)+5000,
-    deductions: Math.floor(Math.random()*10000)
-  });
-}
-
-// Dashboard stats
-document.getElementById('totalEmployees').textContent = employees.length;
-document.getElementById('lastUpdate').textContent = new Date().toLocaleString();
-
+// Global variables
+let employees = [];
 let payslipsGenerated = 0;
 let zipDownloads = 0;
 
-function updatePayslip(empCode, month) {
-  const emp = employees.find(e=>e.code===empCode);
-  if(!emp) return alert('Employee not found!');
-  
-  document.getElementById('previewEmpCode').textContent = emp.code;
-  document.getElementById('previewMonth').textContent = month;
+// Update Last Update Timestamp
+document.getElementById('lastUpdate').textContent = new Date().toLocaleString();
 
-  // Earnings
-  const earnings = [{desc:'Basic', amount:emp.basic},{desc:'HRA', amount:emp.hra}];
-  const earnTable = document.getElementById('earningsTable');
-  earnTable.innerHTML = '';
-  earnings.forEach(e=>earnTable.innerHTML+=`<tr class="border-b"><td>${e.desc}</td><td>₹${e.amount}</td></tr>`);
+// Login
+document.getElementById('loginBtn').addEventListener('click', ()=>{
+  const user = document.getElementById('adminUsername').value.trim();
+  const pass = document.getElementById('adminPassword').value.trim();
+  if(user && pass){
+    document.getElementById('loginPanel').classList.add('hidden');
+    document.getElementById('dashboard').classList.remove('hidden');
+  } else alert('Enter credentials!');
+});
 
-  // Deductions
-  const deductions = [{desc:'Tax', amount:emp.deductions}];
-  const dedTable = document.getElementById('deductionsTable');
-  dedTable.innerHTML = '';
-  deductions.forEach(d=>dedTable.innerHTML+=`<tr class="border-b"><td>${d.desc}</td><td>₹${d.amount}</td></tr>`);
+// Logout
+document.getElementById('logoutBtn').addEventListener('click', ()=>{
+  document.getElementById('dashboard').classList.add('hidden');
+  document.getElementById('loginPanel').classList.remove('hidden');
+});
 
-  // Net pay
-  const net = (emp.basic+emp.hra)-emp.deductions;
-  document.getElementById('netPay').textContent = net;
-}
-
-// Logo upload
+// Company Logo Upload
 document.getElementById('logoUpload').addEventListener('change', (e)=>{
   const reader = new FileReader();
   reader.onload = function(event){ document.getElementById('previewLogo').src = event.target.result; }
   reader.readAsDataURL(e.target.files[0]);
 });
 
-// Generate payslip button
+// Excel Import
+document.getElementById('excelUpload').addEventListener('change', async (e)=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  const data = await file.arrayBuffer();
+  const workbook = XLSX.read(data);
+  const sheetName = workbook.SheetNames[0];
+  const worksheet = workbook.Sheets[sheetName];
+  employees = XLSX.utils.sheet_to_json(worksheet, {defval:0}); // convert to JS array
+  document.getElementById('totalEmployees').textContent = employees.length;
+  alert('Excel Imported Successfully!');
+});
+
+// Update Payslip Preview
+function updatePayslip(empCode, month){
+  const emp = employees.find(e=>e.code==empCode);
+  if(!emp) return alert('Employee not found! Check Excel import and code.');
+  
+  document.getElementById('previewEmpCode').textContent = emp.code;
+  document.getElementById('previewMonth').textContent = month;
+
+  // Earnings table
+  const earnTable = document.getElementById('earningsTable');
+  earnTable.innerHTML = '';
+  ['basic','hra'].forEach(k=>{
+    if(emp[k]!==undefined) earnTable.innerHTML+=`<tr class="border-b"><td class="px-2 py-1">${k.toUpperCase()}</td><td class="px-2 py-1">₹${emp[k]}</td></tr>`;
+  });
+
+  // Deductions table
+  const dedTable = document.getElementById('deductionsTable');
+  dedTable.innerHTML = '';
+  ['deductions'].forEach(k=>{
+    if(emp[k]!==undefined) dedTable.innerHTML+=`<tr class="border-b"><td class="px-2 py-1">${k.toUpperCase()}</td><td class="px-2 py-1">₹${emp[k]}</td></tr>`;
+  });
+
+  const net = (emp.basic||0)+(emp.hra||0)-(emp.deductions||0);
+  document.getElementById('netPay').textContent = net;
+}
+
+// Generate Payslip Button
 document.getElementById('generatePayslip').addEventListener('click', ()=>{
   const empCode = document.getElementById('empCodeInput').value.trim();
   const month = document.getElementById('monthSelect').value;
@@ -189,17 +212,46 @@ document.getElementById('downloadPDF').addEventListener('click', ()=>{
   const doc = new jsPDF();
   const empCode = document.getElementById('previewEmpCode').textContent;
   const month = document.getElementById('previewMonth').textContent;
-  doc.text(`Payslip - ${empCode} - ${month}`, 10, 10);
-  doc.text(`Net Pay: ₹${document.getElementById('netPay').textContent}`, 10, 20);
+  const netPay = document.getElementById('netPay').textContent;
+
+  doc.setFontSize(18);
+  doc.text("Rudransh Pvt. Ltd.", 105, 15, null, null, "center");
+  doc.setFontSize(12);
+  doc.text(`Payslip for: ${empCode} - ${month}`, 105, 25, null, null, "center");
+
+  // Earnings
+  let y = 35;
+  doc.text("Earnings", 20, y);
+  y+=7;
+  const earningsRows = Array.from(document.querySelectorAll("#earningsTable tr")).map(r=>[r.cells[0].innerText,r.cells[1].innerText]);
+  earningsRows.forEach(r=>{
+    doc.text(`${r[0]}: ${r[1]}`, 20, y);
+    y+=7;
+  });
+
+  // Deductions
+  y = 35;
+  doc.text("Deductions", 110, y);
+  y+=7;
+  const dedRows = Array.from(document.querySelectorAll("#deductionsTable tr")).map(r=>[r.cells[0].innerText,r.cells[1].innerText]);
+  dedRows.forEach(r=>{
+    doc.text(`${r[0]}: ${r[1]}`, 110, y);
+    y+=7;
+  });
+
+  doc.setFontSize(14);
+  doc.text(`Net Pay: ₹${netPay}`, 105, 100, null, null, "center");
   doc.save(`${empCode}_${month}.pdf`);
 });
 
-// Bulk ZIP download
+// Bulk ZIP Download
 document.getElementById('bulkZip').addEventListener('click', ()=>{
+  if(employees.length==0) return alert('Import Excel first!');
   const zip = new JSZip();
   const month = document.getElementById('monthSelect').value;
   employees.forEach(emp=>{
-    const content = `Payslip for ${emp.name}\nBasic: ${emp.basic}\nHRA: ${emp.hra}\nDeductions: ${emp.deductions}\nNet Pay: ${(emp.basic+emp.hra)-emp.deductions}`;
+    const net = (emp.basic||0)+(emp.hra||0)-(emp.deductions||0);
+    const content = `Payslip for ${emp.name}\nBasic: ₹${emp.basic}\nHRA: ₹${emp.hra}\nDeductions: ₹${emp.deductions}\nNet Pay: ₹${net}`;
     zip.file(`${emp.code}_${month}.txt`, content);
   });
   zip.generateAsync({type:"blob"}).then(function(content){
@@ -211,25 +263,6 @@ document.getElementById('bulkZip').addEventListener('click', ()=>{
     document.getElementById('zipDownloads').textContent = zipDownloads;
   });
 });
-
-// Login simulation
-document.getElementById('loginBtn').addEventListener('click', ()=>{
-  const user = document.getElementById('adminUsername').value.trim();
-  const pass = document.getElementById('adminPassword').value.trim();
-  if(user && pass){
-    document.getElementById('loginPanel').classList.add('hidden');
-    document.getElementById('dashboard').classList.remove('hidden');
-  } else {
-    alert('Enter credentials!');
-  }
-});
-
-// Logout
-document.getElementById('logoutBtn').addEventListener('click', ()=>{
-  document.getElementById('dashboard').classList.add('hidden');
-  document.getElementById('loginPanel').classList.remove('hidden');
-});
-
 </script>
 
 </body>
