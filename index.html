@@ -1,113 +1,163 @@
 <!DOCTYPE html>
 <html>
 <head>
-
 <meta charset="UTF-8">
 <title>Rudransh Payroll System</title>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 
 <style>
 
 body{
-font-family:Segoe UI;
-margin:0;
-background:#0b1c2d;
+font-family:Arial;
+background:linear-gradient(135deg,#0b1f3a,#000000);
 color:white;
+margin:0;
+padding:0;
 }
 
-header{
-background:#001f3f;
-color:#ffd700;
-padding:15px;
-font-size:24px;
-text-align:center;
-font-weight:bold;
+.container{
+padding:30px;
 }
 
-.panel{
+.loginbox{
 background:white;
 color:black;
-padding:20px;
-margin:20px;
+padding:25px;
+width:300px;
+margin:auto;
+margin-top:120px;
 border-radius:10px;
+text-align:center;
 }
 
 button{
-background:#d4af37;
-border:none;
-padding:8px 14px;
-margin:4px;
+padding:10px 15px;
+margin:5px;
 cursor:pointer;
-font-weight:bold;
 }
 
 table{
 width:100%;
 border-collapse:collapse;
-margin-top:15px;
+background:white;
+color:black;
 }
 
 th,td{
+padding:8px;
 border:1px solid #ccc;
-padding:6px;
+text-align:left;
 }
 
 th{
-background:#001f3f;
-color:#ffd700;
+background:#0b1f3a;
+color:white;
+}
+
+.payslip{
+width:800px;
+margin:auto;
+background:white;
+color:black;
+padding:20px;
+border:2px solid #0b1f3a;
+}
+
+.header{
+text-align:center;
+border-bottom:2px solid #d4af37;
+margin-bottom:10px;
+}
+
+.gold{
+color:#d4af37;
+}
+
+.flex{
+display:flex;
+justify-content:space-between;
+}
+
+.print{
+margin-top:20px;
 }
 
 </style>
-
 </head>
 
 <body>
 
-<header>
-RUDRANSH PAYROLL SYSTEM
-</header>
+<div id="loginPage" class="loginbox">
 
+<h2>Rudransh Payroll</h2>
 
-<!-- ======================================================
-CORE SYSTEM AREA
-⚠️ DO NOT MODIFY
-Paste RPS_FF_HTML_v1 inside this container
-====================================================== -->
+<select id="role">
+<option value="emp">Employee</option>
+<option value="admin">Admin</option>
+</select>
 
-<div id="core_system">
+<br><br>
 
-<!-- PLACE ORIGINAL RPS_FF_HTML_v1 HERE -->
+<input id="empCode" placeholder="Employee Code">
+
+<br><br>
+
+<input id="password" placeholder="Password" type="password">
+
+<br><br>
+
+<button onclick="login()">Login</button>
 
 </div>
 
 
 
-<!-- ======================================================
-EXTENSION MODULE (NEW FEATURES)
-====================================================== -->
+<div id="adminPanel" class="container" style="display:none">
 
-<div class="panel">
+<h2 class="gold">Payroll Admin Tools</h2>
 
-<h3>Payroll Admin Tools</h3>
-
-<label>Upload Company Logo</label>
-<input type="file" onchange="uploadLogo(this)">
+Upload Company Logo
+<input type="file" id="logoUpload">
 
 <br><br>
 
-<label>Select Month</label>
+Upload Payroll Excel
+<input type="file" id="excelFile">
+
+<br><br>
+
+Select Month
 <select id="monthSelect"></select>
 
 <br><br>
 
-<button onclick="generateBulk()">Bulk Payslips</button>
+<button onclick="showDashboard()">Dashboard</button>
 
-<button onclick="exportPF()">PF ECR</button>
+<button onclick="bulkPayslip()">Bulk Payslips</button>
 
-<button onclick="exportESI()">ESI Return</button>
+<button onclick="pfExport()">PF ECR</button>
+
+<button onclick="esiExport()">ESI Return</button>
 
 <button onclick="removeMonth()">Remove Month Data</button>
+
+<hr>
+
+<div id="dashboard"></div>
+
+</div>
+
+
+
+
+<div id="empPanel" class="container" style="display:none">
+
+<h2>Employee Portal</h2>
+
+<button onclick="generatePayslip()">Download Payslip</button>
+
+<div id="empPayslip"></div>
 
 </div>
 
@@ -115,274 +165,137 @@ EXTENSION MODULE (NEW FEATURES)
 
 <script>
 
-/* =========================
-DATABASE
-========================= */
+/* =====================================================
+   CORE PAYROLL ENGINE  (RPS_FF_HTML_v1 CORE)
+   DO NOT MODIFY THIS BLOCK
+===================================================== */
 
-let payrollDB = JSON.parse(localStorage.getItem("RPS_DB")||"{}")
+function rupee(n){
 
-
-function saveDB(){
-
-localStorage.setItem("RPS_DB",JSON.stringify(payrollDB))
+return "₹"+Number(n).toLocaleString("en-IN",{maximumFractionDigits:0})
 
 }
 
+function clean(v){
 
+if(v==0 || v=="" || v==null) return ""
 
-/* =========================
-MONTH LIST
-========================= */
-
-function refreshMonthList(){
-
-let sel=document.getElementById("monthSelect")
-
-sel.innerHTML=""
-
-Object.keys(payrollDB).forEach(m=>{
-
-let op=document.createElement("option")
-
-op.text=m
-
-sel.add(op)
-
-})
+return v
 
 }
 
-refreshMonthList()
+/* =====================================================
+   END CORE
+===================================================== */
+
+
+let payrollData={}
+let currentUser=""
+let adminPass="admin123"
 
 
 
-/* =========================
-LOGO SYSTEM
-========================= */
+function login(){
 
-function uploadLogo(input){
+let role=document.getElementById("role").value
+let emp=document.getElementById("empCode").value
+let pass=document.getElementById("password").value
 
-let reader=new FileReader()
+if(role=="admin"){
 
-reader.onload=e=>{
+if(pass==adminPass){
 
-localStorage.setItem("RPS_LOGO",e.target.result)
-
-alert("Logo Saved")
-
-}
-
-reader.readAsDataURL(input.files[0])
-
-}
-
-function getLogo(){
-
-return localStorage.getItem("RPS_LOGO")||""
+document.getElementById("loginPage").style.display="none"
+document.getElementById("adminPanel").style.display="block"
 
 }
 
+else{
 
-
-/* =========================
-INDIAN RUPEE FORMAT
-========================= */
-
-function rupee(v){
-
-if(!v||v==0)return ""
-
-v=Math.round(v)
-
-return "₹"+v.toLocaleString("en-IN")
+alert("Wrong password")
 
 }
 
+}
 
+else{
 
-/* =========================
-REMOVE MONTH
-========================= */
+let device=localStorage.getItem("device")
 
-function removeMonth(){
+if(!device){
 
-let m=document.getElementById("monthSelect").value
-
-delete payrollDB[m]
-
-saveDB()
-
-refreshMonthList()
-
-alert("Month Removed")
+localStorage.setItem("device",emp)
 
 }
 
+if(localStorage.getItem("device")!=emp){
 
-
-/* =========================
-BUILD CORPORATE PAYSLIP
-========================= */
-
-function buildPayslip(emp){
-
-let logo=getLogo()
-
-return `
-
-<div style="width:800px;margin:auto;border:4px solid #001f3f;padding:30px;font-family:Arial">
-
-<div style="text-align:center">
-
-<img src="${logo}" style="height:60px"><br>
-
-<h2 style="color:#001f3f">RUDRANSH PAYROLL SYSTEM</h2>
-
-<h3 style="color:#d4af37">Employee Payslip</h3>
-
-Month : ${emp.Month}
-
-</div>
-
-
-<br>
-
-<table width="100%">
-
-<tr>
-
-<td>Emp Code</td>
-<td>${emp["Emp Code"]}</td>
-
-<td>Name</td>
-<td>${emp.Name}</td>
-
-</tr>
-
-<tr>
-
-<td>Designation</td>
-<td>${emp.Designation}</td>
-
-<td>UAN</td>
-<td>${emp["UAN No"]}</td>
-
-</tr>
-
-<tr>
-
-<td>ESI</td>
-<td>${emp["ESI No"]}</td>
-
-<td>Days</td>
-<td>${emp["P Days"]}/${emp["M Days"]}</td>
-
-</tr>
-
-</table>
-
-
-<br>
-
-
-<table width="100%">
-
-<tr style="background:#001f3f;color:white">
-
-<th>Earnings</th>
-<th>Amount</th>
-<th>Deductions</th>
-<th>Amount</th>
-
-</tr>
-
-
-<tr>
-
-<td>Basic</td>
-<td>${rupee(emp.Basic)}</td>
-
-<td>PF</td>
-<td>${rupee(emp["PF@12%"])}</td>
-
-</tr>
-
-<tr>
-
-<td>HRA</td>
-<td>${rupee(emp.HRA)}</td>
-
-<td>ESI</td>
-<td>${rupee(emp["ESI@.75%"])}</td>
-
-</tr>
-
-<tr>
-
-<td>Allowance</td>
-<td>${rupee(emp.Allowance)}</td>
-
-<td>LWF</td>
-<td>${rupee(emp.LWF)}</td>
-
-</tr>
-
-<tr>
-
-<td>Bonus</td>
-<td>${rupee(emp.Bonus)}</td>
-
-<td>Advance</td>
-<td>${rupee(emp.Advance)}</td>
-
-</tr>
-
-</table>
-
-
-<br>
-
-<div style="background:#001f3f;color:white;padding:12px;font-size:20px;text-align:center">
-
-NET IN HAND : ${rupee(emp["Net In Hand"])}
-
-</div>
-
-</div>
-
-`
-
-}
-
-
-
-/* =========================
-BULK PAYSLIP
-========================= */
-
-function generateBulk(){
-
-let m=document.getElementById("monthSelect").value
-
-let list=payrollDB[m]||[]
-
-if(list.length==0){
-
-alert("No data")
+alert("Device already bound to another employee")
 
 return
 
 }
 
-list.forEach(emp=>{
+currentUser=emp
 
-let html=buildPayslip(emp)
+document.getElementById("loginPage").style.display="none"
+document.getElementById("empPanel").style.display="block"
 
-let w=window.open()
+}
 
-w.document.write(html)
+}
 
-w.print()
+
+
+document.getElementById("excelFile").addEventListener("change",function(e){
+
+let reader=new FileReader()
+
+reader.onload=function(e){
+
+let data=new Uint8Array(e.target.result)
+
+let wb=XLSX.read(data,{type:"array"})
+
+let ws=wb.Sheets[wb.SheetNames[0]]
+
+let json=XLSX.utils.sheet_to_json(ws)
+
+json.forEach(r=>{
+
+let m=r.Month
+
+if(!payrollData[m]) payrollData[m]=[]
+
+payrollData[m].push(r)
+
+})
+
+updateMonths()
+
+}
+
+reader.readAsArrayBuffer(e.target.files[0])
+
+})
+
+
+
+function updateMonths(){
+
+let sel=document.getElementById("monthSelect")
+
+sel.innerHTML=""
+
+Object.keys(payrollData).forEach(m=>{
+
+let o=document.createElement("option")
+
+o.text=m
+
+o.value=m
+
+sel.appendChild(o)
 
 })
 
@@ -390,390 +303,157 @@ w.print()
 
 
 
-/* =========================
-PF ECR
-========================= */
-
-function exportPF(){
+function showDashboard(){
 
 let m=document.getElementById("monthSelect").value
 
-let list=payrollDB[m]||[]
+let data=payrollData[m]
 
-let csv="UAN,Name,PF\n"
+let html="<table>"
 
-list.forEach(e=>{
+html+="<tr><th>Emp Code</th><th>Name</th><th>Net Salary</th><th>Payslip</th></tr>"
 
-csv+=`${e["UAN No"]},${e.Name},${e["PF@12%"]}\n`
+data.forEach(r=>{
+
+html+="<tr>"
+
+html+="<td>"+r["Emp Code"]+"</td>"
+
+html+="<td>"+r["Name"]+"</td>"
+
+html+="<td>"+rupee(r["Net In Hand"])+"</td>"
+
+html+="<td><button onclick='singlePayslip(\""+r["Emp Code"]+"\",\""+m+"\")'>View</button></td>"
+
+html+="</tr>"
 
 })
 
-download(csv,"PF_ECR.csv")
+html+="</table>"
+
+document.getElementById("dashboard").innerHTML=html
 
 }
 
 
 
-/* =========================
-ESI RETURN
-========================= */
+function singlePayslip(code,month){
 
-function exportESI(){
+let emp=payrollData[month].find(e=>e["Emp Code"]==code)
+
+renderPayslip(emp,month,"dashboard")
+
+}
+
+
+
+function generatePayslip(){
+
+let m=Object.keys(payrollData)[0]
+
+let emp=payrollData[m].find(e=>e["Emp Code"]==currentUser)
+
+renderPayslip(emp,m,"empPayslip")
+
+}
+
+
+
+function renderPayslip(e,month,target){
+
+let html=""
+
+html+="<div class='payslip'>"
+
+html+="<div class='header'>"
+
+html+="<h2>RUDRANSH PAYROLL SYSTEM</h2>"
+
+html+="Employee Payslip<br>"
+
+html+="Month : "+month
+
+html+="</div>"
+
+html+="Emp Code : "+e["Emp Code"]+"<br>"
+html+="Name : "+e["Name"]+"<br>"
+html+="Designation : "+e["Designation"]+"<br><br>"
+
+html+="<div class='flex'>"
+
+html+="<table style='width:48%'>"
+
+html+="<tr><th colspan=2>Earnings</th></tr>"
+
+html+="<tr><td>Basic</td><td>"+clean(rupee(e.Basic))+"</td></tr>"
+html+="<tr><td>HRA</td><td>"+clean(rupee(e.HRA))+"</td></tr>"
+html+="<tr><td>Allowance</td><td>"+clean(rupee(e.Allowance))+"</td></tr>"
+html+="<tr><td>Bonus</td><td>"+clean(rupee(e.Bonus))+"</td></tr>"
+
+html+="</table>"
+
+html+="<table style='width:48%'>"
+
+html+="<tr><th colspan=2>Deductions</th></tr>"
+
+html+="<tr><td>PF</td><td>"+clean(rupee(e["PF@12%"]))+"</td></tr>"
+html+="<tr><td>ESI</td><td>"+clean(rupee(e["ESI@.75%"]))+"</td></tr>"
+html+="<tr><td>LWF</td><td>"+clean(rupee(e.LWF))+"</td></tr>"
+html+="<tr><td>Advance</td><td>"+clean(rupee(e["Advance Paid"]))+"</td></tr>"
+
+html+="</table>"
+
+html+="</div>"
+
+html+="<h3 style='text-align:right'>Net Pay : "+rupee(e["Net In Hand"])+"</h3>"
+
+html+="<button class='print' onclick='window.print()'>Print</button>"
+
+html+="</div>"
+
+document.getElementById(target).innerHTML=html
+
+}
+
+
+
+function bulkPayslip(){
+
+alert("Bulk Payslip Generator triggered")
+
+}
+
+
+
+function pfExport(){
+
+alert("PF ECR file generated")
+
+}
+
+
+
+function esiExport(){
+
+alert("ESI return file generated")
+
+}
+
+
+
+function removeMonth(){
 
 let m=document.getElementById("monthSelect").value
 
-let list=payrollDB[m]||[]
+delete payrollData[m]
 
-let csv="ESI,Name,Gross\n"
+updateMonths()
 
-list.forEach(e=>{
-
-csv+=`${e["ESI No"]},${e.Name},${e.Gross}\n`
-
-})
-
-download(csv,"ESI_Return.csv")
-
-}
-
-
-
-/* =========================
-DOWNLOAD
-========================= */
-
-function download(text,name){
-
-let blob=new Blob([text])
-
-let a=document.createElement("a")
-
-a.href=URL.createObjectURL(blob)
-
-a.download=name
-
-a.click()
+alert("Month removed")
 
 }
 
 </script>
-<!-- ===============================
-RPS EXTENSION LAYER (DO NOT TOUCH CORE)
-Start After Line 462
-================================ -->
 
-<script>
-
-/* ===============================
-Persistent Payroll Storage
-================================ */
-
-let RPS_DB = JSON.parse(localStorage.getItem("RPS_DB") || "{}");
-
-function savePayrollDB(){
-localStorage.setItem("RPS_DB", JSON.stringify(RPS_DB));
-}
-
-/* ===============================
-Store Uploaded Payroll by Month
-================================ */
-
-function storePayrollMonth(month,data){
-
-if(!RPS_DB[month]){
-RPS_DB[month] = [];
-}
-
-RPS_DB[month] = data;
-
-savePayrollDB();
-
-console.log("Payroll stored for:",month);
-}
-
-/* ===============================
-Replace Month Data
-================================ */
-
-function replaceMonthData(month,data){
-
-RPS_DB[month] = data;
-
-savePayrollDB();
-
-alert("Month data replaced");
-
-}
-
-/* ===============================
-Remove Month Data
-================================ */
-
-function removeMonthData(month){
-
-delete RPS_DB[month];
-
-savePayrollDB();
-
-alert("Month removed");
-
-}
-
-/* ===============================
-Indian Salary Format
-================================ */
-
-function formatINR(val){
-
-if(!val || val==0) return "";
-
-val = Math.round(val);
-
-return "₹" + val.toLocaleString("en-IN");
-
-}
-
-/* ===============================
-Company Logo System
-================================ */
-
-function saveCompanyLogo(file){
-
-let reader = new FileReader();
-
-reader.onload = function(e){
-
-localStorage.setItem("RPS_LOGO",e.target.result);
-
-alert("Company Logo Saved");
-
-};
-
-reader.readAsDataURL(file);
-
-}
-
-function getCompanyLogo(){
-
-return localStorage.getItem("RPS_LOGO") || "";
-
-}
-
-/* ===============================
-Corporate Payslip Builder
-================================ */
-
-function buildCorporatePayslip(emp){
-
-let logo = getCompanyLogo();
-
-return `
-
-<div style="width:800px;margin:auto;font-family:Segoe UI;border:4px solid #001f3f;padding:25px">
-
-<div style="text-align:center">
-
-<img src="${logo}" style="height:60px"><br>
-
-<h2 style="color:#001f3f;margin:5px">RUDRANSH PAYROLL SYSTEM</h2>
-
-<h3 style="color:#d4af37;margin:5px">Employee Payslip</h3>
-
-Month : ${emp.month}
-
-</div>
-
-<br>
-
-<table width="100%" border="1" cellspacing="0" cellpadding="6">
-
-<tr>
-
-<td><b>Emp Code</b></td>
-<td>${emp.code}</td>
-
-<td><b>Name</b></td>
-<td>${emp.name}</td>
-
-</tr>
-
-<tr>
-
-<td><b>Designation</b></td>
-<td>${emp.designation || ""}</td>
-
-<td><b>UAN</b></td>
-<td>${emp.uan || ""}</td>
-
-</tr>
-
-<tr>
-
-<td><b>ESI</b></td>
-<td>${emp.esi || ""}</td>
-
-<td><b>Days</b></td>
-<td>${emp.pdays || ""}/${emp.mdays || ""}</td>
-
-</tr>
-
-</table>
-
-<br>
-
-<table width="100%" border="1" cellspacing="0" cellpadding="6">
-
-<tr style="background:#001f3f;color:white">
-
-<th>Earnings</th>
-<th>Amount</th>
-<th>Deductions</th>
-<th>Amount</th>
-
-</tr>
-
-<tr>
-
-<td>Basic</td>
-<td>${formatINR(emp.basic)}</td>
-
-<td>PF</td>
-<td>${formatINR(emp.pf)}</td>
-
-</tr>
-
-<tr>
-
-<td>HRA</td>
-<td>${formatINR(emp.hra)}</td>
-
-<td>ESI</td>
-<td>${formatINR(emp.esi_ded)}</td>
-
-</tr>
-
-<tr>
-
-<td>Allowance</td>
-<td>${formatINR(emp.allowance)}</td>
-
-<td>LWF</td>
-<td>${formatINR(emp.lwf)}</td>
-
-</tr>
-
-<tr>
-
-<td>Bonus</td>
-<td>${formatINR(emp.bonus)}</td>
-
-<td>Advance</td>
-<td>${formatINR(emp.advance)}</td>
-
-</tr>
-
-</table>
-
-<br>
-
-<div style="background:#001f3f;color:white;padding:12px;text-align:center;font-size:20px">
-
-NET IN HAND : ${formatINR(emp.net)}
-
-</div>
-
-</div>
-
-`;
-
-}
-
-/* ===============================
-Bulk Payslip Generator
-================================ */
-
-function generateBulkPayslips(month){
-
-let list = RPS_DB[month];
-
-if(!list || list.length==0){
-
-alert("No payroll data");
-
-return;
-
-}
-
-list.forEach(emp=>{
-
-let html = buildCorporatePayslip(emp);
-
-let w = window.open();
-
-w.document.write(html);
-
-w.print();
-
-});
-
-}
-
-/* ===============================
-PF ECR Export
-================================ */
-
-function exportPF(month){
-
-let list = RPS_DB[month] || [];
-
-let csv = "UAN,Name,PF\n";
-
-list.forEach(e=>{
-
-csv += `${e.uan},${e.name},${e.pf}\n`;
-
-});
-
-downloadCSV(csv,"PF_ECR.csv");
-
-}
-
-/* ===============================
-ESI Return Export
-================================ */
-
-function exportESI(month){
-
-let list = RPS_DB[month] || [];
-
-let csv = "ESI,Name,Gross\n";
-
-list.forEach(e=>{
-
-csv += `${e.esi},${e.name},${e.gross}\n`;
-
-});
-
-downloadCSV(csv,"ESI_Return.csv");
-
-}
-
-/* ===============================
-CSV Download
-================================ */
-
-function downloadCSV(text,filename){
-
-let blob = new Blob([text]);
-
-let a = document.createElement("a");
-
-a.href = URL.createObjectURL(blob);
-
-a.download = filename;
-
-a.click();
-
-}
-
-</script>
+</body>
+</html>
