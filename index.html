@@ -9,43 +9,23 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
 <style>
-body {
-    font-family: Arial, sans-serif;
-    background: #f3f3f3;
-    margin: 0;
-    padding: 20px;
-}
+body { font-family: Arial, sans-serif; background: #f3f3f3; margin: 0; padding: 20px; }
 #payslipPreview {
     background: #fff;
+    width: 210mm;
+    margin: 0 auto;
     padding: 20px;
     border: 1px solid #ccc;
-    width: 210mm; /* A4 width */
-    margin: 0 auto;
     box-shadow: 0 0 10px rgba(0,0,0,0.1);
 }
-h1, h2 { text-align: center; margin: 0; padding: 0; }
-table {
-    width: 100%;
-    border-collapse: collapse;
-    page-break-inside: auto;
-}
+h1, h2 { text-align: center; margin: 0; padding: 5px 0; }
+table { width: 100%; border-collapse: collapse; page-break-inside: auto; }
 table, th, td { border: 1px solid #000; }
-th, td { padding: 5px; font-size: 12px; text-align: center; }
+th, td { padding: 5px; text-align: center; font-size: 12px; }
 tfoot td { font-weight: bold; }
 .section-title { background: #e0e0e0; font-weight: bold; }
-.footer {
-    margin-top: 20px;
-    text-align: center;
-    font-size: 10px;
-    color: #555;
-}
-button {
-    display: block;
-    margin: 20px auto;
-    padding: 10px 20px;
-    font-size: 14px;
-    cursor: pointer;
-}
+.footer { margin-top: 20px; text-align: center; font-size: 10px; color: #555; }
+button { display: block; margin: 20px auto; padding: 10px 20px; font-size: 14px; cursor: pointer; }
 </style>
 </head>
 <body>
@@ -53,52 +33,86 @@ button {
 <h1>RUDRANSH PAYROLL SYSTEM v6 - ULTIMATE</h1>
 <h2>Payslip Preview</h2>
 
-<!-- This div wraps your ENTIRE Enterprise payslip preview -->
 <div id="payslipPreview">
-    <!-- Insert your real Enterprise HTML here -->
-    <!-- Example Header -->
-    <table>
-        <tr class="section-title">
-            <td>Name</td><td>Designation</td><td>UAN No</td><td>ESI No</td><td>Project</td><td>Location</td>
-        </tr>
-        <tr>
-            <td>Debasish Biswas</td><td>Software Engineer</td><td>123456789012</td><td>9876543210</td><td>Project X</td><td>Gurgaon</td>
-        </tr>
-    </table>
-
-    <!-- Example Attendance -->
-    <table>
-        <tr class="section-title"><td>M Days</td><td>P Days</td></tr>
-        <tr><td>22</td><td>20</td></tr>
-    </table>
-
-    <!-- Example Earnings & Deductions -->
-    <table>
-        <tr class="section-title">
-            <td>Basic</td><td>HRA</td><td>Allowance</td><td>Leave</td><td>Bonus</td><td>PF @12%</td><td>ESI @0.75%</td><td>LWF</td><td>Gross</td><td>Advance Paid</td><td>Net Pay</td>
-        </tr>
-        <tr>
-            <td>50,000</td><td>10,000</td><td>5,000</td><td>0</td><td>2,000</td><td>7,200</td><td>450</td><td>200</td><td>67,000</td><td>5,000</td><td>61,800</td>
-        </tr>
-    </table>
-
-    <div class="footer">
-        This is a computer generated payslip. No signature required.
-    </div>
+    <!-- Dynamic content goes here -->
 </div>
 
-<button onclick="downloadEnterprisePDF()">Download PDF</button>
+<button onclick="downloadEnterprisePayslipPDF()">Download PDF</button>
 
 <script>
-function downloadEnterprisePDF() {
+// Example employee data (replace with real dynamic data)
+const employeeData = [
+    {
+        name: 'Debasish Biswas',
+        designation: 'Software Engineer',
+        uan: '123456789012',
+        esi: '9876543210',
+        project: 'Project X',
+        location: 'Gurgaon',
+        mDays: 22,
+        pDays: 20,
+        earnings: { basic: 50000, hra: 10000, allowance: 5000, leave: 0, bonus: 2000 },
+        deductions: { pf: 7200, esi: 450, lwf: 200, advance: 5000 }
+    }
+];
+
+// Function to render payslip dynamically
+function renderPayslips() {
+    const container = document.getElementById('payslipPreview');
+    container.innerHTML = '';
+
+    employeeData.forEach(emp => {
+        let gross = Object.values(emp.earnings).reduce((a,b)=>a+b,0);
+        let totalDeductions = Object.values(emp.deductions).reduce((a,b)=>a+b,0);
+        let netPay = gross - totalDeductions;
+
+        container.innerHTML += `
+        <table>
+            <tr class="section-title">
+                <td>Name</td><td>Designation</td><td>UAN No</td><td>ESI No</td><td>Project</td><td>Location</td>
+            </tr>
+            <tr>
+                <td>${emp.name}</td><td>${emp.designation}</td><td>${emp.uan}</td><td>${emp.esi}</td><td>${emp.project}</td><td>${emp.location}</td>
+            </tr>
+        </table>
+
+        <table>
+            <tr class="section-title"><td>M Days</td><td>P Days</td></tr>
+            <tr><td>${emp.mDays}</td><td>${emp.pDays}</td></tr>
+        </table>
+
+        <table>
+            <tr class="section-title">
+                <td>Basic</td><td>HRA</td><td>Allowance</td><td>Leave</td><td>Bonus</td>
+                <td>PF @12%</td><td>ESI @0.75%</td><td>LWF</td><td>Gross</td><td>Advance Paid</td><td>Net Pay</td>
+            </tr>
+            <tr>
+                <td>${emp.earnings.basic}</td><td>${emp.earnings.hra}</td><td>${emp.earnings.allowance}</td><td>${emp.earnings.leave}</td><td>${emp.earnings.bonus}</td>
+                <td>${emp.deductions.pf}</td><td>${emp.deductions.esi}</td><td>${emp.deductions.lwf}</td><td>${gross}</td><td>${emp.deductions.advance}</td><td>${netPay}</td>
+            </tr>
+        </table>
+
+        <div class="footer">
+            This is a computer generated payslip. No signature required.
+        </div>
+        <div style="page-break-after: always;"></div>
+        `;
+    });
+}
+
+// Render payslips on page load
+renderPayslips();
+
+// PDF download function
+function downloadEnterprisePayslipPDF() {
     const element = document.getElementById('payslipPreview');
     const opt = {
-        margin:       [0.3, 0.3, 0.3, 0.3], // top/right/bottom/left in inches
+        margin:       [0.2, 0.2, 0.2, 0.2],
         filename:     'Rudransh_Payslip.pdf',
         image:        { type: 'jpeg', quality: 1 },
         html2canvas:  { scale: 2, scrollY: 0, logging: true },
         jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' },
-        pagebreak:    { mode: ['css', 'legacy'] } // handle multi-page
+        pagebreak:    { mode: ['css', 'legacy'] }
     };
     html2pdf().set(opt).from(element).save();
 }
