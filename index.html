@@ -12,15 +12,15 @@
 
 body{
 font-family:Arial;
+background:#f2f4f8;
 margin:0;
-background:#f4f6fb;
 }
 
 header{
 background:#0b2a4a;
 color:white;
-padding:15px;
 text-align:center;
+padding:15px;
 font-size:22px;
 }
 
@@ -31,9 +31,9 @@ padding:20px;
 .card{
 background:white;
 padding:20px;
-margin-bottom:20px;
 border-radius:6px;
-box-shadow:0 2px 8px rgba(0,0,0,.2);
+box-shadow:0 2px 6px rgba(0,0,0,.2);
+margin-bottom:20px;
 }
 
 input,select{
@@ -47,10 +47,6 @@ color:white;
 border:none;
 padding:8px 12px;
 cursor:pointer;
-}
-
-button:hover{
-background:#0b5ed7;
 }
 
 .footer{
@@ -71,76 +67,25 @@ font-size:12px;
 
 <div class="container">
 
-<div class="card" id="loginBox">
+<div class="card">
 
-<h3>Login</h3>
+Upload Payroll Excel
 
-<select id="role" onchange="roleChange()">
-<option>Employee</option>
-<option>Admin</option>
-</select>
-
-<br>
-
-User ID
-<input id="userid">
-
-<br>
-
-Password
-<input type="password" id="password">
+<input type="file" id="excelFile">
 
 <br><br>
 
-<button onclick="login()">Login</button>
-
-</div>
-
-
-
-<div id="adminPanel" style="display:none">
-
-<div class="card">
-
-<h3>Admin Panel</h3>
-
-Upload Payroll Excel
-<input type="file" id="excelFile">
-
-<br>
-
-Upload Company Logo
-<input type="file" id="logoFile">
-
-<br>
-
 Select Month
+
 <select id="monthList"></select>
 
-<br>
+<br><br>
 
 Employee Code
-<input id="empSearch">
 
-<br>
+<input id="empCode">
 
 <button onclick="generatePayslip()">Generate Payslip</button>
-
-</div>
-
-</div>
-
-
-
-<div id="empPanel" style="display:none">
-
-<div class="card">
-
-<h3>Employee Portal</h3>
-
-<button onclick="employeePayslip()">Download Payslip</button>
-
-</div>
 
 </div>
 
@@ -152,93 +97,7 @@ Employee Code
 
 <script>
 
-let payrollDB=JSON.parse(localStorage.getItem("payrollDB")||"{}")
-let logoData=localStorage.getItem("companyLogo")||""
-
-const COL={
-emp:"Emp Code",
-name:"Name",
-designation:"Designation",
-uan:"UAN No",
-esi:"ESI No",
-month:"Month",
-basic:"Basic",
-hra:"HRA",
-allow:"Allowance",
-bonus:"Bonus",
-gross:"Gross",
-pf:"PF@12%",
-esic:"ESI@.75%",
-lwf:"LWF",
-advance:"Advance Paid",
-net:"Net In Hand"
-}
-
-function roleChange(){
-
-let r=document.getElementById("role").value
-
-if(r=="Admin"){
-document.getElementById("userid").value="Admin"
-document.getElementById("userid").disabled=true
-}else{
-document.getElementById("userid").disabled=false
-document.getElementById("userid").value=""
-}
-
-}
-
-function login(){
-
-let role=document.getElementById("role").value
-let pass=document.getElementById("password").value
-let id=document.getElementById("userid").value
-
-if(role=="Admin"){
-
-if(pass==="Rud@03"){
-
-document.getElementById("loginBox").style.display="none"
-document.getElementById("adminPanel").style.display="block"
-
-loadMonths()
-
-}else{
-alert("Wrong password")
-}
-
-}else{
-
-let device=localStorage.getItem("deviceBind")
-
-if(!device){
-localStorage.setItem("deviceBind",id)
-}else if(device!=id){
-alert("Device already bound to another employee")
-return
-}
-
-document.getElementById("loginBox").style.display="none"
-document.getElementById("empPanel").style.display="block"
-
-}
-
-}
-
-document.getElementById("logoFile").addEventListener("change",function(){
-
-let reader=new FileReader()
-
-reader.onload=function(e){
-
-logoData=e.target.result
-localStorage.setItem("companyLogo",logoData)
-
-}
-
-reader.readAsDataURL(this.files[0])
-
-})
+let payrollData=[]
 
 document.getElementById("excelFile").addEventListener("change",function(e){
 
@@ -247,48 +106,14 @@ let reader=new FileReader()
 reader.onload=function(e){
 
 let data=new Uint8Array(e.target.result)
+
 let wb=XLSX.read(data,{type:'array'})
 
-wb.SheetNames.forEach(sheet=>{
+let sheet=wb.SheetNames[0]
 
 let rows=XLSX.utils.sheet_to_json(wb.Sheets[sheet],{defval:""})
 
-if(rows.length==0) return
-
-let parts=sheet.split("-")
-
-let project=parts[0]
-let location=parts.slice(1).join("-")
-
-rows.forEach(r=>{
-
-let m=r["Month"]
-
-if(typeof m==="number"){
-
-let d=XLSX.SSF.parse_date_code(m)
-
-let date=new Date(d.y,d.m-1,d.d)
-
-m=date.toLocaleString('en',{month:'short'})+"-"+String(date.getFullYear()).slice(-2)
-
-}
-
-r.Month=m
-r.Project=project
-r.Location=location
-
-})
-
-let monthKey=rows[0].Month
-
-if(!payrollDB[monthKey]) payrollDB[monthKey]=[]
-
-payrollDB[monthKey]=payrollDB[monthKey].concat(rows)
-
-})
-
-localStorage.setItem("payrollDB",JSON.stringify(payrollDB))
+payrollData=rows
 
 loadMonths()
 
@@ -304,14 +129,16 @@ let list=document.getElementById("monthList")
 
 list.innerHTML=""
 
-Object.keys(payrollDB).forEach(m=>{
+let months=[...new Set(payrollData.map(r=>r["Month"]))]
 
-let o=document.createElement("option")
+months.forEach(m=>{
 
-o.value=m
-o.text=m
+let opt=document.createElement("option")
 
-list.appendChild(o)
+opt.value=m
+opt.text=m
+
+list.appendChild(opt)
 
 })
 
@@ -319,7 +146,7 @@ list.appendChild(o)
 
 function money(v){
 
-if(!v || v==0 || isNaN(v)) return ""
+if(!v || v==0) return ""
 
 return "₹"+Number(v).toLocaleString("en-IN")
 
@@ -327,35 +154,25 @@ return "₹"+Number(v).toLocaleString("en-IN")
 
 function generatePayslip(){
 
+let emp=document.getElementById("empCode").value
 let month=document.getElementById("monthList").value
-let emp=document.getElementById("empSearch").value
 
-let data=payrollDB[month].find(e=>e[COL.emp]==emp)
+let row=payrollData.find(r=>r["Emp Code"]==emp && r["Month"]==month)
 
-createPayslip(data,month)
+if(!row){
+alert("Employee not found for selected month")
+return
+}
+
+createPDF(row)
 
 }
 
-function employeePayslip(){
-
-let emp=localStorage.getItem("deviceBind")
-let month=Object.keys(payrollDB).slice(-1)[0]
-
-let data=payrollDB[month].find(e=>e[COL.emp]==emp)
-
-createPayslip(data,month)
-
-}
-
-function createPayslip(emp,month){
+function createPDF(emp){
 
 const {jsPDF}=window.jspdf
 
 let doc=new jsPDF()
-
-if(logoData){
-doc.addImage(logoData,'PNG',10,10,30,15)
-}
 
 doc.setFontSize(18)
 doc.text("Rudransh Enterprises",70,20)
@@ -363,38 +180,35 @@ doc.text("Rudransh Enterprises",70,20)
 doc.setFontSize(12)
 doc.text("Employee Payslip",85,30)
 
-doc.text("Month : "+month,20,45)
+doc.text("Month : "+emp["Month"],20,45)
 
-doc.text("Emp Code : "+emp[COL.emp],20,60)
-doc.text("Name : "+emp[COL.name],20,70)
+doc.text("Emp Code : "+emp["Emp Code"],20,60)
+doc.text("Name : "+emp["Name"],20,70)
 
-doc.text("Project : "+emp.Project,120,60)
-doc.text("Location : "+emp.Location,120,70)
+doc.text("UAN : "+emp["UAN No"],20,85)
+doc.text("ESI : "+emp["ESI No"],120,85)
 
-doc.text("UAN : "+emp[COL.uan],20,85)
-doc.text("ESI : "+emp[COL.esi],120,85)
+doc.text("Basic "+money(emp["Basic"]),20,110)
+doc.text("HRA "+money(emp["HRA"]),20,120)
+doc.text("Allowance "+money(emp["Allowance"]),20,130)
+doc.text("Bonus "+money(emp["Bonus"]),20,140)
 
-doc.text("Basic "+money(emp[COL.basic]),20,110)
-doc.text("HRA "+money(emp[COL.hra]),20,120)
-doc.text("Allowance "+money(emp[COL.allow]),20,130)
-doc.text("Bonus "+money(emp[COL.bonus]),20,140)
+doc.text("PF "+money(emp["PF@12%"]),120,110)
+doc.text("ESI "+money(emp["ESI@.75%"]),120,120)
+doc.text("LWF "+money(emp["LWF"]),120,130)
+doc.text("Advance "+money(emp["Advance Paid"]),120,140)
 
-doc.text("PF "+money(emp[COL.pf]),120,110)
-doc.text("ESI "+money(emp[COL.esic]),120,120)
-doc.text("LWF "+money(emp[COL.lwf]),120,130)
-doc.text("Advance "+money(emp[COL.advance]),120,140)
-
-doc.text("Gross : "+money(emp[COL.gross]),20,170)
+doc.text("Gross : "+money(emp["Gross"]),20,170)
 
 doc.setFontSize(14)
-doc.text("NET PAY : "+money(emp[COL.net]),20,200)
+doc.text("NET PAY : "+money(emp["Net In Hand"]),20,200)
 
 doc.setFontSize(9)
 doc.text("Computer generated payslip – signature not required",20,270)
 
 doc.text("© 2026 Rudransh Enterprises. All rights reserved.",45,285)
 
-doc.save(emp[COL.emp]+"_"+month+".pdf")
+doc.save(emp["Emp Code"]+"_"+emp["Month"]+".pdf")
 
 }
 
