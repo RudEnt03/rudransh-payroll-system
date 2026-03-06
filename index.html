@@ -1,79 +1,36 @@
 <!DOCTYPE html>
-document.getElementById('logoFile').addEventListener('change', function(){
-    let reader = new FileReader();
-    reader.onload = function(e){ logoData = e.target.result; };
-    reader.readAsDataURL(this.files[0]);
-});
 
-document.getElementById('excelFile').addEventListener('change', function(e){
-    let reader = new FileReader();
-    reader.onload = function(e){
-        let data = new Uint8Array(e.target.result);
-        let wb = XLSX.read(data, {type:'array'});
-        let all = [];
-        wb.SheetNames.forEach(sheet => {
-            let rows = XLSX.utils.sheet_to_json(wb.Sheets[sheet], {defval: ''});
-            let parts = sheet.split('-');
-            let project = parts[0];
-            let location = parts.slice(1).join('-');
-            rows.forEach(r => {
-                let m = r['Month'];
-                if(typeof m === 'number'){ let d = XLSX.SSF.parse_date_code(m);
-                let dt = new Date(d.y, d.m-1, d.d); m = dt.toLocaleString('en',{month:'short'}) + '-' + String(dt.getFullYear()).slice(-2); }
-                r.Month = m; r.Project = project; r.Location = location;
-            });
-            all = all.concat(rows);
-        });
-        payrollData = all;
-        loadMonths();
-    };
-    reader.readAsArrayBuffer(this.files[0]);
-});
+    // Earnings & Deductions Table
+    y=95;
+    doc.rect(20,y,80,8); doc.rect(100,y,80,8);
+    doc.text('EARNINGS',50,y+6); doc.text('DEDUCTIONS',125,y+6);
+    y+=10;
 
-function loadMonths(){
-    let list = document.getElementById('monthList'); list.innerHTML = '';
-    let months = [...new Set(payrollData.map(r => r.Month))];
-    months.forEach(m => { let o = document.createElement('option'); o.value=m;o.text=m;list.appendChild(o); });
-}
+    // Explicitly write each earning row
+    doc.text('Basic',22,y); doc.text(money(emp['Basic']),70,y); y+=8;
+    doc.text('HRA',22,y); doc.text(money(emp['HRA']),70,y); y+=8;
+    doc.text('Allowance',22,y); doc.text(money(emp['Allowance']),70,y); y+=8;
+    doc.text('Bonus',22,y); doc.text(money(emp['Bonus']),70,y); y+=8;
 
-function money(v){ if(!v||v==0||isNaN(v)) return ''; return '₹'+Number(v).toLocaleString('en-IN'); }
+    // Explicitly write each deduction row
+    doc.text('PF',102,y-24); doc.text(money(emp['PF@12%']),150,y-24);
+    doc.text('ESI',102,y-16); doc.text(money(emp['ESI@.75%']),150,y-16);
+    doc.text('LWF',102,y-8); doc.text(money(emp['LWF']),150,y-8);
+    doc.text('Advance',102,y); doc.text(money(emp['Advance Paid']),150,y);
 
-// ====== SINGLE PAYSLIP PDF ======
-function generatePayslip(){
-    let emp = document.getElementById('empCode').value;
-    let month = document.getElementById('monthList').value;
-    let row = payrollData.find(r => r['Emp Code']==emp && r.Month==month);
-    if(!row){ alert('Employee not found'); return; }
-    createPDF(row);
-}
+    // Gross & Net Salary
+    y+=15; doc.text('Gross Salary : '+money(emp['Gross']),20,y);
+    y+=12; doc.setFontSize(14); doc.text('Net Salary : '+money(emp['Net In Hand']),20,y);
 
-function createPDF(emp){
-    const { jsPDF } = window.jspdf;
-    let doc = new jsPDF(); let y=20;
-    if(logoData) doc.addImage(logoData,'PNG',15,10,30,15);
-    doc.setFontSize(18); doc.text('Rudransh Enterprises',70,20);
-    doc.setFontSize(13); doc.text('Employee Payslip',80,28);
-    doc.setFontSize(11);
-    doc.text('Month : '+emp.Month,20,45);
-    doc.text('Emp Code : '+emp['Emp Code'],20,55);
-    doc.text('Name : '+emp['Name'],20,63);
-    doc.text('Designation : '+emp['Designation'],20,71);
-    doc.text('UAN : '+emp['UAN No'],120,55);
-    doc.text('ESI : '+emp['ESI No'],120,63);
-    doc.text('Project : '+emp.Project,120,71);
-    doc.text('Location : '+emp.Location,120,79);
-    y=95; doc.rect(20,y,80,8); doc.rect(100,y,80,8);
-    doc.text('EARNINGS',50,y+6); doc.text('DEDUCTIONS',125,y+6); y+=10;
-    ['Basic','HRA','Allowance','Bonus'].forEach((key,i)=>{ doc.text(key,22,y+i*8); doc.text(money(emp[key]),70,y+i*8); });
-    ['PF@12%','ESI@.75%','LWF','Advance Paid'].forEach((key,i)=>{ doc.text(key.replace('Paid',''),102,y+i*8); doc.text(money(emp[key]),150,y+i*8); });
-    y+=40; doc.setFontSize(12); doc.text('Gross Salary : '+money(emp['Gross']),20,y);
-    y+=10; doc.setFontSize(14); doc.text('Net Salary : '+money(emp['Net In Hand']),20,y);
-    doc.setFontSize(9); doc.text('Computer generated payslip – signature not required',20,270);
+    // Footer
+    doc.setFontSize(9);
+    doc.text('Computer generated payslip – signature not required',20,270);
     doc.text('© 2026 Rudransh Enterprises. All rights reserved.',50,285);
+
     doc.save(emp['Emp Code']+'_'+emp.Month+'.pdf');
 }
 
-// ====== BULK PDF ZIP ======
+// ===== BULK ZIP PDF DOWNLOAD =====
 async function downloadAllPayslips(){
     if(payrollData.length===0){alert('No payroll data');return;}
     const { jsPDF } = window.jspdf;
@@ -92,26 +49,40 @@ async function downloadAllPayslips(){
         doc.text('ESI : '+emp['ESI No'],120,63);
         doc.text('Project : '+emp.Project,120,71);
         doc.text('Location : '+emp.Location,120,79);
+
         y=95; doc.rect(20,y,80,8); doc.rect(100,y,80,8);
         doc.text('EARNINGS',50,y+6); doc.text('DEDUCTIONS',125,y+6); y+=10;
-        ['Basic','HRA','Allowance','Bonus'].forEach((key,i)=>{ doc.text(key,22,y+i*8); doc.text(money(emp[key]),70,y+i*8); });
-        ['PF@12%','ESI@.75%','LWF','Advance Paid'].forEach((key,i)=>{ doc.text(key.replace('Paid',''),102,y+i*8); doc.text(money(emp[key]),150,y+i*8); });
-        y+=40; doc.setFontSize(12); doc.text('Gross Salary : '+money(emp['Gross']),20,y);
-        y+=10; doc.setFontSize(14); doc.text('Net Salary : '+money(emp['Net In Hand']),20,y);
-        doc.setFontSize(9); doc.text('Computer generated payslip – signature not required',20,270);
+
+        doc.text('Basic',22,y); doc.text(money(emp['Basic']),70,y); y+=8;
+        doc.text('HRA',22,y); doc.text(money(emp['HRA']),70,y); y+=8;
+        doc.text('Allowance',22,y); doc.text(money(emp['Allowance']),70,y); y+=8;
+        doc.text('Bonus',22,y); doc.text(money(emp['Bonus']),70,y); y+=8;
+
+        doc.text('PF',102,y-24); doc.text(money(emp['PF@12%']),150,y-24);
+        doc.text('ESI',102,y-16); doc.text(money(emp['ESI@.75%']),150,y-16);
+        doc.text('LWF',102,y-8); doc.text(money(emp['LWF']),150,y-8);
+        doc.text('Advance',102,y); doc.text(money(emp['Advance Paid']),150,y);
+
+        y+=15; doc.text('Gross Salary : '+money(emp['Gross']),20,y);
+        y+=12; doc.setFontSize(14); doc.text('Net Salary : '+money(emp['Net In Hand']),20,y);
+        doc.setFontSize(9);
+        doc.text('Computer generated payslip – signature not required',20,270);
         doc.text('© 2026 Rudransh Enterprises. All rights reserved.',50,285);
+
         let pdfData = doc.output('arraybuffer');
         zip.file(emp['Emp Code']+'_'+emp.Month+'.pdf', pdfData);
     }
     zip.generateAsync({type:'blob'}).then(function(content){
-        const a = document.createElement('a'); a.href = URL.createObjectURL(content);
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(content);
         a.download = 'Payslips.zip'; a.click();
     });
 }
 
-// ====== PF / ESI PLACEHOLDER ======
-function generatePF(){ alert('PF ECR generator demo (CSV/Excel export can be added here)'); }
-function generateESI(){ alert('ESI Return generator demo (CSV/Excel export can be added here)'); }
+// ===== PF / ESI / TDS PLACEHOLDERS =====
+function generatePF(){ alert('PF ECR generator placeholder (CSV/Excel export)'); }
+function generateESI(){ alert('ESI Return generator placeholder (CSV/Excel export)'); }
+function generateTDS(){ alert('TDS Report generator placeholder'); }
 
 </script>
 
