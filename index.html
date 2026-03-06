@@ -2,99 +2,175 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>RUDRANSH PAYROLL SYSTEM v6 - Ultimate</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<!-- html2pdf library -->
+<!-- Excel reader -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<!-- PDF exporter -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
 <style>
-body {
-    font-family: Arial, sans-serif;
-    background: #f3f3f3;
-    margin: 0;
-    padding: 20px;
-}
-#payslipPreview {
-    background: #fff;
-    width: 210mm; /* A4 width */
-    margin: 0 auto;
-    padding: 20px;
-    border: 1px solid #ccc;
-    box-shadow: 0 0 10px rgba(0,0,0,0.1);
-}
-button {
-    display: block;
-    margin: 20px auto;
-    padding: 10px 20px;
-    font-size: 14px;
-    cursor: pointer;
-}
+body { font-family: Arial, sans-serif; margin:0; padding:0; }
+header { background:#003366; color:#fff; padding:15px; text-align:center; font-size:22px; }
+section { padding:20px; }
+input, button { padding:8px; font-size:14px; }
+button { cursor:pointer; }
+#loginBox, #dashboard, #payslipView { display:none; }
+table { border-collapse:collapse; width:100%; margin-top:10px; }
+th, td { border:1px solid #000; padding:6px; text-align:center; }
+.footerNote { font-size:11px; color:#555; text-align:center; margin-top:10px; }
 </style>
 </head>
 <body>
 
-<h1 style="text-align:center;">RUDRANSH PAYROLL SYSTEM v6 - ULTIMATE</h1>
-<h2 style="text-align:center;">Payslip Preview</h2>
+<header>RUDRANSH PAYROLL SYSTEM v6 - Ultimate</header>
 
-<!-- ENTERPRISE PAYSILP HTML START -->
-<div id="payslipPreview">
-    <!-- Insert your full 1800+ lines Enterprise Edition HTML here -->
-    <!-- Example structure: keep all your real HTML with nested divs, tables, CSS -->
-    <div style="border-bottom:1px solid #000; padding:10px;">
-        <div style="display:flex; justify-content:space-between;">
-            <div><strong>Name:</strong> Debasish Biswas</div>
-            <div><strong>Designation:</strong> Software Engineer</div>
-        </div>
-        <div style="display:flex; justify-content:space-between; margin-top:5px;">
-            <div><strong>UAN No:</strong> 123456789012</div>
-            <div><strong>ESI No:</strong> 9876543210</div>
-            <div><strong>Project:</strong> Project X</div>
-            <div><strong>Location:</strong> Gurgaon</div>
-        </div>
-    </div>
+<section id="loginBox">
+    <h2>Login</h2>
+    <input type="text" id="username" placeholder="Username"><br><br>
+    <input type="password" id="password" placeholder="Password"><br><br>
+    <button onclick="doLogin()">Login</button>
+</section>
 
-    <div style="margin-top:10px; display:flex; justify-content:space-between;">
-        <div><strong>M Days:</strong> 22</div>
-        <div><strong>P Days:</strong> 20</div>
-    </div>
+<section id="importBox">
+    <h2>Import Excel Payroll Sheet</h2>
+    <input type="file" id="excelFile" accept=".xlsx, .xls"><br><br>
+    <button onclick="loadExcel()">Load Sheet</button>
+</section>
 
-    <table style="width:100%; border-collapse:collapse; margin-top:10px;">
-        <thead style="background:#e0e0e0;">
-            <tr>
-                <th>Basic</th><th>HRA</th><th>Allowance</th><th>Leave</th><th>Bonus</th>
-                <th>PF @12%</th><th>ESI @0.75%</th><th>LWF</th><th>Gross</th><th>Advance Paid</th><th>Net Pay</th>
-            </tr>
+<section id="dashboard">
+    <h2>Employee Dashboard</h2>
+    <table id="empTable">
+        <thead>
+            <tr><th>ID</th><th>Name</th><th>Project</th><th>Action</th></tr>
         </thead>
-        <tbody>
-            <tr>
-                <td>50,000</td><td>10,000</td><td>5,000</td><td>0</td><td>2,000</td>
-                <td>7,200</td><td>450</td><td>200</td><td>67,000</td><td>5,000</td><td>61,800</td>
-            </tr>
-        </tbody>
+        <tbody></tbody>
     </table>
+</section>
 
-    <div style="margin-top:20px; text-align:center; font-size:10px; color:#555;">
-        This is a computer generated payslip. No signature required.
-    </div>
-</div>
-<!-- ENTERPRISE PAYSILP HTML END -->
-
-<button onclick="downloadEnterprisePayslipPDF()">Download PDF</button>
+<section id="payslipView">
+    <button onclick="backToDash()">← Back to Dashboard</button>
+    <div id="payslipPreview"></div>
+    <button onclick="downloadPayslipPDF()">Download PDF</button>
+</section>
 
 <script>
-function downloadEnterprisePayslipPDF() {
-    const element = document.getElementById('payslipPreview');
+// === DATA STORAGE ===
+let payrollData = [];
+let currentUser = null;
 
+// === LOGIN SYSTEM ===
+function doLogin() {
+    const u = document.getElementById("username").value.trim();
+    const p = document.getElementById("password").value.trim();
+
+    // Hardcoded — change as needed
+    if (u === "admin" && p === "admin123") {
+        document.getElementById("loginBox").style.display = "none";
+        document.getElementById("importBox").style.display = "block";
+        return;
+    }
+    alert("Invalid credentials!");
+}
+
+// === EXCEL LOAD ===
+function loadExcel() {
+    const fileInput = document.getElementById("excelFile");
+    if (!fileInput.files.length) return alert("Select Excel file");
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const data = e.target.result;
+        const wb = XLSX.read(data, { type:"binary" });
+        const sheet = wb.Sheets[wb.SheetNames[0]];
+        payrollData = XLSX.utils.sheet_to_json(sheet, { defval:"" });
+        alert("Excel loaded: " + payrollData.length + " records");
+        showDashboard();
+    };
+    reader.readAsBinaryString(fileInput.files[0]);
+}
+
+// === DASHBOARD ===
+function showDashboard() {
+    document.getElementById("importBox").style.display = "none";
+    document.getElementById("dashboard").style.display = "block";
+    const tbody = document.getElementById("empTable").querySelector("tbody");
+    tbody.innerHTML = "";
+    payrollData.forEach((e, i) => {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+            <td>${e.ID || i+1}</td>
+            <td>${e.Name}</td>
+            <td>${e.Project}</td>
+            <td><button onclick='viewPayslip(${i})'>View Payslip</button></td>`;
+        tbody.appendChild(row);
+    });
+}
+
+// === PAYSLIP PREVIEW ===
+function viewPayslip(idx) {
+    const emp = payrollData[idx];
+    document.getElementById("dashboard").style.display = "none";
+    const container = document.getElementById("payslipPreview");
+    container.innerHTML = `
+<div style="padding:10px; border:1px solid #000;">
+    <h2 style="text-align:center;">Payslip for: ${emp.Name}</h2>
+
+    <table>
+        <tr>
+            <td><strong>Employee ID</strong></td><td>${emp.ID}</td>
+            <td><strong>Project</strong></td><td>${emp.Project}</td>
+        </tr>
+        <tr>
+            <td><strong>UAN</strong></td><td>${emp.UAN}</td>
+            <td><strong>ESI</strong></td><td>${emp.ESI}</td>
+        </tr>
+        <tr>
+            <td><strong>M Days</strong></td><td>${emp.MDays}</td>
+            <td><strong>P Days</strong></td><td>${emp.PDays}</td>
+        </tr>
+    </table>
+
+    <table>
+        <tr><th>EARNINGS</th><th>AMOUNT</th></tr>
+        <tr><td>Basic</td><td>${emp.Basic}</td></tr>
+        <tr><td>HRA</td><td>${emp.HRA}</td></tr>
+        <tr><td>Allowance</td><td>${emp.Allowance}</td></tr>
+        <tr><td>Bonus</td><td>${emp.Bonus}</td></tr>
+        <tr><th>GROSS</th><th>${emp.Gross}</th></tr>
+    </table>
+
+    <table>
+        <tr><th>DEDUCTIONS</th><th>AMOUNT</th></tr>
+        <tr><td>PF</td><td>${emp.PF}</td></tr>
+        <tr><td>ESI</td><td>${emp.ESI_Deduction}</td></tr>
+        <tr><td>Advance</td><td>${emp.Advance}</td></tr>
+        <tr><th>TOTAL DEDUCTIONS</th><th>${emp.TotalDeductions}</th></tr>
+    </table>
+
+    <h3 style="text-align:center;">Net Pay: ${emp.NetPay}</h3>
+    <div class="footerNote">This is a computer generated payslip. No signature required.</div>
+</div>`;
+    document.getElementById("payslipView").style.display = "block";
+}
+
+// === VIEW SWITCHING ===
+function backToDash() {
+    document.getElementById("payslipView").style.display = "none";
+    document.getElementById("dashboard").style.display = "block";
+}
+
+// === PDF DOWNLOAD ===
+function downloadPayslipPDF() {
+    const element = document.getElementById("payslipPreview");
     const opt = {
         margin: [0.2,0.2,0.2,0.2],
-        filename: 'Rudransh_Payslip.pdf',
-        image: { type: 'jpeg', quality: 1 },
-        html2canvas: { scale: 2, scrollY: 0 },
-        jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' },
-        pagebreak: { mode: ['css', 'legacy'] } // handles multi-page long content
+        filename: 'Payslip.pdf',
+        image: { type:'jpeg', quality:1 },
+        html2canvas: { scale:2, scrollY:0 },
+        jsPDF: { unit:'in', format:'a4', orientation:'portrait' },
+        pagebreak:{ mode:['css','legacy'] }
     };
-
     html2pdf().set(opt).from(element).save();
 }
 </script>
