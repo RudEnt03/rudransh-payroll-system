@@ -127,7 +127,6 @@
 </div>
 
 <script>
-// Global variables
 let employees = [];
 let payslipsGenerated = 0;
 let zipDownloads = 0;
@@ -154,46 +153,60 @@ document.getElementById('logoUpload').addEventListener('change', e=>{
   reader.readAsDataURL(e.target.files[0]);
 });
 
-// Excel Import with normalized headers
-document.getElementById('excelUpload').addEventListener('change', async e=>{
+// Excel Import with exact headers
+document.getElementById('excelUpload').addEventListener('change', async e => {
   const file = e.target.files[0];
-  if(!file) return;
+  if (!file) return;
   const data = await file.arrayBuffer();
   const workbook = XLSX.read(data);
   const sheetName = workbook.SheetNames[0];
   const worksheet = workbook.Sheets[sheetName];
-  const rawEmployees = XLSX.utils.sheet_to_json(worksheet, {defval:0});
-  employees = rawEmployees.map(emp=>{
-    const normalized = {};
-    for(const key in emp) normalized[key.trim().toLowerCase()] = emp[key];
-    return normalized;
-  });
+  const rawEmployees = XLSX.utils.sheet_to_json(worksheet, { defval: 0 });
+
+  employees = rawEmployees.map(emp => ({
+    code: (emp['Emp Code'] || "").toString().trim(),
+    name: (emp['Name'] || "").toString().trim(),
+    basic: parseFloat(emp['Basic'] || 0),
+    hra: parseFloat(emp['HRA'] || 0),
+    allowance: parseFloat(emp['Allowance'] || 0),
+    bonus: parseFloat(emp['Bonus'] || 0),
+    netpay: parseFloat(emp['Net In Hand'] || 0),
+    pf: parseFloat(emp['PF@12%'] || 0),
+    esi: parseFloat(emp['ESI@.75%'] || 0),
+    lwf: parseFloat(emp['LWF'] || 0)
+  }));
+
   document.getElementById('totalEmployees').textContent = employees.length;
-  alert('Excel Imported Successfully!');
+  alert('Excel Imported Successfully! Check console with console.log(employees)');
   console.log(employees);
 });
 
-// Update Payslip Preview
+// Update Payslip
 function updatePayslip(empCode, month){
-  const emp = employees.find(e=>e.code == empCode);
-  if(!emp) return alert('Employee not found! Check Excel import and code.');
+  empCode = empCode.trim().toUpperCase();
+  const emp = employees.find(e => (e.code || "").toString().trim().toUpperCase() === empCode);
+  if(!emp) {
+    console.log("Available codes:", employees.map(e=>e.code));
+    return alert('Employee not found! Check Excel import and code.');
+  }
   document.getElementById('previewEmpCode').textContent = emp.code;
   document.getElementById('previewMonth').textContent = month;
 
+  // Earnings
   const earnTable = document.getElementById('earningsTable');
   earnTable.innerHTML = '';
-  ['basic','hra'].forEach(k=>{
-    if(emp[k]!==undefined) earnTable.innerHTML+=`<tr class="border-b"><td class="px-2 py-1 font-medium">${k.toUpperCase()}</td><td class="px-2 py-1">₹${emp[k]}</td></tr>`;
+  [['Basic',emp.basic],['HRA',emp.hra],['Allowance',emp.allowance],['Bonus',emp.bonus]].forEach(([k,v])=>{
+    if(v!==undefined) earnTable.innerHTML+=`<tr class="border-b"><td class="px-2 py-1 font-medium">${k}</td><td class="px-2 py-1">₹${v}</td></tr>`;
   });
 
+  // Deductions
   const dedTable = document.getElementById('deductionsTable');
   dedTable.innerHTML = '';
-  ['deductions'].forEach(k=>{
-    if(emp[k]!==undefined) dedTable.innerHTML+=`<tr class="border-b"><td class="px-2 py-1 font-medium">${k.toUpperCase()}</td><td class="px-2 py-1">₹${emp[k]}</td></tr>`;
+  [['PF@12%',emp.pf],['ESI@.75%',emp.esi],['LWF',emp.lwf]].forEach(([k,v])=>{
+    if(v!==undefined) dedTable.innerHTML+=`<tr class="border-b"><td class="px-2 py-1 font-medium">${k}</td><td class="px-2 py-1">₹${v}</td></tr>`;
   });
 
-  const net = (emp.basic||0)+(emp.hra||0)-(emp.deductions||0);
-  document.getElementById('netPay').textContent = net;
+  document.getElementById('netPay').textContent = emp.netpay;
 }
 
 // Generate Payslip Button
@@ -205,7 +218,7 @@ document.getElementById('generatePayslip').addEventListener('click', ()=>{
   document.getElementById('payslipsGenerated').textContent = payslipsGenerated;
 });
 
-// Download PDF with table styling
+// Download PDF
 document.getElementById('downloadPDF').addEventListener('click', ()=>{
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF();
@@ -213,42 +226,30 @@ document.getElementById('downloadPDF').addEventListener('click', ()=>{
   const month = document.getElementById('previewMonth').textContent;
   const netPay = document.getElementById('netPay').textContent;
 
-  // Header
   doc.setFontSize(18);
   doc.text("Rudransh Pvt. Ltd.", 105, 15, null, null, "center");
   doc.setFontSize(12);
   doc.text(`Payslip for: ${empCode} - ${month}`, 105, 25, null, null, "center");
 
   let y = 35;
-
-  // Earnings Table
-  doc.setFontSize(12);
-  doc.text("Earnings", 20, y);
-  y+=7;
+  doc.text("Earnings", 20, y); y+=7;
   const earningsRows = Array.from(document.querySelectorAll("#earningsTable tr")).map(r=>[r.cells[0].innerText,r.cells[1].innerText]);
   earningsRows.forEach(r=>{
-    doc.rect(20, y-5, 60, 7); // box border
-    doc.rect(80, y-5, 30, 7);
-    doc.text(r[0], 22, y);
-    doc.text(r[1], 82, y);
+    doc.rect(20, y-5, 60, 7); doc.rect(80, y-5, 30, 7);
+    doc.text(r[0], 22, y); doc.text(r[1], 82, y);
     y+=7;
   });
 
-  // Deductions Table
-  y = 35;
-  doc.text("Deductions", 110, y);
-  y+=7;
+  y=35;
+  doc.text("Deductions", 110, y); y+=7;
   const dedRows = Array.from(document.querySelectorAll("#deductionsTable tr")).map(r=>[r.cells[0].innerText,r.cells[1].innerText]);
   dedRows.forEach(r=>{
-    doc.rect(110, y-5, 60, 7);
-    doc.rect(170, y-5, 30, 7);
-    doc.text(r[0], 112, y);
-    doc.text(r[1], 172, y);
+    doc.rect(110, y-5, 60, 7); doc.rect(170, y-5, 30, 7);
+    doc.text(r[0], 112, y); doc.text(r[1], 172, y);
     y+=7;
   });
 
-  doc.setFontSize(14);
-  doc.setTextColor(0,128,0);
+  doc.setFontSize(14); doc.setTextColor(0,128,0);
   doc.text(`Net Pay: ₹${netPay}`, 105, y+15, null, null, "center");
   doc.save(`${empCode}_${month}.pdf`);
 });
@@ -259,8 +260,7 @@ document.getElementById('bulkZip').addEventListener('click', ()=>{
   const zip = new JSZip();
   const month = document.getElementById('monthSelect').value;
   employees.forEach(emp=>{
-    const net = (emp.basic||0)+(emp.hra||0)-(emp.deductions||0);
-    const content = `Payslip for ${emp.name}\nBasic: ₹${emp.basic}\nHRA: ₹${emp.hra}\nDeductions: ₹${emp.deductions}\nNet Pay: ₹${net}`;
+    const content = `Payslip for ${emp.name}\nBasic: ₹${emp.basic}\nHRA: ₹${emp.hra}\nAllowance: ₹${emp.allowance}\nBonus: ₹${emp.bonus}\nPF@12%: ₹${emp.pf}\nESI@.75%: ₹${emp.esi}\nLWF: ₹${emp.lwf}\nNet Pay: ₹${emp.netpay}`;
     zip.file(`${emp.code}_${month}.txt`, content);
   });
   zip.generateAsync({type:"blob"}).then(content=>{
