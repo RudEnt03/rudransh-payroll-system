@@ -1,324 +1,52 @@
+```html
 <!DOCTYPE html>
 <html>
 <head>
-<title>Payroll Dashboard</title>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-
+<title>Login Test</title>
 <style>
-
-body{
-font-family:Arial;
-margin:0;
-background:#f4f6f9;
-}
-
-.header{
-background:#2c3e50;
-color:white;
-padding:15px;
-font-size:20px;
-}
-
-.container{
-padding:20px;
-}
-
-.card{
-background:white;
-padding:20px;
-margin-bottom:20px;
-border-radius:6px;
-box-shadow:0 2px 6px rgba(0,0,0,0.1);
-}
-
-button{
-padding:10px 15px;
-background:#3498db;
-border:none;
-color:white;
-cursor:pointer;
-border-radius:4px;
-}
-
-button:hover{
-background:#2980b9;
-}
-
-input{
-padding:8px;
-margin:5px 0;
-width:100%;
-}
-
-table{
-width:100%;
-border-collapse:collapse;
-margin-top:10px;
-}
-
-table th, table td{
-border:1px solid #ddd;
-padding:8px;
-text-align:left;
-}
-
-table th{
-background:#34495e;
-color:white;
-}
-
-.login-box{
+body{font-family:Arial;background:#f4f4f4}
+.box{
 width:300px;
 margin:120px auto;
 background:white;
-padding:30px;
-border-radius:6px;
-box-shadow:0 2px 6px rgba(0,0,0,0.2);
-}
-
-.payslip{
-width:600px;
-margin:auto;
-background:white;
 padding:20px;
-border:1px solid #ccc;
+border-radius:6px;
+box-shadow:0 0 5px rgba(0,0,0,0.3)
 }
-
+input{width:100%;padding:8px;margin:5px 0}
+button{width:100%;padding:10px;background:#3498db;color:white;border:none}
 </style>
 </head>
 
 <body>
 
-<div id="loginPage">
+<div id="loginPage" class="box">
+<h3>Admin Login</h3>
 
-<div class="login-box">
-
-<h2>Admin Login</h2>
-
-<input type="text" id="username" placeholder="Username">
-<input type="password" id="password" placeholder="Password">
+<input id="username" placeholder="Username">
+<input id="password" type="password" placeholder="Password">
 
 <button onclick="login()">Login</button>
-
 </div>
 
-</div>
-
-<div id="dashboard" style="display:none">
-
-<div class="header">
-Payroll Dashboard
-</div>
-
-<div class="container">
-
-<div class="card">
-
-<h3>Upload Excel</h3>
-
-<input type="file" id="excelFile">
-
-<button onclick="importExcel()">Import Excel</button>
-
-</div>
-
-<div class="card">
-
-<h3>Employees</h3>
-
-<table id="employeeTable">
-
-<thead>
-<tr>
-<th>Emp Code</th>
-<th>Name</th>
-<th>Designation</th>
-<th>Month</th>
-<th>Gross</th>
-<th>Net</th>
-<th>Payslip</th>
-</tr>
-</thead>
-
-<tbody></tbody>
-
-</table>
-
-</div>
-
-</div>
-
-</div>
-
-<div id="payslipPage" style="display:none">
-
-<div class="container">
-
-<button onclick="back()">Back</button>
-
-<div class="payslip" id="payslipContent"></div>
-
-<button onclick="printPayslip()">Print Payslip</button>
-
-</div>
-
+<div id="dashboard" style="display:none;text-align:center">
+<h1>Dashboard Loaded Successfully</h1>
 </div>
 
 <script>
 
-const adminUser="Rudransh";
-const adminPass="Rud@03";
-
-let employees=[];
-let project="";
-let location="";
-
 function login(){
 
-let u=document.getElementById("username").value;
-let p=document.getElementById("password").value;
+let user=document.getElementById("username").value;
+let pass=document.getElementById("password").value;
 
-if(u===adminUser && p===adminPass){
-
+if(user==="Rudransh" && pass==="Rud@03"){
 document.getElementById("loginPage").style.display="none";
 document.getElementById("dashboard").style.display="block";
-
-}else{
-
+}
+else{
 alert("Invalid Login");
-
 }
-
-}
-
-function importExcel(){
-
-const file=document.getElementById('excelFile').files[0];
-
-const reader=new FileReader();
-
-reader.onload=function(e){
-
-const data=new Uint8Array(e.target.result);
-const workbook=XLSX.read(data,{type:'array'});
-
-const sheetName=workbook.SheetNames[0];
-
-let parts=sheetName.split("-");
-project=parts[0]||"";
-location=parts[1]||"";
-
-const sheet=workbook.Sheets[sheetName];
-
-employees=XLSX.utils.sheet_to_json(sheet);
-
-renderTable();
-
-};
-
-reader.readAsArrayBuffer(file);
-
-}
-
-function renderTable(){
-
-const tbody=document.querySelector("#employeeTable tbody");
-
-tbody.innerHTML="";
-
-employees.forEach((emp,i)=>{
-
-let row=`
-
-<tr>
-
-<td>${emp["Emp Code"]}</td>
-<td>${emp["Name"]}</td>
-<td>${emp["Designation"]}</td>
-<td>${emp["Month"]}</td>
-<td>${emp["Gross"]}</td>
-<td>${emp["Net In Hand"]}</td>
-
-<td>
-<button onclick="generatePayslip(${i})">View</button>
-</td>
-
-</tr>
-
-`;
-
-tbody.innerHTML+=row;
-
-});
-
-}
-
-function generatePayslip(i){
-
-const e=employees[i];
-
-document.getElementById("dashboard").style.display="none";
-document.getElementById("payslipPage").style.display="block";
-
-document.getElementById("payslipContent").innerHTML=`
-
-<h2 style="text-align:center">Salary Payslip</h2>
-
-<p><b>Project:</b> ${project}</p>
-<p><b>Location:</b> ${location}</p>
-
-<hr>
-
-<p><b>Employee Code:</b> ${e["Emp Code"]}</p>
-<p><b>Name:</b> ${e["Name"]}</p>
-<p><b>Designation:</b> ${e["Designation"]}</p>
-<p><b>Month:</b> ${e["Month"]}</p>
-
-<hr>
-
-<table>
-
-<tr><th>Earnings</th><th>Amount</th></tr>
-
-<tr><td>Basic</td><td>${e["Basic"]}</td></tr>
-<tr><td>HRA</td><td>${e["HRA"]}</td></tr>
-<tr><td>Allowance</td><td>${e["Allowance"]}</td></tr>
-<tr><td>Bonus</td><td>${e["Bonus"]}</td></tr>
-<tr><td><b>Gross</b></td><td><b>${e["Gross"]}</b></td></tr>
-
-</table>
-
-<br>
-
-<table>
-
-<tr><th>Deductions</th><th>Amount</th></tr>
-
-<tr><td>PF</td><td>${e["PF@12%"]}</td></tr>
-<tr><td>ESI</td><td>${e["ESI@.75%"]}</td></tr>
-<tr><td>LWF</td><td>${e["LWF"]}</td></tr>
-
-</table>
-
-<br>
-
-<h3>Net In Hand : ${e["Net In Hand"]}</h3>
-
-`;
-
-}
-
-function back(){
-
-document.getElementById("payslipPage").style.display="none";
-document.getElementById("dashboard").style.display="block";
-
-}
-
-function printPayslip(){
-
-window.print();
 
 }
 
@@ -326,3 +54,4 @@ window.print();
 
 </body>
 </html>
+```
