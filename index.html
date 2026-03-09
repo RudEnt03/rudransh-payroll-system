@@ -285,8 +285,8 @@ Salary Payslip
 
 <script>
 
-let employees=[];
-let savedExcel = []; 
+// Load persisted employees if any
+let employees = JSON.parse(localStorage.getItem("payroll_data") || "[]");
 let empDevice = JSON.parse(localStorage.getItem("emp_device") || "{}");
 let allSelected = false;
 
@@ -336,6 +336,12 @@ function showDashboard(role, code){
   document.getElementById("loginMsg").innerText="";
   if(role=="emp"){ document.getElementById("file").style.display="none"; }
   else{ document.getElementById("file").style.display="inline-block"; }
+
+  // render existing data if any
+  if(employees.length>0){
+    populateFilters();
+    render(employees);
+  }
 }
 
 // RESET DEVICE
@@ -345,13 +351,12 @@ function resetDevice(){
   else{ alert("No device binding found."); }
 }
 
-// FILE UPLOAD WITH HEADER NORMALIZATION
+// FILE UPLOAD
 document.getElementById("file").addEventListener("change", e => {
     const reader = new FileReader();
     reader.onload = function(evt) {
         const data = new Uint8Array(evt.target.result);
         const wb = XLSX.read(data, { type: 'array' });
-        savedExcel.push(wb); 
 
         wb.SheetNames.forEach(name => {
             const sheet = wb.Sheets[name];
@@ -390,7 +395,10 @@ document.getElementById("file").addEventListener("change", e => {
             });
         });
 
-        populateFilters(); 
+        // Persist data
+        localStorage.setItem("payroll_data", JSON.stringify(employees));
+
+        populateFilters();
         render(employees);
     };
     reader.readAsArrayBuffer(e.target.files[0]);
