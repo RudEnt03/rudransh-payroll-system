@@ -9,108 +9,65 @@
 <style>
 
 body{
-font-family:Segoe UI;
+font-family:Arial;
+background:#eef1f5;
 margin:0;
-background:#eef2f7;
-}
-
-header{
-background:linear-gradient(90deg,#4e73df,#36b9cc);
-color:white;
-padding:15px;
-display:flex;
-justify-content:space-between;
-align-items:center;
-}
-
-.container{
-padding:20px;
-}
-
-.cards{
-display:flex;
-gap:15px;
-margin-bottom:20px;
 }
 
 .card{
-flex:1;
-background:white;
-padding:20px;
-border-radius:8px;
+width:350px;
+background:#fff;
+margin:120px auto;
+padding:25px;
+border-radius:10px;
+box-shadow:0 5px 15px rgba(0,0,0,0.2);
 text-align:center;
-box-shadow:0 2px 6px rgba(0,0,0,0.1);
 }
 
-table{
-width:100%;
-border-collapse:collapse;
-background:white;
-}
-
-th{
-background:#4e73df;
-color:white;
-padding:10px;
-}
-
-td{
-padding:10px;
-border-bottom:1px solid #eee;
-text-align:center;
+input{
+width:90%;
+padding:8px;
+margin:8px;
 }
 
 button{
-padding:6px 12px;
+padding:8px 15px;
+margin:5px;
+background:#22b573;
 border:none;
+color:#fff;
 border-radius:4px;
-background:#1cc88a;
-color:white;
 cursor:pointer;
 }
 
-.view{
-background:#36b9cc;
+button:hover{
+background:#19965d;
 }
 
-.loginBox{
-width:320px;
-margin:120px auto;
-background:white;
-padding:25px;
-border-radius:8px;
-text-align:center;
-box-shadow:0 2px 6px rgba(0,0,0,0.1);
-}
-
-#modal{
+#adminDashboard{
 display:none;
-position:fixed;
-top:0;
-left:0;
+padding:30px;
+}
+
+#employeePortal{
+display:none;
+padding:30px;
+}
+
+table{
+border-collapse:collapse;
 width:100%;
-height:100%;
-background:rgba(0,0,0,0.5);
+margin-top:20px;
 }
 
-.payslip{
-background:white;
-width:700px;
-margin:40px auto;
-padding:25px;
-border-radius:8px;
+th,td{
+border:1px solid #ccc;
+padding:8px;
+text-align:center;
 }
 
-.row{
-display:flex;
-justify-content:space-between;
-margin:6px 0;
-}
-
-.section{
-font-weight:bold;
-border-bottom:2px solid #ddd;
-margin-top:10px;
+th{
+background:#f0f0f0;
 }
 
 </style>
@@ -120,120 +77,96 @@ margin-top:10px;
 
 <!-- LOGIN PAGE -->
 
-<div id="loginPage">
+<div class="card" id="loginPage">
 
-<div class="loginBox">
+<h2>Employee Login</h2>
 
-<h3>Employee Login</h3>
+<input id="empCode" placeholder="Employee Code">
 
-<input id="empCode" placeholder="Employee Code"><br><br>
-<input id="password" type="password" placeholder="Password"><br><br>
+<input id="empPass" placeholder="Password">
 
-<button onclick="login()">Login</button>
+<br>
+
+<button onclick="employeeLogin()">Login</button>
 
 <br><br>
 
-<button onclick="adminLogin()">Admin Login</button>
+<button onclick="showAdminLogin()">Admin Login</button>
 
 </div>
 
-</div>
 
+<!-- ADMIN LOGIN -->
 
-<!-- DASHBOARD -->
+<div class="card" id="adminLogin" style="display:none">
 
-<div id="app" style="display:none">
+<h2>Admin Login</h2>
 
-<header>
+<input id="adminUser" placeholder="Username">
 
-<h2>Rudransh Enterprises Payroll Dashboard</h2>
+<input id="adminPass" placeholder="Password">
 
-<button onclick="logout()">Logout</button>
+<br>
 
-</header>
+<button onclick="adminLogin()">Login</button>
 
-<div class="container">
-
-<input type="file" id="file">
-<input id="search" placeholder="Search employee">
-
-<div class="cards">
-
-<div class="card">
-<h3>Total Employees</h3>
-<p id="cEmp">0</p>
-</div>
-
-<div class="card">
-<h3>Total Gross</h3>
-<p id="cGross">0</p>
-</div>
-
-<div class="card">
-<h3>Total Net</h3>
-<p id="cNet">0</p>
-</div>
+<button onclick="backLogin()">Back</button>
 
 </div>
 
-<table>
+
+<!-- ADMIN DASHBOARD -->
+
+<div id="adminDashboard">
+
+<h2>Admin Dashboard</h2>
+
+<input type="file" id="excelFile">
+
+<button onclick="importExcel()">Import Excel</button>
+
+<table id="employeeTable">
 
 <thead>
 
 <tr>
 <th>Emp Code</th>
 <th>Name</th>
-<th>Project</th>
-<th>Location</th>
-<th>Month</th>
+<th>Designation</th>
+<th>Basic</th>
+<th>HRA</th>
+<th>Allowance</th>
 <th>Gross</th>
+<th>PF</th>
+<th>ESI</th>
 <th>Net</th>
 <th>Payslip</th>
 </tr>
 
 </thead>
 
-<tbody id="tbody"></tbody>
+<tbody></tbody>
 
 </table>
 
-</div>
-
-</div>
-
-
-<!-- ADMIN PANEL -->
-
-<div id="adminPanel" style="display:none;padding:20px">
+<br><br>
 
 <h3>Admin Control Panel</h3>
 
-<input id="resetEmp" placeholder="Employee Code">
+<input id="resetCode" placeholder="Employee Code">
 
-<button onclick="resetEmployee()">Reset Employee Device</button>
-
-<button onclick="closeAdmin()">Close</button>
+<button onclick="resetDevice()">Reset Employee Device</button>
 
 </div>
 
 
-<!-- PAYSLIP -->
+<!-- EMPLOYEE PORTAL -->
 
-<div id="modal">
+<div id="employeePortal">
 
-<div class="payslip">
+<h2>Employee Portal</h2>
 
-<h3 style="text-align:center">Rudransh Enterprises</h3>
-<h4 style="text-align:center">Salary Payslip</h4>
-
-<div id="psBody"></div>
-
-<div style="text-align:center;margin-top:15px">
-<button onclick="window.print()">Print / PDF</button>
-<button onclick="closePS()">Close</button>
-</div>
-
-</div>
+<div id="payslip"></div>
 
 </div>
 
@@ -242,234 +175,20 @@ margin-top:10px;
 
 let employees=[];
 
-function isMobile(){
 
-return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+/* LOGIN NAVIGATION */
 
-}
-
-function formatINR(num){
-
-num=Math.round(Number(num)||0);
-
-return "₹ "+num.toLocaleString('en-IN');
-
-}
-
-function formatMonth(v){
-
-if(typeof v==="number"){
-
-let d=XLSX.SSF.parse_date_code(v);
-
-return new Date(d.y,d.m-1).toLocaleString('default',{month:'long',year:'numeric'});
-
-}
-
-return v;
-
-}
-
-
-/* EXCEL IMPORT */
-
-document.getElementById("file").addEventListener("change",e=>{
-
-const reader=new FileReader();
-
-reader.onload=function(evt){
-
-const data=new Uint8Array(evt.target.result);
-const wb=XLSX.read(data,{type:'array'});
-
-employees=[];
-
-wb.SheetNames.forEach(name=>{
-
-const sheet=wb.Sheets[name];
-
-const rows=XLSX.utils.sheet_to_json(sheet);
-
-let parts=name.split("_");
-
-let project=parts[0]||"";
-let location=parts[1]||"";
-
-rows.forEach(r=>{
-
-employees.push({
-
-code:r["Emp Code"],
-name:r["Name"],
-designation:r["Designation"],
-month:formatMonth(r["Month"]),
-basic:r["Basic"],
-hra:r["HRA"],
-allow:r["Allowance"],
-bonus:r["Bonus"],
-gross:r["Gross"],
-pf:r["PF@12%"],
-esi:r["ESI@.75%"],
-lwf:r["LWF"],
-advance:r["Advance Paid"],
-net:r["Net In Hand"],
-project:project,
-location:location
-
-});
-
-});
-
-});
-
-render(employees);
-
-};
-
-reader.readAsArrayBuffer(e.target.files[0]);
-
-});
-
-
-/* DASHBOARD */
-
-function render(data){
-
-let tb=document.getElementById("tbody");
-
-tb.innerHTML="";
-
-let gross=0;
-let net=0;
-
-data.forEach(e=>{
-
-gross+=Number(e.gross);
-net+=Number(e.net);
-
-tb.innerHTML+=`
-
-<tr>
-<td>${e.code}</td>
-<td>${e.name}</td>
-<td>${e.project}</td>
-<td>${e.location}</td>
-<td>${e.month}</td>
-<td>${formatINR(e.gross)}</td>
-<td>${formatINR(e.net)}</td>
-<td><button class="view" onclick='showPS(${JSON.stringify(e)})'>View</button></td>
-</tr>
-
-`;
-
-});
-
-document.getElementById("cEmp").innerText=data.length;
-document.getElementById("cGross").innerText=formatINR(gross);
-document.getElementById("cNet").innerText=formatINR(net);
-
-}
-
-
-/* SEARCH */
-
-document.getElementById("search").addEventListener("keyup",function(){
-
-let v=this.value.toLowerCase();
-
-let f=employees.filter(e=>e.code.toLowerCase().includes(v)||e.name.toLowerCase().includes(v));
-
-render(f);
-
-});
-
-
-/* PAYSLIP */
-
-function showPS(e){
-
-document.getElementById("modal").style.display="block";
-
-document.getElementById("psBody").innerHTML=`
-
-<div class="row"><b>Emp Code</b><span>${e.code}</span></div>
-<div class="row"><b>Name</b><span>${e.name}</span></div>
-<div class="row"><b>Designation</b><span>${e.designation}</span></div>
-<div class="row"><b>Project</b><span>${e.project}</span></div>
-<div class="row"><b>Location</b><span>${e.location}</span></div>
-<div class="row"><b>Month</b><span>${e.month}</span></div>
-
-<div class="section">Earnings</div>
-
-<div class="row"><span>Basic</span><span>${formatINR(e.basic)}</span></div>
-<div class="row"><span>HRA</span><span>${formatINR(e.hra)}</span></div>
-<div class="row"><span>Allowance</span><span>${formatINR(e.allow)}</span></div>
-<div class="row"><span>Bonus</span><span>${formatINR(e.bonus)}</span></div>
-<div class="row"><b>Gross</b><b>${formatINR(e.gross)}</b></div>
-
-<div class="section">Deductions</div>
-
-<div class="row"><span>PF</span><span>${formatINR(e.pf)}</span></div>
-<div class="row"><span>ESI</span><span>${formatINR(e.esi)}</span></div>
-<div class="row"><span>LWF</span><span>${formatINR(e.lwf)}</span></div>
-<div class="row"><span>Advance</span><span>${formatINR(e.advance)}</span></div>
-
-<div class="section"></div>
-
-<div class="row"><b>Net Pay</b><b>${formatINR(e.net)}</b></div>
-
-`;
-
-}
-
-function closePS(){
-
-document.getElementById("modal").style.display="none";
-
-}
-
-
-/* EMPLOYEE LOGIN */
-
-function login(){
-
-if(!isMobile()){
-
-alert("Employee login allowed only from mobile device.");
-
-return;
-
-}
-
-let code=document.getElementById("empCode").value;
-
-let pass=document.getElementById("password").value;
-
-let device=navigator.userAgent;
-
-let stored=localStorage.getItem("device_"+code);
-
-if(stored && stored!==device){
-
-alert("Device mismatch. Contact Admin.");
-
-return;
-
-}
-
-if(pass==="1234"){
-
-localStorage.setItem("device_"+code,device);
+function showAdminLogin(){
 
 document.getElementById("loginPage").style.display="none";
-
-document.getElementById("app").style.display="block";
-
-}else{
-
-alert("Invalid password");
+document.getElementById("adminLogin").style.display="block";
 
 }
+
+function backLogin(){
+
+document.getElementById("loginPage").style.display="block";
+document.getElementById("adminLogin").style.display="none";
 
 }
 
@@ -478,45 +197,172 @@ alert("Invalid password");
 
 function adminLogin(){
 
-let pass=prompt("Enter Admin Password");
+let u=document.getElementById("adminUser").value;
+let p=document.getElementById("adminPass").value;
 
-if(pass==="Rud@03"){
+if(u==="Rudransh" && p==="Rud@03"){
 
-document.getElementById("adminPanel").style.display="block";
+document.getElementById("adminLogin").style.display="none";
+document.getElementById("adminDashboard").style.display="block";
 
 }else{
 
-alert("Wrong password");
+alert("Invalid Login");
 
 }
 
 }
 
 
-/* ADMIN RESET */
+/* EMPLOYEE LOGIN */
 
-function resetEmployee(){
+function employeeLogin(){
 
-let code=document.getElementById("resetEmp").value;
+let code=document.getElementById("empCode").value;
 
-localStorage.removeItem("device_"+code);
+let emp=employees.find(e=>e.code==code);
 
-alert("Device reset completed");
+if(!emp){
 
-}
-
-function closeAdmin(){
-
-document.getElementById("adminPanel").style.display="none";
+alert("Employee Not Found");
+return;
 
 }
 
+document.getElementById("loginPage").style.display="none";
+document.getElementById("employeePortal").style.display="block";
 
-/* LOGOUT */
+generatePayslip(emp);
 
-function logout(){
+}
 
-location.reload();
+
+/* EXCEL IMPORT */
+
+function importExcel(){
+
+let file=document.getElementById("excelFile").files[0];
+
+let reader=new FileReader();
+
+reader.onload=function(e){
+
+let data=new Uint8Array(e.target.result);
+
+let workbook=XLSX.read(data,{type:'array'});
+
+let sheet=workbook.Sheets[workbook.SheetNames[0]];
+
+let json=XLSX.utils.sheet_to_json(sheet);
+
+employees=[];
+
+json.forEach(r=>{
+
+let emp={
+
+code:r["Emp Code"],
+name:r["Name"],
+des:r["Designation"],
+basic:Number(r["Basic"]),
+hra:Number(r["HRA"]),
+allow:Number(r["Allowance"]),
+gross:Number(r["Gross"]),
+pf:Number(r["PF@12%"]),
+esi:Number(r["ESI@.75%"]),
+net:Number(r["Net In Hand"])
+
+};
+
+employees.push(emp);
+
+});
+
+renderTable();
+
+};
+
+reader.readAsArrayBuffer(file);
+
+}
+
+
+/* TABLE */
+
+function renderTable(){
+
+let tbody=document.querySelector("#employeeTable tbody");
+
+tbody.innerHTML="";
+
+employees.forEach(e=>{
+
+let row=`<tr>
+
+<td>${e.code}</td>
+<td>${e.name}</td>
+<td>${e.des}</td>
+<td>${e.basic}</td>
+<td>${e.hra}</td>
+<td>${e.allow}</td>
+<td>${e.gross}</td>
+<td>${e.pf}</td>
+<td>${e.esi}</td>
+<td>${e.net}</td>
+
+<td>
+
+<button onclick='generatePayslip(${JSON.stringify(e)})'>
+
+View
+
+</button>
+
+</td>
+
+</tr>`;
+
+tbody.innerHTML+=row;
+
+});
+
+}
+
+
+/* PAYSLIP */
+
+function generatePayslip(emp){
+
+let html=
+
+`<h3>${emp.name}</h3>
+
+<p>Employee Code : ${emp.code}</p>
+
+<table>
+
+<tr><td>Basic</td><td>${emp.basic}</td></tr>
+<tr><td>HRA</td><td>${emp.hra}</td></tr>
+<tr><td>Allowance</td><td>${emp.allow}</td></tr>
+<tr><td>Gross</td><td>${emp.gross}</td></tr>
+<tr><td>PF</td><td>${emp.pf}</td></tr>
+<tr><td>ESI</td><td>${emp.esi}</td></tr>
+<tr><td><b>Net In Hand</b></td><td><b>${emp.net}</b></td></tr>
+
+</table>`;
+
+document.getElementById("payslip").innerHTML=html;
+
+}
+
+
+/* RESET DEVICE */
+
+function resetDevice(){
+
+let code=document.getElementById("resetCode").value;
+
+alert("Device Reset For "+code);
 
 }
 
