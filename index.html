@@ -282,7 +282,7 @@ Salary Payslip
 <script>
 
 let employees=[];
-let savedExcel = null; // store uploaded Excel
+let savedExcel = []; // store multiple Excels
 let empDevice = JSON.parse(localStorage.getItem("emp_device") || "{}");
 
 // Currency formatting
@@ -292,11 +292,8 @@ function rupee(v){ return "₹"+Math.round(v).toLocaleString("en-IN"); }
 function updateAdminID(){
   const role = document.getElementById("role").value;
   const empInput = document.getElementById("empCode");
-  if(role=="admin"){
-    empInput.value="Admin"; empInput.disabled=true;
-  }else{
-    empInput.value=""; empInput.disabled=false;
-  }
+  if(role=="admin"){ empInput.value="Admin"; empInput.disabled=true; }
+  else{ empInput.value=""; empInput.disabled=false; }
 }
 
 // LOGIN
@@ -344,67 +341,75 @@ function resetDevice(){
   else{ alert("No device binding found."); }
 }
 
-// FILE UPLOAD
-document.getElementById("file").addEventListener("change",e=>{
-const reader=new FileReader();
-reader.onload=function(evt){
-  const data=new Uint8Array(evt.target.result);
-  const wb=XLSX.read(data,{type:'array'});
-  savedExcel = wb; // keep in memory
-  employees=[];
-  wb.SheetNames.forEach(name=>{
-    const sheet=wb.Sheets[name];
-    const rows=XLSX.utils.sheet_to_json(sheet);
-    let parts=name.split("_");
-    let project=parts[0]||"";
-    let location=parts[1]||"";
-    rows.forEach(r=>{
-      employees.push({
-        code:r["Emp Code"],
-        name:r["Name"],
-        designation:r["Designation"],
-        month:XLSX.SSF.format("mmm-yy", r["Month"]),
-        basic:r["Basic"]||0,
-        hra:r["HRA"]||0,
-        allow:r["Allowance"]||0,
-        bonus:r["Bonus"]||0,
-        gross:r["Gross"]||0,
-        pf:r["PF@12%"]||0,
-        esi:r["ESI@.75%"]||0,
-        lwf:r["LWF"]||0,
-        advance:r["Advance Paid"]||0,
-        net:r["Net In Hand"]||0,
-        project:project,
-        location:location
-      });
-    });
-  });
-  populateFilters();
-  render(employees);
-};
-reader.readAsArrayBuffer(e.target.files[0]);
+// FILE UPLOAD FIXED
+document.getElementById("file").addEventListener("change", e => {
+    const reader = new FileReader();
+    reader.onload = function(evt) {
+        const data = new Uint8Array(evt.target.result);
+        const wb = XLSX.read(data, { type: 'array' });
+        savedExcel.push(wb); // keep multiple Excels
+
+        wb.SheetNames.forEach(name => {
+            const sheet = wb.Sheets[name];
+            const rows = XLSX.utils.sheet_to_json(sheet);
+
+            let parts = name.split("_");
+            let project = parts[0] || "";
+            let location = parts[1] || "";
+
+            rows.forEach(r => {
+                employees.push({
+                    code: r["Emp Code"],
+                    name: r["Name"],
+                    designation: r["Designation"],
+                    month: XLSX.SSF.format("mmm-yy", r["Month"]),
+                    basic: r["Basic"] || 0,
+                    hra: r["HRA"] || 0,
+                    allow: r["Allowance"] || 0,
+                    bonus: r["Bonus"] || 0,
+                    gross: r["Gross"] || 0,
+                    pf: r["PF@12%"] || 0,
+                    esi: r["ESI@.75%"] || 0,
+                    lwf: r["LWF"] || 0,
+                    advance: r["Advance Paid"] || 0,
+                    net: r["Net In Hand"] || 0,
+                    project: project,
+                    location: location
+                });
+            });
+        });
+
+        populateFilters(); // update dropdowns after every upload
+        render(employees);
+    };
+    reader.readAsArrayBuffer(e.target.files[0]);
 });
 
-// Populate project & month filters
+// POPULATE FILTERS
 function populateFilters(){
-  const projSelect = document.getElementById("filterProject");
-  const monthSelect = document.getElementById("filterMonth");
-  projSelect.innerHTML='<option value="all">All Projects</option>';
-  monthSelect.innerHTML='<option value="all">All Months</option>';
-  let projSet = new Set(), monthSet = new Set();
-  employees.forEach(e=>{ projSet.add(e.project); monthSet.add(e.month); });
-  projSet.forEach(p=>projSelect.innerHTML+='<option value="'+p+'">'+p+'</option>');
-  monthSet.forEach(m=>monthSelect.innerHTML+='<option value="'+m+'">'+m+'</option>');
+    const projSelect = document.getElementById("filterProject");
+    const monthSelect = document.getElementById("filterMonth");
+
+    projSelect.innerHTML = '<option value="all">All Projects</option>';
+    monthSelect.innerHTML = '<option value="all">All Months</option>';
+
+    let projSet = new Set(), monthSet = new Set();
+    employees.forEach(e => { projSet.add(e.project); monthSet.add(e.month); });
+
+    projSet.forEach(p => projSelect.innerHTML += '<option value="' + p + '">' + p + '</option>');
+    monthSet.forEach(m => monthSelect.innerHTML += '<option value="' + m + '">' + m + '</option>');
 }
 
 // FILTER PAYSLIP
 function filterPayslip(){
-  const proj = document.getElementById("filterProject").value;
-  const month = document.getElementById("filterMonth").value;
-  let filtered = employees.filter(e=>
-    (proj=="all"||e.project==proj) && (month=="all"||e.month==month)
-  );
-  render(filtered);
+    const proj = document.getElementById("filterProject").value;
+    const month = document.getElementById("filterMonth").value;
+
+    let filtered = employees.filter(e =>
+        (proj==="all"||e.project===proj) && (month==="all"||e.month===month)
+    );
+
+    render(filtered);
 }
 
 // RENDER TABLE
@@ -430,6 +435,7 @@ function render(data){
   document.getElementById("cNet").innerText=rupee(net);
 }
 
+// SEARCH
 document.getElementById("search").addEventListener("keyup",function(){
   let v=this.value.toLowerCase();
   let f=employees.filter(e=>e.code.toLowerCase().includes(v)||e.name.toLowerCase().includes(v));
