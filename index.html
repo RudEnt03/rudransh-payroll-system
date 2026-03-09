@@ -46,7 +46,6 @@ table{
 width:100%;
 border-collapse:collapse;
 background:white;
-box-shadow:0 2px 6px rgba(0,0,0,0.1);
 }
 
 th{
@@ -140,6 +139,7 @@ margin-top:10px;
 
 </div>
 
+
 <!-- DASHBOARD -->
 
 <div id="app" style="display:none">
@@ -201,6 +201,7 @@ margin-top:10px;
 
 </div>
 
+
 <!-- ADMIN PANEL -->
 
 <div id="adminPanel" style="display:none;padding:20px">
@@ -214,6 +215,7 @@ margin-top:10px;
 <button onclick="closeAdmin()">Close</button>
 
 </div>
+
 
 <!-- PAYSLIP -->
 
@@ -235,26 +237,39 @@ margin-top:10px;
 
 </div>
 
+
 <script>
 
 let employees=[];
 
 function isMobile(){
+
 return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
 }
 
 function formatINR(num){
+
 num=Math.round(Number(num)||0);
+
 return "₹ "+num.toLocaleString('en-IN');
+
 }
 
 function formatMonth(v){
+
 if(typeof v==="number"){
+
 let d=XLSX.SSF.parse_date_code(v);
+
 return new Date(d.y,d.m-1).toLocaleString('default',{month:'long',year:'numeric'});
+
 }
+
 return v;
+
 }
+
 
 /* EXCEL IMPORT */
 
@@ -272,6 +287,7 @@ employees=[];
 wb.SheetNames.forEach(name=>{
 
 const sheet=wb.Sheets[name];
+
 const rows=XLSX.utils.sheet_to_json(sheet);
 
 let parts=name.split("_");
@@ -314,6 +330,7 @@ reader.readAsArrayBuffer(e.target.files[0]);
 
 });
 
+
 /* DASHBOARD */
 
 function render(data){
@@ -331,6 +348,7 @@ gross+=Number(e.gross);
 net+=Number(e.net);
 
 tb.innerHTML+=`
+
 <tr>
 <td>${e.code}</td>
 <td>${e.name}</td>
@@ -341,6 +359,7 @@ tb.innerHTML+=`
 <td>${formatINR(e.net)}</td>
 <td><button class="view" onclick='showPS(${JSON.stringify(e)})'>View</button></td>
 </tr>
+
 `;
 
 });
@@ -350,6 +369,7 @@ document.getElementById("cGross").innerText=formatINR(gross);
 document.getElementById("cNet").innerText=formatINR(net);
 
 }
+
 
 /* SEARCH */
 
@@ -362,6 +382,7 @@ let f=employees.filter(e=>e.code.toLowerCase().includes(v)||e.name.toLowerCase()
 render(f);
 
 });
+
 
 /* PAYSLIP */
 
@@ -402,19 +423,26 @@ document.getElementById("psBody").innerHTML=`
 }
 
 function closePS(){
+
 document.getElementById("modal").style.display="none";
+
 }
 
-/* LOGIN */
+
+/* EMPLOYEE LOGIN */
 
 function login(){
 
 if(!isMobile()){
+
 alert("Employee login allowed only from mobile device.");
+
 return;
+
 }
 
 let code=document.getElementById("empCode").value;
+
 let pass=document.getElementById("password").value;
 
 let device=navigator.userAgent;
@@ -422,8 +450,11 @@ let device=navigator.userAgent;
 let stored=localStorage.getItem("device_"+code);
 
 if(stored && stored!==device){
+
 alert("Device mismatch. Contact Admin.");
+
 return;
+
 }
 
 if(pass==="1234"){
@@ -431,29 +462,38 @@ if(pass==="1234"){
 localStorage.setItem("device_"+code,device);
 
 document.getElementById("loginPage").style.display="none";
+
 document.getElementById("app").style.display="block";
 
 }else{
+
 alert("Invalid password");
-}
 
 }
 
-/* ADMIN */
+}
+
+
+/* ADMIN LOGIN */
 
 function adminLogin(){
 
 let pass=prompt("Enter Admin Password");
 
 if(pass==="Rud@03"){
+
 document.getElementById("adminPanel").style.display="block";
+
 }else{
+
 alert("Wrong password");
-}
 
 }
 
-/* RESET */
+}
+
+
+/* ADMIN RESET */
 
 function resetEmployee(){
 
@@ -466,11 +506,18 @@ alert("Device reset completed");
 }
 
 function closeAdmin(){
+
 document.getElementById("adminPanel").style.display="none";
+
 }
 
+
+/* LOGOUT */
+
 function logout(){
+
 location.reload();
+
 }
 
 </script>
