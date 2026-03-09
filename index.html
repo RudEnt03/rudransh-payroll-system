@@ -31,18 +31,20 @@ padding:20px;
 display:flex;
 justify-content:space-between;
 margin-bottom:20px;
+gap:10px;
+flex-wrap:wrap;
 }
 
-input{
+input, select{
 padding:8px;
 margin-bottom:10px;
-width:100%;
 }
 
 .cards{
 display:flex;
 gap:15px;
 margin-bottom:20px;
+flex-wrap:wrap;
 }
 
 .card{
@@ -185,7 +187,7 @@ box-shadow:0 2px 10px rgba(0,0,0,0.2);
 
 #loginBox h2{text-align:center;margin-bottom:20px;color:#4e73df;}
 
-#loginBox input{margin-bottom:10px;padding:8px;width:100%;border:1px solid #ccc;border-radius:4px;}
+#loginBox input, #loginBox select{margin-bottom:10px;padding:8px;width:100%;border:1px solid #ccc;border-radius:4px;}
 
 #loginBox button{width:100%;background:#4e73df;margin-top:10px;}
 
@@ -200,7 +202,7 @@ box-shadow:0 2px 10px rgba(0,0,0,0.2);
 <div id="loginPage">
 <div id="loginBox">
 <h2>Login</h2>
-<select id="role">
+<select id="role" onchange="updateAdminID()">
 <option value="emp">Employee</option>
 <option value="admin">Admin</option>
 </select>
@@ -225,6 +227,9 @@ box-shadow:0 2px 10px rgba(0,0,0,0.2);
 <div class="controls">
 <input type="file" id="file">
 <input type="text" id="search" placeholder="Search employee">
+<select id="filterProject"><option value="all">All Projects</option></select>
+<select id="filterMonth"><option value="all">All Months</option></select>
+<button onclick="filterPayslip()">Filter Payslip</button>
 </div>
 
 <div class="cards">
@@ -277,17 +282,24 @@ Salary Payslip
 <script>
 
 let employees=[];
+let savedExcel = null; // store uploaded Excel
+let empDevice = JSON.parse(localStorage.getItem("emp_device") || "{}");
 
 // Currency formatting
-function rupee(v){
-  return "₹"+Math.round(v).toLocaleString("en-IN");
+function rupee(v){ return "₹"+Math.round(v).toLocaleString("en-IN"); }
+
+// Update admin ID automatically
+function updateAdminID(){
+  const role = document.getElementById("role").value;
+  const empInput = document.getElementById("empCode");
+  if(role=="admin"){
+    empInput.value="Admin"; empInput.disabled=true;
+  }else{
+    empInput.value=""; empInput.disabled=false;
+  }
 }
 
-// LOGIN & DEVICE LOGIC
-const storedDevices = JSON.parse(localStorage.getItem("emp_device") || "{}");
-const adminCreds = {username:"admin",password:"admin123"}; // admin creds
-const empCreds = {password:"emp123"}; // default emp password
-
+// LOGIN
 function login(){
   const role = document.getElementById("role").value;
   const code = document.getElementById("empCode").value.trim();
@@ -295,130 +307,113 @@ function login(){
   const ua = navigator.userAgent;
 
   if(role=="emp"){
-    // Check mobile
     if(!/Mobi|Android/i.test(ua)){
-      document.getElementById("loginMsg").innerText="Employee login only allowed on mobile!";
+      document.getElementById("loginMsg").innerText="Employee login only on mobile!";
       return;
     }
     if(!code){ document.getElementById("loginMsg").innerText="Enter Employee Code"; return;}
-    if(pwd!=empCreds.password){ document.getElementById("loginMsg").innerText="Invalid Password"; return;}
-    
-    // Device binding check
-    if(storedDevices[code] && storedDevices[code]!=ua){
-      document.getElementById("loginMsg").innerText="This emp code is bound to another device! Contact Admin to reset.";
+    if(pwd!=code){ document.getElementById("loginMsg").innerText="Password must be same as Emp Code"; return;}
+    if(empDevice[code] && empDevice[code]!=ua){
+      document.getElementById("loginMsg").innerText="This emp code bound to another device. Contact Admin.";
       return;
     }
-
-    // Save device binding
-    storedDevices[code] = ua;
-    localStorage.setItem("emp_device", JSON.stringify(storedDevices));
-
+    // First login device binding
+    empDevice[code] = ua;
+    localStorage.setItem("emp_device", JSON.stringify(empDevice));
     showDashboard(role, code);
 
   }else{
-    // Admin login (desktop & mobile)
-    if(document.getElementById("empCode").value!=adminCreds.username || pwd!=adminCreds.password){
-      document.getElementById("loginMsg").innerText="Invalid Admin Credentials"; return;
-    }
+    if(pwd!="Rud@03"){ document.getElementById("loginMsg").innerText="Invalid Admin Password"; return;}
     showDashboard(role, "admin");
   }
 }
 
+// SHOW DASHBOARD
 function showDashboard(role, code){
   document.getElementById("loginPage").style.display="none";
   document.getElementById("dashboard").style.display="block";
   document.getElementById("loginMsg").innerText="";
-
-  if(role=="emp"){
-    // EMP can only see his own row
-    document.getElementById("file").style.display="none";
-  }else{
-    document.getElementById("file").style.display="inline-block";
-  }
+  if(role=="emp"){ document.getElementById("file").style.display="none"; }
+  else{ document.getElementById("file").style.display="inline-block"; }
 }
 
-// Reset device binding (Admin / Employee)
+// RESET DEVICE
 function resetDevice(){
   const code = prompt("Enter Emp Code to reset device:");
-  if(code && storedDevices[code]){
-    delete storedDevices[code];
-    localStorage.setItem("emp_device", JSON.stringify(storedDevices));
-    alert("Device reset for "+code);
-  }else{
-    alert("No device binding found for this code.");
-  }
+  if(code && empDevice[code]){ delete empDevice[code]; localStorage.setItem("emp_device", JSON.stringify(empDevice)); alert("Device reset for "+code);}
+  else{ alert("No device binding found."); }
 }
 
-// EMPLOYEE DATA & PAYROLL LOGIC
+// FILE UPLOAD
 document.getElementById("file").addEventListener("change",e=>{
-
 const reader=new FileReader();
-
 reader.onload=function(evt){
-
-const data=new Uint8Array(evt.target.result);
-const wb=XLSX.read(data,{type:'array'});
-
-employees=[];
-
-wb.SheetNames.forEach(name=>{
-
-const sheet=wb.Sheets[name];
-const rows=XLSX.utils.sheet_to_json(sheet);
-
-let parts=name.split("_");
-let project=parts[0]||"";
-let location=parts[1]||"";
-
-rows.forEach(r=>{
-
-employees.push({
-
-code:r["Emp Code"],
-name:r["Name"],
-designation:r["Designation"],
-month:XLSX.SSF.format("mmm-yy", r["Month"]),
-basic:r["Basic"]||0,
-hra:r["HRA"]||0,
-allow:r["Allowance"]||0,
-bonus:r["Bonus"]||0,
-gross:r["Gross"]||0,
-pf:r["PF@12%"]||0,
-esi:r["ESI@.75%"]||0,
-lwf:r["LWF"]||0,
-advance:r["Advance Paid"]||0,
-net:r["Net In Hand"]||0,
-project:project,
-location:location
-
-});
-
-});
-
-});
-
-render(employees);
-
+  const data=new Uint8Array(evt.target.result);
+  const wb=XLSX.read(data,{type:'array'});
+  savedExcel = wb; // keep in memory
+  employees=[];
+  wb.SheetNames.forEach(name=>{
+    const sheet=wb.Sheets[name];
+    const rows=XLSX.utils.sheet_to_json(sheet);
+    let parts=name.split("_");
+    let project=parts[0]||"";
+    let location=parts[1]||"";
+    rows.forEach(r=>{
+      employees.push({
+        code:r["Emp Code"],
+        name:r["Name"],
+        designation:r["Designation"],
+        month:XLSX.SSF.format("mmm-yy", r["Month"]),
+        basic:r["Basic"]||0,
+        hra:r["HRA"]||0,
+        allow:r["Allowance"]||0,
+        bonus:r["Bonus"]||0,
+        gross:r["Gross"]||0,
+        pf:r["PF@12%"]||0,
+        esi:r["ESI@.75%"]||0,
+        lwf:r["LWF"]||0,
+        advance:r["Advance Paid"]||0,
+        net:r["Net In Hand"]||0,
+        project:project,
+        location:location
+      });
+    });
+  });
+  populateFilters();
+  render(employees);
 };
-
 reader.readAsArrayBuffer(e.target.files[0]);
-
 });
 
+// Populate project & month filters
+function populateFilters(){
+  const projSelect = document.getElementById("filterProject");
+  const monthSelect = document.getElementById("filterMonth");
+  projSelect.innerHTML='<option value="all">All Projects</option>';
+  monthSelect.innerHTML='<option value="all">All Months</option>';
+  let projSet = new Set(), monthSet = new Set();
+  employees.forEach(e=>{ projSet.add(e.project); monthSet.add(e.month); });
+  projSet.forEach(p=>projSelect.innerHTML+='<option value="'+p+'">'+p+'</option>');
+  monthSet.forEach(m=>monthSelect.innerHTML+='<option value="'+m+'">'+m+'</option>');
+}
+
+// FILTER PAYSLIP
+function filterPayslip(){
+  const proj = document.getElementById("filterProject").value;
+  const month = document.getElementById("filterMonth").value;
+  let filtered = employees.filter(e=>
+    (proj=="all"||e.project==proj) && (month=="all"||e.month==month)
+  );
+  render(filtered);
+}
+
+// RENDER TABLE
 function render(data){
-
-let tb=document.getElementById("tbody");
-tb.innerHTML="";
-
-let gross=0;
-let net=0;
-
-data.forEach(e=>{
-
-gross+=Number(e.gross);
-net+=Number(e.net);
-
-tb.innerHTML+=`
+  let tb=document.getElementById("tbody"); tb.innerHTML="";
+  let gross=0, net=0;
+  data.forEach(e=>{
+    gross+=Number(e.gross); net+=Number(e.net);
+    tb.innerHTML+=`
 <tr>
 <td>${e.code}</td>
 <td>${e.name}</td>
@@ -429,65 +424,45 @@ tb.innerHTML+=`
 <td>${rupee(e.net)}</td>
 <td><button class="view" onclick='showPS(${JSON.stringify(e)})'>View</button></td>
 </tr>`;
-
-});
-
-document.getElementById("cEmp").innerText=data.length;
-document.getElementById("cGross").innerText=rupee(gross);
-document.getElementById("cNet").innerText=rupee(net);
-
+  });
+  document.getElementById("cEmp").innerText=data.length;
+  document.getElementById("cGross").innerText=rupee(gross);
+  document.getElementById("cNet").innerText=rupee(net);
 }
 
 document.getElementById("search").addEventListener("keyup",function(){
-
-let v=this.value.toLowerCase();
-
-let f=employees.filter(e=>e.code.toLowerCase().includes(v)||e.name.toLowerCase().includes(v));
-
-render(f);
-
+  let v=this.value.toLowerCase();
+  let f=employees.filter(e=>e.code.toLowerCase().includes(v)||e.name.toLowerCase().includes(v));
+  render(f);
 });
 
+// PAYSLIP
 function showPS(e){
-
-document.getElementById("modal").style.display="block";
-
-document.getElementById("psBody").innerHTML=`
-
+  document.getElementById("modal").style.display="block";
+  document.getElementById("psBody").innerHTML=`
 <div class="row"><b>Emp Code</b><span>${e.code}</span></div>
 <div class="row"><b>Name</b><span>${e.name}</span></div>
 <div class="row"><b>Designation</b><span>${e.designation}</span></div>
 <div class="row"><b>Project</b><span>${e.project}</span></div>
 <div class="row"><b>Location</b><span>${e.location}</span></div>
 <div class="row"><b>Month</b><span>${e.month}</span></div>
-
 <div class="section">Earnings</div>
 <div class="row"><span>Basic</span><span>${rupee(e.basic)}</span></div>
 <div class="row"><span>HRA</span><span>${rupee(e.hra)}</span></div>
 <div class="row"><span>Allowance</span><span>${rupee(e.allow)}</span></div>
 <div class="row"><span>Bonus</span><span>${rupee(e.bonus)}</span></div>
 <div class="row"><b>Gross</b><b>${rupee(e.gross)}</b></div>
-
 <div class="section">Deductions</div>
 <div class="row"><span>PF</span><span>${rupee(e.pf)}</span></div>
 <div class="row"><span>ESI</span><span>${rupee(e.esi)}</span></div>
 <div class="row"><span>LWF</span><span>${rupee(e.lwf)}</span></div>
 <div class="row"><span>Advance</span><span>${rupee(e.advance)}</span></div>
-
 <div class="section"></div>
-<div class="row net"><span>Net Pay</span><span>${rupee(e.net)}</span></div>
-
-`;
-
+<div class="row net"><span>Net Pay</span><span>${rupee(e.net)}</span></div>`;
 }
 
-function closePS(){
-document.getElementById("modal").style.display="none";
-}
-
-function toggleTheme(){
-document.body.classList.toggle("dark");
-}
+function closePS(){ document.getElementById("modal").style.display="none"; }
+function toggleTheme(){ document.body.classList.toggle("dark"); }
 
 </script>
 
