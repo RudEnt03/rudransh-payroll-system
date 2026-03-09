@@ -7,7 +7,6 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
 <style>
-
 body{
 font-family:Segoe UI;
 margin:0;
@@ -112,6 +111,7 @@ left:0;
 width:100%;
 height:100%;
 background:rgba(0,0,0,0.5);
+overflow-y:auto;
 }
 
 .payslip{
@@ -193,6 +193,7 @@ box-shadow:0 2px 10px rgba(0,0,0,0.2);
 
 #resetBtn{background:#e74a3b;margin-top:5px;}
 
+.checkbox-col{width:40px;}
 </style>
 </head>
 
@@ -230,6 +231,8 @@ box-shadow:0 2px 10px rgba(0,0,0,0.2);
 <select id="filterProject"><option value="all">All Projects</option></select>
 <select id="filterMonth"><option value="all">All Months</option></select>
 <button onclick="filterPayslip()">Filter Payslip</button>
+<button onclick="bulkPayslip()">Generate Bulk Payslips</button>
+<button onclick="selectAllEmployees()">Select All / Deselect All</button>
 </div>
 
 <div class="cards">
@@ -241,6 +244,7 @@ box-shadow:0 2px 10px rgba(0,0,0,0.2);
 <table>
 <thead>
 <tr>
+<th class="checkbox-col"><input type="checkbox" id="selectAllChk" onclick="toggleSelectAll(this)"></th>
 <th>Emp Code</th>
 <th>Name</th>
 <th>Project</th>
@@ -282,8 +286,9 @@ Salary Payslip
 <script>
 
 let employees=[];
-let savedExcel = []; // store multiple Excels
+let savedExcel = []; 
 let empDevice = JSON.parse(localStorage.getItem("emp_device") || "{}");
+let allSelected = false;
 
 // Currency formatting
 function rupee(v){ return "₹"+Math.round(v).toLocaleString("en-IN"); }
@@ -314,7 +319,6 @@ function login(){
       document.getElementById("loginMsg").innerText="This emp code bound to another device. Contact Admin.";
       return;
     }
-    // First login device binding
     empDevice[code] = ua;
     localStorage.setItem("emp_device", JSON.stringify(empDevice));
     showDashboard(role, code);
@@ -341,13 +345,13 @@ function resetDevice(){
   else{ alert("No device binding found."); }
 }
 
-// FILE UPLOAD FIXED
+// FILE UPLOAD WITH HEADER NORMALIZATION
 document.getElementById("file").addEventListener("change", e => {
     const reader = new FileReader();
     reader.onload = function(evt) {
         const data = new Uint8Array(evt.target.result);
         const wb = XLSX.read(data, { type: 'array' });
-        savedExcel.push(wb); // keep multiple Excels
+        savedExcel.push(wb); 
 
         wb.SheetNames.forEach(name => {
             const sheet = wb.Sheets[name];
@@ -358,28 +362,35 @@ document.getElementById("file").addEventListener("change", e => {
             let location = parts[1] || "";
 
             rows.forEach(r => {
+                const record = {};
+                for(let k in r) record[k.trim().toLowerCase()] = r[k];
+
+                let monthValue = record['month'];
+                if(typeof monthValue === 'number'){ monthValue = XLSX.SSF.format("mmm-yy", monthValue); }
+                else if(!monthValue){ monthValue = "N/A"; }
+
                 employees.push({
-                    code: r["Emp Code"],
-                    name: r["Name"],
-                    designation: r["Designation"],
-                    month: XLSX.SSF.format("mmm-yy", r["Month"]),
-                    basic: r["Basic"] || 0,
-                    hra: r["HRA"] || 0,
-                    allow: r["Allowance"] || 0,
-                    bonus: r["Bonus"] || 0,
-                    gross: r["Gross"] || 0,
-                    pf: r["PF@12%"] || 0,
-                    esi: r["ESI@.75%"] || 0,
-                    lwf: r["LWF"] || 0,
-                    advance: r["Advance Paid"] || 0,
-                    net: r["Net In Hand"] || 0,
+                    code: record['emp code'] || "N/A",
+                    name: record['name'] || "N/A",
+                    designation: record['designation'] || "",
+                    month: monthValue,
+                    basic: Number(record['basic']||0),
+                    hra: Number(record['hra']||0),
+                    allow: Number(record['allowance']||0),
+                    bonus: Number(record['bonus']||0),
+                    gross: Number(record['gross']||0),
+                    pf: Number(record['pf@12%']||0),
+                    esi: Number(record['esi@.75%']||0),
+                    lwf: Number(record['lwf']||0),
+                    advance: Number(record['advance paid']||0),
+                    net: Number(record['net in hand']||0),
                     project: project,
                     location: location
                 });
             });
         });
 
-        populateFilters(); // update dropdowns after every upload
+        populateFilters(); 
         render(employees);
     };
     reader.readAsArrayBuffer(e.target.files[0]);
@@ -412,7 +423,59 @@ function filterPayslip(){
     render(filtered);
 }
 
-// RENDER TABLE
+// SELECT ALL / DESELECT ALL FUNCTION
+function toggleSelectAll(chk){
+    const checkboxes = document.querySelectorAll('.empChk');
+    checkboxes.forEach(c => c.checked = chk.checked);
+    allSelected = chk.checked;
+}
+
+// BULK SELECT ALL / DESELECT ALL BUTTON
+function selectAllEmployees(){
+    const checkboxes = document.querySelectorAll('.empChk');
+    allSelected = !allSelected;
+    checkboxes.forEach(c => c.checked = allSelected);
+}
+
+// BULK PAYSLIP
+function bulkPayslip(){
+    const checkboxes = document.querySelectorAll('.empChk:checked');
+    if(checkboxes.length==0){ alert("No employees selected for payslip!"); return; }
+
+    document.getElementById("modal").style.display="block";
+    let html = "";
+    checkboxes.forEach(c=>{
+        const e = employees.find(emp=>emp.code===c.value);
+        if(!e) return;
+        html += `
+<div class="payslip">
+<div class="psHeader"><div class="company">Rudransh Enterprises</div>Salary Payslip</div>
+<div class="row"><b>Emp Code</b><span>${e.code}</span></div>
+<div class="row"><b>Name</b><span>${e.name}</span></div>
+<div class="row"><b>Designation</b><span>${e.designation}</span></div>
+<div class="row"><b>Project</b><span>${e.project}</span></div>
+<div class="row"><b>Location</b><span>${e.location}</span></div>
+<div class="row"><b>Month</b><span>${e.month}</span></div>
+<div class="section">Earnings</div>
+<div class="row"><span>Basic</span><span>${rupee(e.basic)}</span></div>
+<div class="row"><span>HRA</span><span>${rupee(e.hra)}</span></div>
+<div class="row"><span>Allowance</span><span>${rupee(e.allow)}</span></div>
+<div class="row"><span>Bonus</span><span>${rupee(e.bonus)}</span></div>
+<div class="row"><b>Gross</b><b>${rupee(e.gross)}</b></div>
+<div class="section">Deductions</div>
+<div class="row"><span>PF</span><span>${rupee(e.pf)}</span></div>
+<div class="row"><span>ESI</span><span>${rupee(e.esi)}</span></div>
+<div class="row"><span>LWF</span><span>${rupee(e.lwf)}</span></div>
+<div class="row"><span>Advance</span><span>${rupee(e.advance)}</span></div>
+<div class="section"></div>
+<div class="row net"><span>Net Pay</span><span>${rupee(e.net)}</span></div>
+</div>
+<hr>`;
+    });
+    document.getElementById("psBody").innerHTML = html;
+}
+
+// RENDER TABLE WITH CHECKBOXES
 function render(data){
   let tb=document.getElementById("tbody"); tb.innerHTML="";
   let gross=0, net=0;
@@ -420,6 +483,7 @@ function render(data){
     gross+=Number(e.gross); net+=Number(e.net);
     tb.innerHTML+=`
 <tr>
+<td class="checkbox-col"><input type="checkbox" class="empChk" value="${e.code}"></td>
 <td>${e.code}</td>
 <td>${e.name}</td>
 <td>${e.project}</td>
@@ -442,7 +506,7 @@ document.getElementById("search").addEventListener("keyup",function(){
   render(f);
 });
 
-// PAYSLIP
+// SINGLE PAYSLIP
 function showPS(e){
   document.getElementById("modal").style.display="block";
   document.getElementById("psBody").innerHTML=`
