@@ -1,71 +1,15 @@
+```html
 <!DOCTYPE html>
 <html>
 <head>
-<title>Payroll Dashboard</title>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<title>Payroll System</title>
 
 <style>
 
 body{
 font-family:Arial;
 margin:0;
-background:#f4f6f9;
-}
-
-.header{
-background:#2c3e50;
-color:white;
-padding:15px;
-font-size:20px;
-}
-
-.container{
-padding:20px;
-}
-
-.card{
-background:white;
-padding:20px;
-margin-bottom:20px;
-border-radius:6px;
-box-shadow:0 2px 6px rgba(0,0,0,0.1);
-}
-
-button{
-padding:10px 15px;
-background:#3498db;
-border:none;
-color:white;
-cursor:pointer;
-border-radius:4px;
-}
-
-button:hover{
-background:#2980b9;
-}
-
-input{
-padding:8px;
-margin:5px 0;
-width:100%;
-}
-
-table{
-width:100%;
-border-collapse:collapse;
-margin-top:10px;
-}
-
-table th, table td{
-border:1px solid #ddd;
-padding:8px;
-text-align:left;
-}
-
-table th{
-background:#34495e;
-color:white;
+background:#f2f2f2;
 }
 
 .login-box{
@@ -73,12 +17,51 @@ width:320px;
 margin:120px auto;
 background:white;
 padding:30px;
-border-radius:6px;
-box-shadow:0 2px 6px rgba(0,0,0,0.2);
+box-shadow:0 0 8px rgba(0,0,0,0.2);
+}
+
+input{
+width:100%;
+padding:8px;
+margin:6px 0;
+}
+
+button{
+padding:10px;
+background:#3498db;
+border:none;
+color:white;
+cursor:pointer;
+width:100%;
+}
+
+.header{
+background:#2c3e50;
+color:white;
+padding:15px;
+}
+
+.container{
+padding:20px;
+}
+
+table{
+width:100%;
+border-collapse:collapse;
+}
+
+table th,table td{
+border:1px solid #ddd;
+padding:8px;
+}
+
+table th{
+background:#34495e;
+color:white;
 }
 
 .payslip{
-width:650px;
+width:600px;
 margin:auto;
 background:white;
 padding:20px;
@@ -91,13 +74,13 @@ border:1px solid #ccc;
 
 <body>
 
-<!-- LOGIN PAGE -->
+<!-- LOGIN -->
 
 <div id="loginPage">
 
 <div class="login-box">
 
-<h2>Admin Login</h2>
+<h3>Admin Login</h3>
 
 <input id="username" placeholder="Username">
 <input id="password" type="password" placeholder="Password">
@@ -118,23 +101,18 @@ Payroll Dashboard
 
 <div class="container">
 
-<div class="card">
-
-<h3>Upload Excel File</h3>
+<h3>Upload Excel</h3>
 
 <input type="file" id="excelFile">
 
 <button onclick="importExcel()">Import Excel</button>
 
-</div>
-
-<div class="card">
-
-<h3>Employee List</h3>
+<br><br>
 
 <table id="employeeTable">
 
 <thead>
+
 <tr>
 <th>Emp Code</th>
 <th>Name</th>
@@ -144,6 +122,7 @@ Payroll Dashboard
 <th>Net</th>
 <th>Payslip</th>
 </tr>
+
 </thead>
 
 <tbody></tbody>
@@ -154,9 +133,7 @@ Payroll Dashboard
 
 </div>
 
-</div>
-
-<!-- PAYSLIP PAGE -->
+<!-- PAYSLIP -->
 
 <div id="payslipPage" style="display:none">
 
@@ -168,7 +145,7 @@ Payroll Dashboard
 
 <br>
 
-<button onclick="printPayslip()">Print Payslip</button>
+<button onclick="window.print()">Print</button>
 
 </div>
 
@@ -176,8 +153,8 @@ Payroll Dashboard
 
 <script>
 
-const ADMIN_USER="Rudransh";
-const ADMIN_PASS="Rud@03";
+const USER="Rudransh";
+const PASS="Rud@03";
 
 let employees=[];
 let project="";
@@ -185,19 +162,32 @@ let location="";
 
 function login(){
 
-let user=document.getElementById("username").value;
-let pass=document.getElementById("password").value;
+let u=document.getElementById("username").value;
+let p=document.getElementById("password").value;
 
-if(user===ADMIN_USER && pass===ADMIN_PASS){
+if(u===USER && p===PASS){
 
 document.getElementById("loginPage").style.display="none";
 document.getElementById("dashboard").style.display="block";
 
-}else{
-
-alert("Invalid Username or Password");
+loadExcelLibrary();
 
 }
+else{
+
+alert("Invalid Login");
+
+}
+
+}
+
+function loadExcelLibrary(){
+
+let script=document.createElement("script");
+
+script.src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js";
+
+document.body.appendChild(script);
 
 }
 
@@ -206,8 +196,10 @@ function importExcel(){
 let file=document.getElementById("excelFile").files[0];
 
 if(!file){
-alert("Please select Excel file");
+
+alert("Select Excel File");
 return;
+
 }
 
 let reader=new FileReader();
@@ -215,11 +207,13 @@ let reader=new FileReader();
 reader.onload=function(e){
 
 let data=new Uint8Array(e.target.result);
+
 let workbook=XLSX.read(data,{type:"array"});
 
 let sheetName=workbook.SheetNames[0];
 
 let parts=sheetName.split("-");
+
 project=parts[0]||"";
 location=parts[1]||"";
 
@@ -241,16 +235,16 @@ let tbody=document.querySelector("#employeeTable tbody");
 
 tbody.innerHTML="";
 
-employees.forEach((emp,i)=>{
+employees.forEach((e,i)=>{
 
 let row="<tr>";
 
-row+="<td>"+emp["Emp Code"]+"</td>";
-row+="<td>"+emp["Name"]+"</td>";
-row+="<td>"+emp["Designation"]+"</td>";
-row+="<td>"+emp["Month"]+"</td>";
-row+="<td>"+emp["Gross"]+"</td>";
-row+="<td>"+emp["Net In Hand"]+"</td>";
+row+="<td>"+e["Emp Code"]+"</td>";
+row+="<td>"+e["Name"]+"</td>";
+row+="<td>"+e["Designation"]+"</td>";
+row+="<td>"+e["Month"]+"</td>";
+row+="<td>"+e["Gross"]+"</td>";
+row+="<td>"+e["Net In Hand"]+"</td>";
 
 row+='<td><button onclick="viewPayslip('+i+')">View</button></td>';
 
@@ -271,7 +265,7 @@ document.getElementById("payslipPage").style.display="block";
 
 document.getElementById("payslipContent").innerHTML=
 
-"<h2 style='text-align:center'>Salary Payslip</h2>"+
+"<h2>Salary Payslip</h2>"+
 
 "<p><b>Project:</b> "+project+"</p>"+
 "<p><b>Location:</b> "+location+"</p>"+
@@ -285,7 +279,7 @@ document.getElementById("payslipContent").innerHTML=
 
 "<hr>"+
 
-"<table width='100%' border='1' style='border-collapse:collapse'>"+
+"<table width='100%' border='1'>"+
 "<tr><th>Earnings</th><th>Amount</th></tr>"+
 
 "<tr><td>Basic</td><td>"+e["Basic"]+"</td></tr>"+
@@ -298,7 +292,7 @@ document.getElementById("payslipContent").innerHTML=
 
 "<br>"+
 
-"<table width='100%' border='1' style='border-collapse:collapse'>"+
+"<table width='100%' border='1'>"+
 "<tr><th>Deductions</th><th>Amount</th></tr>"+
 
 "<tr><td>PF</td><td>"+e["PF@12%"]+"</td></tr>"+
@@ -307,7 +301,7 @@ document.getElementById("payslipContent").innerHTML=
 
 "</table>"+
 
-"<br><h3>Net In Hand : "+e["Net In Hand"]+"</h3>";
+"<br><h3>Net In Hand: "+e["Net In Hand"]+"</h3>";
 
 }
 
@@ -318,11 +312,8 @@ document.getElementById("dashboard").style.display="block";
 
 }
 
-function printPayslip(){
-window.print();
-}
-
 </script>
 
 </body>
 </html>
+```
