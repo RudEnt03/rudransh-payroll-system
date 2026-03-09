@@ -35,6 +35,8 @@ margin-bottom:20px;
 
 input{
 padding:8px;
+margin-bottom:10px;
+width:100%;
 }
 
 .cards{
@@ -162,10 +164,56 @@ color:white;
 .dark th{background:#111827;}
 .dark .card{background:#2c3e50;}
 
+/* LOGIN PAGE */
+#loginPage{
+position:fixed;
+top:0; left:0;
+width:100%; height:100%;
+background:#eef2f7;
+display:flex;
+justify-content:center;
+align-items:center;
+}
+
+#loginBox{
+background:white;
+padding:30px;
+border-radius:8px;
+width:300px;
+box-shadow:0 2px 10px rgba(0,0,0,0.2);
+}
+
+#loginBox h2{text-align:center;margin-bottom:20px;color:#4e73df;}
+
+#loginBox input{margin-bottom:10px;padding:8px;width:100%;border:1px solid #ccc;border-radius:4px;}
+
+#loginBox button{width:100%;background:#4e73df;margin-top:10px;}
+
+#resetBtn{background:#e74a3b;margin-top:5px;}
+
 </style>
 </head>
 
 <body>
+
+<!-- LOGIN PAGE -->
+<div id="loginPage">
+<div id="loginBox">
+<h2>Login</h2>
+<select id="role">
+<option value="emp">Employee</option>
+<option value="admin">Admin</option>
+</select>
+<input type="text" id="empCode" placeholder="Employee Code">
+<input type="password" id="password" placeholder="Password">
+<button onclick="login()">Login</button>
+<button id="resetBtn" onclick="resetDevice()">Reset Device</button>
+<div id="loginMsg" style="color:red;margin-top:10px;"></div>
+</div>
+</div>
+
+<!-- PAYROLL DASHBOARD -->
+<div id="dashboard" style="display:none;">
 
 <header>
 <h2>Payroll Dashboard</h2>
@@ -224,15 +272,84 @@ Salary Payslip
 
 </div>
 
+</div>
+
 <script>
 
 let employees=[];
 
-// Function to format Indian Rupee with commas
+// Currency formatting
 function rupee(v){
   return "₹"+Math.round(v).toLocaleString("en-IN");
 }
 
+// LOGIN & DEVICE LOGIC
+const storedDevices = JSON.parse(localStorage.getItem("emp_device") || "{}");
+const adminCreds = {username:"admin",password:"admin123"}; // admin creds
+const empCreds = {password:"emp123"}; // default emp password
+
+function login(){
+  const role = document.getElementById("role").value;
+  const code = document.getElementById("empCode").value.trim();
+  const pwd = document.getElementById("password").value;
+  const ua = navigator.userAgent;
+
+  if(role=="emp"){
+    // Check mobile
+    if(!/Mobi|Android/i.test(ua)){
+      document.getElementById("loginMsg").innerText="Employee login only allowed on mobile!";
+      return;
+    }
+    if(!code){ document.getElementById("loginMsg").innerText="Enter Employee Code"; return;}
+    if(pwd!=empCreds.password){ document.getElementById("loginMsg").innerText="Invalid Password"; return;}
+    
+    // Device binding check
+    if(storedDevices[code] && storedDevices[code]!=ua){
+      document.getElementById("loginMsg").innerText="This emp code is bound to another device! Contact Admin to reset.";
+      return;
+    }
+
+    // Save device binding
+    storedDevices[code] = ua;
+    localStorage.setItem("emp_device", JSON.stringify(storedDevices));
+
+    showDashboard(role, code);
+
+  }else{
+    // Admin login (desktop & mobile)
+    if(document.getElementById("empCode").value!=adminCreds.username || pwd!=adminCreds.password){
+      document.getElementById("loginMsg").innerText="Invalid Admin Credentials"; return;
+    }
+    showDashboard(role, "admin");
+  }
+}
+
+function showDashboard(role, code){
+  document.getElementById("loginPage").style.display="none";
+  document.getElementById("dashboard").style.display="block";
+  document.getElementById("loginMsg").innerText="";
+
+  if(role=="emp"){
+    // EMP can only see his own row
+    document.getElementById("file").style.display="none";
+  }else{
+    document.getElementById("file").style.display="inline-block";
+  }
+}
+
+// Reset device binding (Admin / Employee)
+function resetDevice(){
+  const code = prompt("Enter Emp Code to reset device:");
+  if(code && storedDevices[code]){
+    delete storedDevices[code];
+    localStorage.setItem("emp_device", JSON.stringify(storedDevices));
+    alert("Device reset for "+code);
+  }else{
+    alert("No device binding found for this code.");
+  }
+}
+
+// EMPLOYEE DATA & PAYROLL LOGIC
 document.getElementById("file").addEventListener("change",e=>{
 
 const reader=new FileReader();
