@@ -26,68 +26,9 @@ align-items:center;
 padding:20px;
 }
 
-.controls{
-display:flex;
-justify-content:space-between;
-margin-bottom:20px;
-gap:10px;
-flex-wrap:wrap;
-}
-
 input, select{
 padding:8px;
 margin-bottom:10px;
-}
-
-.cards{
-display:flex;
-gap:15px;
-margin-bottom:20px;
-flex-wrap:wrap;
-}
-
-.card{
-flex:1;
-background:white;
-padding:20px;
-border-radius:8px;
-text-align:center;
-box-shadow:0 2px 6px rgba(0,0,0,0.1);
-}
-
-.card h3{
-margin:0;
-color:#4e73df;
-}
-
-.card p{
-font-size:22px;
-font-weight:bold;
-margin-top:8px;
-}
-
-table{
-width:100%;
-border-collapse:collapse;
-background:white;
-box-shadow:0 2px 6px rgba(0,0,0,0.1);
-}
-
-th{
-background:#4e73df;
-color:white;
-padding:10px;
-cursor:pointer;
-}
-
-td{
-padding:10px;
-text-align:center;
-border-bottom:1px solid #eee;
-}
-
-tr:hover{
-background:#f1f3f9;
 }
 
 button{
@@ -162,9 +103,7 @@ background:#1f2933;
 color:white;
 }
 
-.dark table{background:#2c3e50;color:white;}
-.dark th{background:#111827;}
-.dark .card{background:#2c3e50;}
+.dark .payslip{background:#2c3e50;color:white;}
 
 /* LOGIN PAGE */
 #loginPage{
@@ -192,8 +131,6 @@ box-shadow:0 2px 10px rgba(0,0,0,0.2);
 #loginBox button{width:100%;background:#4e73df;margin-top:10px;}
 
 #resetBtn{background:#e74a3b;margin-top:5px;}
-
-.checkbox-col{width:40px;}
 </style>
 </head>
 
@@ -215,84 +152,56 @@ box-shadow:0 2px 10px rgba(0,0,0,0.2);
 </div>
 </div>
 
-<!-- PAYROLL DASHBOARD -->
+<!-- PAYROLL DASHBOARD / Employee View -->
 <div id="dashboard" style="display:none;">
-
 <header>
 <h2>Payroll Dashboard</h2>
 <button onclick="toggleTheme()">Theme</button>
 </header>
 
-<div class="container">
-
-<div class="controls">
+<div class="container" id="adminView" style="display:none;">
+<!-- Admin full dashboard content will go here -->
 <input type="file" id="file">
 <input type="text" id="search" placeholder="Search employee">
-<select id="filterProject"><option value="all">All Projects</option></select>
-<select id="filterMonth"><option value="all">All Months</option></select>
-<button onclick="filterPayslip()">Filter Payslip</button>
-<button onclick="bulkPayslip()">Generate Bulk Payslips</button>
-<button onclick="selectAllEmployees()">Select All / Deselect All</button>
+<!-- Admin cards, table, filters etc will be dynamically rendered -->
 </div>
 
-<div class="cards">
-<div class="card"><h3>Total Employees</h3><p id="cEmp">0</p></div>
-<div class="card"><h3>Total Gross</h3><p id="cGross">0</p></div>
-<div class="card"><h3>Total Net</h3><p id="cNet">0</p></div>
+<!-- Employee minimal view -->
+<div class="container" id="empView" style="display:none;">
+<h3>Generate Payslip</h3>
+<select id="empMonth"><option value="">Select Month</option></select>
+<button onclick="generateEmpPayslip()">Generate Payslip</button>
 </div>
-
-<table>
-<thead>
-<tr>
-<th class="checkbox-col"><input type="checkbox" id="selectAllChk" onclick="toggleSelectAll(this)"></th>
-<th>Emp Code</th>
-<th>Name</th>
-<th>Project</th>
-<th>Location</th>
-<th>Month</th>
-<th>Gross</th>
-<th>Net</th>
-<th>Payslip</th>
-</tr>
-</thead>
-<tbody id="tbody"></tbody>
-</table>
 
 </div>
 
+<!-- Payslip Modal -->
 <div id="modal">
-
 <div class="payslip">
-
 <div class="psHeader">
 <div class="company">Rudransh Enterprises</div>
 Salary Payslip
 </div>
-
 <div id="psBody"></div>
-
 <div class="footer">
 <button onclick="window.print()">Print</button>
 <button onclick="window.print()">Download PDF</button>
 <button onclick="closePS()">Close</button>
 </div>
-
 </div>
-
-</div>
-
 </div>
 
 <script>
 
-// Persisted employees
+// Persisted data
 let employees = JSON.parse(localStorage.getItem("payroll_data") || "[]");
 let empDevice = JSON.parse(localStorage.getItem("emp_device") || "{}");
+let currentEmp = null;
 
-// Format currency
+// Currency formatting
 function rupee(v){ return "₹"+Math.round(v).toLocaleString("en-IN"); }
 
-// Update admin ID
+// Admin ID auto update
 function updateAdminID(){
   const role = document.getElementById("role").value;
   const empInput = document.getElementById("empCode");
@@ -300,7 +209,7 @@ function updateAdminID(){
   else{ empInput.value=""; empInput.disabled=false; }
 }
 
-// Login button
+// LOGIN
 document.getElementById("loginBtn").addEventListener("click", login);
 function login(){
   const role = document.getElementById("role").value;
@@ -321,37 +230,52 @@ function login(){
     }
     empDevice[code] = ua;
     localStorage.setItem("emp_device", JSON.stringify(empDevice));
-    showDashboard(role, code);
+    currentEmp = code;
+    showEmpView();
 
-  }else{
+  } else {
     if(pwd!="Rud@03"){ document.getElementById("loginMsg").innerText="Invalid Admin Password"; return;}
-    // Load persisted data
     employees = JSON.parse(localStorage.getItem("payroll_data") || "[]");
-    showDashboard(role, "admin");
+    showAdminView();
   }
 }
 
-// Show Dashboard
-function showDashboard(role, code){
+// Show Employee minimal view
+function showEmpView(){
   document.getElementById("loginPage").style.display="none";
   document.getElementById("dashboard").style.display="block";
-  if(role=="emp"){
-      document.getElementById("file").style.display="none";
-      // Filter only this employee
-      const empData = employees.filter(e => e.code === code);
-      render(empData);
-  }else{
-      document.getElementById("file").style.display="inline-block";
-      render(employees);
-  }
-  populateFilters();
+  document.getElementById("adminView").style.display="none";
+  document.getElementById("empView").style.display="block";
+
+  // Populate month dropdown for this employee
+  const empData = employees.filter(e=>e.code===currentEmp);
+  const monthSelect = document.getElementById("empMonth");
+  monthSelect.innerHTML = '<option value="">Select Month</option>';
+  empData.forEach(e=>{
+    if(!Array.from(monthSelect.options).some(opt=>opt.value===e.month))
+      monthSelect.innerHTML += `<option value="${e.month}">${e.month}</option>`;
+  });
 }
 
-// Close payslip modal
-function closePS(){ document.getElementById("modal").style.display="none"; }
-function toggleTheme(){ document.body.classList.toggle("dark"); }
+// Employee generate single payslip
+function generateEmpPayslip(){
+  const selectedMonth = document.getElementById("empMonth").value;
+  if(!selectedMonth){ alert("Select month"); return; }
+  const empData = employees.find(e=>e.code===currentEmp && e.month===selectedMonth);
+  if(empData) showPS(empData);
+  else alert("Payslip not found for selected month!");
+}
 
-// SHOW SINGLE PAYSLIP
+// Show Admin dashboard
+function showAdminView(){
+  document.getElementById("loginPage").style.display="none";
+  document.getElementById("dashboard").style.display="block";
+  document.getElementById("adminView").style.display="block";
+  document.getElementById("empView").style.display="none";
+  // Admin dashboard rendering code (table/cards/upload) goes here
+}
+
+// Payslip modal
 function showPS(e){
   document.getElementById("modal").style.display="block";
   document.getElementById("psBody").innerHTML=`
@@ -376,8 +300,9 @@ function showPS(e){
 <div class="row net"><span>Net Pay</span><span>${rupee(e.net)}</span></div>`;
 }
 
-// Rest of the previous code for file upload, render, filters, bulk payslip, select all remains same as before
-
+function closePS(){ document.getElementById("modal").style.display="none"; }
+function toggleTheme(){ document.body.classList.toggle("dark"); }
+function resetDevice(){ localStorage.removeItem("emp_device"); alert("Device reset successful!"); }
 </script>
 </body>
 </html>
