@@ -1,1 +1,236 @@
-<!DOCTYPE html> <html> <head> <title>Rudransh Enterprises Payroll</title> <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script> <style> body{ font-family:Arial; margin:0; background:#f4f6f9; } .header{ background:#1f2937; color:white; padding:15px; font-size:20px; } .container{ padding:20px; } .loginBox{ width:320px; margin:140px auto; background:white; padding:25px; box-shadow:0 0 10px rgba(0,0,0,0.2); } input{ width:100%; padding:8px; margin:6px 0; } button{ padding:10px; background:#2563eb; color:white; border:none; cursor:pointer; } table{ width:100%; border-collapse:collapse; margin-top:20px; } table th,table td{ border:1px solid #ddd; padding:8px; } table th{ background:#374151; color:white; } .payslip{ width:650px; margin:auto; background:white; padding:20px; border:1px solid #ccc; } </style> </head> <body> <!-- LOGIN --> <div id="loginPage"> <div class="loginBox"> <h3>Admin Login</h3> <input id="username" placeholder="Username"> <input id="password" type="password" placeholder="Password"> <button id="loginBtn">Login</button> </div> </div> <!-- DASHBOARD --> <div id="dashboard" style="display:none"> <div class="header"> Rudransh Enterprises – Payroll Dashboard </div> <div class="container"> <h3>Upload Excel</h3> <input type="file" id="excelFile"> <button id="importBtn">Import Excel</button> <table id="employeeTable"> <thead> <tr> <th>Emp Code</th> <th>Name</th> <th>Designation</th> <th>Month</th> <th>Gross</th> <th>Net</th> <th>Payslip</th> </tr> </thead> <tbody></tbody> </table> </div> </div> <!-- PAYSLIP --> <div id="payslipPage" style="display:none"> <div class="container"> <button id="backBtn">Back</button> <div class="payslip" id="payslipContent"></div> <br> <button onclick="window.print()">Print Payslip</button> </div> </div> <script> const USER="Rudransh"; const PASS="Rud@03"; let employees=[]; let project=""; let location=""; /* LOGIN */ document.getElementById("loginBtn").addEventListener("click",function(){ let u=document.getElementById("username").value; let p=document.getElementById("password").value; if(u===USER && p===PASS){ document.getElementById("loginPage").style.display="none"; document.getElementById("dashboard").style.display="block"; }else{ alert("Invalid Login"); } }); /* IMPORT EXCEL */ document.getElementById("importBtn").addEventListener("click",function(){ let file=document.getElementById("excelFile").files[0]; if(!file){ alert("Select Excel file"); return; } let reader=new FileReader(); reader.onload=function(e){ let data=new Uint8Array(e.target.result); let workbook=XLSX.read(data,{type:"array"}); let sheetName=workbook.SheetNames[0]; let parts=sheetName.split("-"); project=parts[0]||""; location=parts[1]||""; let sheet=workbook.Sheets[sheetName]; employees=XLSX.utils.sheet_to_json(sheet); renderTable(); }; reader.readAsArrayBuffer(file); }); /* TABLE */ function renderTable(){ let tbody=document.querySelector("#employeeTable tbody"); tbody.innerHTML=""; employees.forEach((e,i)=>{ let row="<tr>"; row+="<td>"+e["Emp Code"]+"</td>"; row+="<td>"+e["Name"]+"</td>"; row+="<td>"+e["Designation"]+"</td>"; row+="<td>"+e["Month"]+"</td>"; row+="<td>"+e["Gross"]+"</td>"; row+="<td>"+e["Net In Hand"]+"</td>"; row+='<td><button onclick="viewPayslip('+i+')">View</button></td>'; row+="</tr>"; tbody.innerHTML+=row; }); } /* PAYSLIP */ function viewPayslip(i){ let e=employees[i]; document.getElementById("dashboard").style.display="none"; document.getElementById("payslipPage").style.display="block"; document.getElementById("payslipContent").innerHTML= "<h2 style='text-align:center'>Rudransh Enterprises</h2>"+ "<h3 style='text-align:center'>Salary Payslip</h3>"+ "<p><b>Project:</b> "+project+"</p>"+ "<p><b>Location:</b> "+location+"</p>"+ "<hr>"+ "<p><b>Emp Code:</b> "+e["Emp Code"]+"</p>"+ "<p><b>Name:</b> "+e["Name"]+"</p>"+ "<p><b>Designation:</b> "+e["Designation"]+"</p>"+ "<p><b>Month:</b> "+e["Month"]+"</p>"+ "<hr>"+ "<table width='100%' border='1'>"+ "<tr><th>Earnings</th><th>Amount</th></tr>"+ "<tr><td>Basic</td><td>"+e["Basic"]+"</td></tr>"+ "<tr><td>HRA</td><td>"+e["HRA"]+"</td></tr>"+ "<tr><td>Allowance</td><td>"+e["Allowance"]+"</td></tr>"+ "<tr><td>Bonus</td><td>"+e["Bonus"]+"</td></tr>"+ "<tr><td><b>Gross</b></td><td><b>"+e["Gross"]+"</b></td></tr>"+ "</table>"+ "<br>"+ "<table width='100%' border='1'>"+ "<tr><th>Deductions</th><th>Amount</th></tr>"+ "<tr><td>PF</td><td>"+e["PF@12%"]+"</td></tr>"+ "<tr><td>ESI</td><td>"+e["ESI@.75%"]+"</td></tr>"+ "<tr><td>LWF</td><td>"+e["LWF"]+"</td></tr>"+ "</table>"+ "<br><h3>Net In Hand: "+e["Net In Hand"]+"</h3>"; } /* BACK */ document.getElementById("backBtn").addEventListener("click",function(){ document.getElementById("payslipPage").style.display="none"; document.getElementById("dashboard").style.display="block"; }); </script> </body> </html>
+```html
+<!DOCTYPE html>
+<html>
+<head>
+<title>Rudransh Enterprises Payroll</title>
+
+<style>
+
+body{
+font-family:Arial;
+margin:0;
+background:#f3f4f6;
+}
+
+.loginBox{
+width:320px;
+margin:140px auto;
+background:white;
+padding:25px;
+box-shadow:0 0 10px rgba(0,0,0,0.2);
+}
+
+input{
+width:100%;
+padding:8px;
+margin:6px 0;
+}
+
+button{
+padding:10px;
+background:#2563eb;
+color:white;
+border:none;
+cursor:pointer;
+width:100%;
+}
+
+.header{
+background:#1f2937;
+color:white;
+padding:15px;
+font-size:20px;
+}
+
+.container{
+padding:20px;
+}
+
+table{
+width:100%;
+border-collapse:collapse;
+}
+
+table th,table td{
+border:1px solid #ddd;
+padding:8px;
+}
+
+table th{
+background:#374151;
+color:white;
+}
+
+.payslip{
+width:600px;
+margin:auto;
+background:white;
+padding:20px;
+border:1px solid #ccc;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<!-- LOGIN -->
+
+<div id="loginPage">
+
+<div class="loginBox">
+
+<h3>Admin Login</h3>
+
+<input id="username" placeholder="Username">
+<input id="password" type="password" placeholder="Password">
+
+<button id="loginBtn">Login</button>
+
+</div>
+
+</div>
+
+<!-- DASHBOARD -->
+
+<div id="dashboard" style="display:none">
+
+<div class="header">
+Rudransh Enterprises – Payroll Dashboard
+</div>
+
+<div class="container">
+
+<h3>Employee List</h3>
+
+<table id="employeeTable">
+
+<thead>
+
+<tr>
+<th>Emp Code</th>
+<th>Name</th>
+<th>Designation</th>
+<th>Gross</th>
+<th>Net</th>
+<th>Payslip</th>
+</tr>
+
+</thead>
+
+<tbody>
+
+<tr>
+<td>EMP001</td>
+<td>Rahul Sharma</td>
+<td>Supervisor</td>
+<td>25000</td>
+<td>22000</td>
+<td><button onclick="viewPayslip()">View</button></td>
+</tr>
+
+</tbody>
+
+</table>
+
+</div>
+
+</div>
+
+<!-- PAYSLIP -->
+
+<div id="payslipPage" style="display:none">
+
+<div class="container">
+
+<button onclick="back()">Back</button>
+
+<div class="payslip">
+
+<h2 style="text-align:center">Rudransh Enterprises</h2>
+<h3 style="text-align:center">Salary Payslip</h3>
+
+<p><b>Employee:</b> Rahul Sharma</p>
+<p><b>Designation:</b> Supervisor</p>
+
+<hr>
+
+<table width="100%" border="1">
+
+<tr><th>Earnings</th><th>Amount</th></tr>
+
+<tr><td>Basic</td><td>15000</td></tr>
+<tr><td>HRA</td><td>5000</td></tr>
+<tr><td>Allowance</td><td>5000</td></tr>
+
+<tr><td><b>Gross</b></td><td><b>25000</b></td></tr>
+
+</table>
+
+<br>
+
+<table width="100%" border="1">
+
+<tr><th>Deductions</th><th>Amount</th></tr>
+
+<tr><td>PF</td><td>1800</td></tr>
+<tr><td>ESI</td><td>188</td></tr>
+<tr><td>LWF</td><td>20</td></tr>
+
+</table>
+
+<br>
+
+<h3>Net In Hand: 22000</h3>
+
+</div>
+
+<br>
+
+<button onclick="window.print()">Print Payslip</button>
+
+</div>
+
+</div>
+
+<script>
+
+document.getElementById("loginBtn").addEventListener("click",function(){
+
+let user=document.getElementById("username").value;
+let pass=document.getElementById("password").value;
+
+if(user==="Rudransh" && pass==="Rud@03"){
+
+document.getElementById("loginPage").style.display="none";
+document.getElementById("dashboard").style.display="block";
+
+}
+else{
+
+alert("Invalid Login");
+
+}
+
+});
+
+function viewPayslip(){
+
+document.getElementById("dashboard").style.display="none";
+document.getElementById("payslipPage").style.display="block";
+
+}
+
+function back(){
+
+document.getElementById("payslipPage").style.display="none";
+document.getElementById("dashboard").style.display="block";
+
+}
+
+</script>
+
+</body>
+</html>
+```
