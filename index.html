@@ -285,15 +285,14 @@ Salary Payslip
 
 <script>
 
-// Load persisted employees if any
+// Persisted employees
 let employees = JSON.parse(localStorage.getItem("payroll_data") || "[]");
 let empDevice = JSON.parse(localStorage.getItem("emp_device") || "{}");
-let allSelected = false;
 
-// Currency formatting
+// Format currency
 function rupee(v){ return "₹"+Math.round(v).toLocaleString("en-IN"); }
 
-// Update admin ID automatically
+// Update admin ID
 function updateAdminID(){
   const role = document.getElementById("role").value;
   const empInput = document.getElementById("empCode");
@@ -301,7 +300,7 @@ function updateAdminID(){
   else{ empInput.value=""; empInput.disabled=false; }
 }
 
-// LOGIN
+// Login button
 document.getElementById("loginBtn").addEventListener("click", login);
 function login(){
   const role = document.getElementById("role").value;
@@ -310,7 +309,6 @@ function login(){
   const ua = navigator.userAgent;
 
   if(role=="emp"){
-    // Mobile check improved
     if(!/Mobi|Android|iPhone/i.test(ua)){
       document.getElementById("loginMsg").innerText="Employee login only on mobile!";
       return;
@@ -327,29 +325,58 @@ function login(){
 
   }else{
     if(pwd!="Rud@03"){ document.getElementById("loginMsg").innerText="Invalid Admin Password"; return;}
-    // Load persisted data for admin on any desktop
+    // Load persisted data
     employees = JSON.parse(localStorage.getItem("payroll_data") || "[]");
     showDashboard(role, "admin");
   }
 }
 
-// SHOW DASHBOARD
+// Show Dashboard
 function showDashboard(role, code){
   document.getElementById("loginPage").style.display="none";
   document.getElementById("dashboard").style.display="block";
-  document.getElementById("loginMsg").innerText="";
-  if(role=="emp"){ 
-      document.getElementById("file").style.display="none"; 
+  if(role=="emp"){
+      document.getElementById("file").style.display="none";
+      // Filter only this employee
       const empData = employees.filter(e => e.code === code);
       render(empData);
-  } else { 
-      document.getElementById("file").style.display="inline-block"; 
+  }else{
+      document.getElementById("file").style.display="inline-block";
       render(employees);
   }
   populateFilters();
 }
 
-// The rest of your code (upload, render, payslip, filters, bulk payslip) remains the same as previous working version
+// Close payslip modal
+function closePS(){ document.getElementById("modal").style.display="none"; }
+function toggleTheme(){ document.body.classList.toggle("dark"); }
+
+// SHOW SINGLE PAYSLIP
+function showPS(e){
+  document.getElementById("modal").style.display="block";
+  document.getElementById("psBody").innerHTML=`
+<div class="row"><b>Emp Code</b><span>${e.code}</span></div>
+<div class="row"><b>Name</b><span>${e.name}</span></div>
+<div class="row"><b>Designation</b><span>${e.designation}</span></div>
+<div class="row"><b>Project</b><span>${e.project}</span></div>
+<div class="row"><b>Location</b><span>${e.location}</span></div>
+<div class="row"><b>Month</b><span>${e.month}</span></div>
+<div class="section">Earnings</div>
+<div class="row"><span>Basic</span><span>${rupee(e.basic)}</span></div>
+<div class="row"><span>HRA</span><span>${rupee(e.hra)}</span></div>
+<div class="row"><span>Allowance</span><span>${rupee(e.allow)}</span></div>
+<div class="row"><span>Bonus</span><span>${rupee(e.bonus)}</span></div>
+<div class="row"><b>Gross</b><b>${rupee(e.gross)}</b></div>
+<div class="section">Deductions</div>
+<div class="row"><span>PF</span><span>${rupee(e.pf)}</span></div>
+<div class="row"><span>ESI</span><span>${rupee(e.esi)}</span></div>
+<div class="row"><span>LWF</span><span>${rupee(e.lwf)}</span></div>
+<div class="row"><span>Advance</span><span>${rupee(e.advance)}</span></div>
+<div class="section"></div>
+<div class="row net"><span>Net Pay</span><span>${rupee(e.net)}</span></div>`;
+}
+
+// Rest of the previous code for file upload, render, filters, bulk payslip, select all remains same as before
 
 </script>
 </body>
