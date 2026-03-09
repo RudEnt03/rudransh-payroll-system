@@ -1,8 +1,8 @@
+<!DOCTYPE html>
 <html>
 <head>
 
 <meta name="viewport" content="width=device-width, initial-scale=1">
-
 <title>Payroll System</title>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -109,6 +109,8 @@ padding:6px;
 
 <body>
 
+<!-- LOGIN PAGE -->
+
 <div id="loginPage" class="login">
 
 <h3>Payroll Login</h3>
@@ -116,9 +118,11 @@ padding:6px;
 <input id="username" placeholder="Username"><br>
 <input id="password" type="password" placeholder="Password"><br>
 
-<button id="loginBtn">Login</button>
+<button onclick="login()">Login</button>
 
 </div>
+
+<!-- MAIN APP -->
 
 <div id="app" style="display:none">
 
@@ -130,11 +134,11 @@ padding:6px;
 
 <input type="file" id="excelFile">
 
-<button id="importBtn">Import Excel</button>
+<button onclick="importExcel()">Import Excel</button>
 
-<input id="searchBox" placeholder="Search Employee">
+<input id="searchBox" placeholder="Search Employee" onkeyup="searchEmployee()">
 
-<button id="bulkBtn">Bulk Print Payslip</button>
+<button onclick="bulkPrint()">Bulk Print Payslip</button>
 
 </div>
 
@@ -179,17 +183,8 @@ padding:6px;
 <script>
 
 let employees=[]
-
 let project=""
 let location=""
-
-document.getElementById("loginBtn").addEventListener("click",login)
-
-document.getElementById("importBtn").addEventListener("click",importExcel)
-
-document.getElementById("searchBox").addEventListener("keyup",searchEmployee)
-
-document.getElementById("bulkBtn").addEventListener("click",bulkPrint)
 
 function login(){
 
@@ -247,27 +242,16 @@ json.forEach(r=>{
 employees.push({
 
 code:r["Emp Code"],
-
 name:r["Name"],
-
 month:convertDate(r["Month"]),
-
 basic:Number(r["Basic"])||0,
-
 hra:Number(r["HRA"])||0,
-
 allowance:Number(r["Allowance"])||0,
-
 gross:Number(r["Gross"])||0,
-
 pf:Number(r["PF@12%"])||0,
-
 esi:Number(r["ESI@.75%"])||0,
-
 net:Number(r["Net In Hand"])||0,
-
 project:project,
-
 location:location
 
 })
@@ -380,12 +364,10 @@ w.document.write(`
 <table>
 
 <tr>
-
 <th>Earnings</th>
 <th>Amount</th>
 <th>Deductions</th>
 <th>Amount</th>
-
 </tr>
 
 <tr>
