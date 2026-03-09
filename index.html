@@ -1,24 +1,22 @@
-<!DOCTYPE html>
 <html>
 <head>
 
-<title>Payroll Dashboard</title>
-
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
+<title>Payroll System</title>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <style>
 
 body{
 font-family:Arial;
 margin:0;
-background:#f1f3f6;
+background:#f4f6f9;
 }
 
 header{
-background:#1e2a38;
+background:#1f2937;
 color:white;
 padding:15px;
 font-size:20px;
@@ -37,10 +35,10 @@ box-shadow:0 2px 8px rgba(0,0,0,0.1);
 }
 
 button{
-background:#2c7be5;
-border:none;
+background:#2563eb;
 color:white;
-padding:8px 14px;
+border:none;
+padding:8px 15px;
 border-radius:5px;
 cursor:pointer;
 }
@@ -59,11 +57,10 @@ margin-top:10px;
 th,td{
 border:1px solid #ddd;
 padding:8px;
-font-size:14px;
 }
 
 th{
-background:#e9edf2;
+background:#e5e7eb;
 }
 
 .summary{
@@ -77,23 +74,22 @@ background:white;
 padding:15px;
 border-radius:6px;
 box-shadow:0 2px 6px rgba(0,0,0,0.1);
-min-width:160px;
+min-width:150px;
 }
 
 .login{
-width:300px;
-margin:150px auto;
+width:320px;
+margin:140px auto;
 background:white;
 padding:30px;
-border-radius:8px;
-box-shadow:0 4px 10px rgba(0,0,0,0.2);
+border-radius:10px;
+box-shadow:0 5px 12px rgba(0,0,0,0.2);
 }
 
 .payslip{
-
 width:700px;
 margin:auto;
-padding:25px;
+padding:20px;
 font-family:Arial;
 }
 
@@ -103,7 +99,7 @@ border-collapse:collapse;
 }
 
 .payslip td,.payslip th{
-border:1px solid #444;
+border:1px solid #333;
 padding:6px;
 }
 
@@ -117,20 +113,16 @@ padding:6px;
 
 <h3>Payroll Login</h3>
 
-<input id="user" placeholder="Username"><br>
-<input id="pass" type="password" placeholder="Password"><br>
+<input id="username" placeholder="Username"><br>
+<input id="password" type="password" placeholder="Password"><br>
 
-<button onclick="login()">Login</button>
+<button id="loginBtn">Login</button>
 
 </div>
 
 <div id="app" style="display:none">
 
-<header>
-
-Payroll Dashboard
-
-</header>
+<header>Payroll Dashboard</header>
 
 <div class="container">
 
@@ -138,11 +130,11 @@ Payroll Dashboard
 
 <input type="file" id="excelFile">
 
-<button onclick="importExcel()">Import Excel</button>
+<button id="importBtn">Import Excel</button>
 
-<input id="search" placeholder="Search Employee" onkeyup="searchEmployee()">
+<input id="searchBox" placeholder="Search Employee">
 
-<button onclick="bulkPrint()">Bulk Print Payslip</button>
+<button id="bulkBtn">Bulk Print Payslip</button>
 
 </div>
 
@@ -191,12 +183,23 @@ let employees=[]
 let project=""
 let location=""
 
+document.getElementById("loginBtn").addEventListener("click",login)
+
+document.getElementById("importBtn").addEventListener("click",importExcel)
+
+document.getElementById("searchBox").addEventListener("keyup",searchEmployee)
+
+document.getElementById("bulkBtn").addEventListener("click",bulkPrint)
+
 function login(){
 
-if(user.value==="Rudransh" && pass.value==="Rud@03"){
+let user=document.getElementById("username").value
+let pass=document.getElementById("password").value
 
-loginPage.style.display="none"
-app.style.display="block"
+if(user==="Rudransh" && pass==="Rud@03"){
+
+document.getElementById("loginPage").style.display="none"
+document.getElementById("app").style.display="block"
 
 }else{
 
@@ -224,14 +227,14 @@ reader.onload=function(e){
 
 let data=new Uint8Array(e.target.result)
 
-let workbook=XLSX.read(data,{type:'array'})
+let workbook=XLSX.read(data,{type:"array"})
 
 let sheetName=workbook.SheetNames[0]
 
-let parts=sheetName.split("-")
+let split=sheetName.split("-")
 
-project=parts[0]||""
-location=parts[1]||""
+project=split[0]||""
+location=split[1]||""
 
 let sheet=workbook.Sheets[sheetName]
 
@@ -285,7 +288,7 @@ if(typeof serial==="number"){
 
 let date=new Date((serial-25569)*86400*1000)
 
-return date.toLocaleString('default',{month:'long',year:'numeric'})
+return date.toLocaleString("default",{month:"long",year:"numeric"})
 
 }
 
@@ -328,10 +331,10 @@ tbody.appendChild(tr)
 
 })
 
-empCount.innerText=employees.length
-grossSum.innerText=gross
-pfSum.innerText=pf
-esiSum.innerText=esi
+document.getElementById("empCount").innerText=employees.length
+document.getElementById("grossSum").innerText=gross
+document.getElementById("pfSum").innerText=pf
+document.getElementById("esiSum").innerText=esi
 
 }
 
@@ -433,7 +436,7 @@ employees.forEach((e,i)=>showPayslip(i))
 
 function searchEmployee(){
 
-let text=search.value.toLowerCase()
+let text=document.getElementById("searchBox").value.toLowerCase()
 
 let rows=document.querySelectorAll("#empTable tbody tr")
 
