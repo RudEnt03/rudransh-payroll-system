@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html>
 <head>
-
 <meta charset="UTF-8">
 <title>Rudransh Enterprises Payroll System</title>
 
@@ -50,9 +49,12 @@ display:none;
 padding:30px;
 }
 
-#employeePortal{
-display:none;
-padding:30px;
+#payslipSection{
+margin-top:30px;
+background:#fff;
+padding:20px;
+border-radius:10px;
+box-shadow:0 3px 10px rgba(0,0,0,0.15);
 }
 
 table{
@@ -76,14 +78,13 @@ background:#f0f0f0;
 
 <body>
 
-<!-- LOGIN -->
+<!-- LOGIN PAGE -->
 
 <div class="card" id="loginPage">
 
 <h2>Employee Login</h2>
 
 <input id="empCode" placeholder="Employee Code">
-
 <input id="empPass" placeholder="Password">
 
 <br>
@@ -104,13 +105,11 @@ background:#f0f0f0;
 <h2>Admin Login</h2>
 
 <input id="adminUser" placeholder="Username">
-
 <input id="adminPass" placeholder="Password">
 
 <br>
 
 <button onclick="adminLogin()">Login</button>
-
 <button onclick="backLogin()">Back</button>
 
 </div>
@@ -123,7 +122,6 @@ background:#f0f0f0;
 <h2>Admin Dashboard</h2>
 
 <input type="file" id="excelFile">
-
 <button onclick="importExcel()">Import Excel</button>
 
 <table id="employeeTable">
@@ -150,24 +148,19 @@ background:#f0f0f0;
 
 </table>
 
+
+<div id="payslipSection">
+<h3>Payslip</h3>
+<div id="payslip"></div>
+</div>
+
+
 <br><br>
 
 <h3>Admin Control Panel</h3>
 
 <input id="resetCode" placeholder="Employee Code">
-
 <button onclick="resetDevice()">Reset Employee Device</button>
-
-</div>
-
-
-<!-- EMPLOYEE PORTAL -->
-
-<div id="employeePortal">
-
-<h2>Employee Portal</h2>
-
-<div id="payslip"></div>
 
 </div>
 
@@ -219,21 +212,7 @@ alert("Invalid Login");
 
 function employeeLogin(){
 
-let code=document.getElementById("empCode").value;
-
-let emp=employees.find(e=>e.code==code);
-
-if(!emp){
-
-alert("Employee Not Found");
-return;
-
-}
-
-document.getElementById("loginPage").style.display="none";
-document.getElementById("employeePortal").style.display="block";
-
-generatePayslip(emp);
+alert("Employees must login after Excel import.");
 
 }
 
@@ -258,20 +237,20 @@ let json=XLSX.utils.sheet_to_json(sheet);
 
 employees=[];
 
-json.forEach(r=>{
+json.forEach(row=>{
 
 let emp={
 
-code:r["Emp Code"],
-name:r["Name"],
-des:r["Designation"],
-basic:Number(r["Basic"]),
-hra:Number(r["HRA"]),
-allow:Number(r["Allowance"]),
-gross:Number(r["Gross"]),
-pf:Number(r["PF@12%"]),
-esi:Number(r["ESI@.75%"]),
-net:Number(r["Net In Hand"])
+code:row["Emp Code"],
+name:row["Name"],
+designation:row["Designation"],
+basic:row["Basic"],
+hra:row["HRA"],
+allowance:row["Allowance"],
+gross:row["Gross"],
+pf:row["PF@12%"],
+esi:row["ESI@.75%"],
+net:row["Net In Hand"]
 
 };
 
@@ -288,7 +267,7 @@ reader.readAsArrayBuffer(file);
 }
 
 
-/* TABLE */
+/* RENDER TABLE */
 
 function renderTable(){
 
@@ -296,68 +275,67 @@ let tbody=document.querySelector("#employeeTable tbody");
 
 tbody.innerHTML="";
 
-employees.forEach((e,i)=>{
+employees.forEach((emp,index)=>{
 
-let row=`<tr>
+let row=document.createElement("tr");
 
-<td>${e.code}</td>
-<td>${e.name}</td>
-<td>${e.des}</td>
-<td>${e.basic}</td>
-<td>${e.hra}</td>
-<td>${e.allow}</td>
-<td>${e.gross}</td>
-<td>${e.pf}</td>
-<td>${e.esi}</td>
-<td>${e.net}</td>
+row.innerHTML=`
+<td>${emp.code}</td>
+<td>${emp.name}</td>
+<td>${emp.designation}</td>
+<td>${emp.basic}</td>
+<td>${emp.hra}</td>
+<td>${emp.allowance}</td>
+<td>${emp.gross}</td>
+<td>${emp.pf}</td>
+<td>${emp.esi}</td>
+<td>${emp.net}</td>
+<td><button class="viewBtn">View</button></td>
+`;
 
-<td>
-<button onclick="viewPayslip(${i})">View</button>
-</td>
+tbody.appendChild(row);
 
-</tr>`;
+row.querySelector(".viewBtn").addEventListener("click",function(){
 
-tbody.innerHTML+=row;
+generatePayslip(index);
+
+});
 
 });
 
 }
 
 
-/* VIEW PAYSLIP */
+/* GENERATE PAYSLIP */
 
-function viewPayslip(index){
+function generatePayslip(index){
 
 let emp=employees[index];
 
-generatePayslip(emp);
+let html=`
 
-}
+<h3>${emp.name}</h3>
 
-
-/* GENERATE PAYSLIP */
-
-function generatePayslip(emp){
-
-let html=
-
-`<h3>${emp.name}</h3>
-
-<p>Employee Code : ${emp.code}</p>
+<p><b>Employee Code:</b> ${emp.code}</p>
+<p><b>Designation:</b> ${emp.designation}</p>
 
 <table>
 
 <tr><td>Basic</td><td>${emp.basic}</td></tr>
 <tr><td>HRA</td><td>${emp.hra}</td></tr>
-<tr><td>Allowance</td><td>${emp.allow}</td></tr>
+<tr><td>Allowance</td><td>${emp.allowance}</td></tr>
 <tr><td>Gross</td><td>${emp.gross}</td></tr>
 <tr><td>PF</td><td>${emp.pf}</td></tr>
 <tr><td>ESI</td><td>${emp.esi}</td></tr>
 <tr><td><b>Net In Hand</b></td><td><b>${emp.net}</b></td></tr>
 
-</table>`;
+</table>
+
+`;
 
 document.getElementById("payslip").innerHTML=html;
+
+window.scrollTo(0,document.body.scrollHeight);
 
 }
 
