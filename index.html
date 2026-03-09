@@ -1,1 +1,330 @@
-<!DOCTYPE html> <html> <head> <meta charset="UTF-8"> <title>RUDRANSH PAYROLL SYSTEM v6 - ULTIMATE</title> <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script> <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script> <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script> <style> body{ margin:0; font-family:Segoe UI; background:#0b1b34; color:white; } /* HEADER */ header{ background:linear-gradient(90deg,#1e3a8a,#16a34a); padding:18px; font-size:26px; font-weight:700; } .enterprise{ float:right; background:#065f46; padding:5px 14px; border-radius:18px; font-size:14px; } /* GRID */ .container{ display:grid; grid-template-columns:300px 200px 300px 250px; grid-gap:16px; padding:20px; } /* PANELS */ .panel{ background:#1e293b; border-radius:10px; padding:16px; box-shadow:0 8px 18px rgba(0,0,0,.45); } .panel h3{ margin-top:0; border-bottom:1px solid #334155; padding-bottom:8px; } /* INPUT */ input,select{ width:100%; padding:8px; margin-top:8px; background:#0f172a; border:1px solid #334155; color:white; border-radius:6px; } /* BUTTONS */ button{ width:100%; padding:10px; margin-top:10px; border:none; border-radius:6px; font-weight:600; cursor:pointer; } .green{background:#22c55e} .blue{background:#3b82f6} .orange{background:#f97316} .purple{background:#8b5cf6} .red{background:#ef4444} /* MONTH */ .month{ padding:6px; border-bottom:1px solid #334155; } /* PREVIEW */ .previewPanel{ grid-column: span 3; } .preview{ background:white; color:black; padding:15px; border-radius:6px; } table{ width:100%; border-collapse:collapse; } td{ padding:6px; border-bottom:1px solid #ccc; } .net{ text-align:right; color:#16a34a; font-size:22px; font-weight:bold; } </style> </head> <body> <header> RUDRANSH PAYROLL SYSTEM v6 - ULTIMATE <span class="enterprise">Enterprise Edition</span> </header> <div class="container"> <!-- ADMIN --> <div class="panel"> <h3>ADMIN LOGIN</h3> <input id="user" placeholder="admin"> <input id="pass" type="password"> <button class="green" onclick="login()">LOGIN & BIND DEVICE</button> <p id="deviceStatus"></p> </div> <!-- MONTH VIEW --> <div class="panel"> <h3>MONTH VIEW</h3> <div class="month">Apr-26 (120)</div> <div class="month">Mar-26 (125)</div> <div class="month">Feb-26 (118)</div> <div class="month">Jan-26 (130)</div> </div> <!-- QUICK ACTIONS --> <div class="panel"> <h3>QUICK ACTIONS</h3> <button class="blue" onclick="downloadZIP()">Download All Payslips (ZIP)</button> <button class="orange">Generate PF / ESI / TDS</button> <button class="purple">Reports Dashboard</button> <button class="red" onclick="logout()">Logout</button> </div> <!-- SYSTEM STATS --> <div class="panel"> <h3>SYSTEM STATS</h3> <p>Total Employees : <span id="empCount">0</span></p> <p>Payslips Generated : <span id="payslipCount">0</span></p> <p>ZIP Downloads : <span id="zipCount">0</span></p> <p>Last Update : <span id="updateTime"></span></p> </div> <!-- UPLOADS --> <div class="panel"> <h3>UPLOADS</h3> <input type="file" id="excelFile"> <button class="blue" onclick="loadExcel()">Upload Payroll Excel</button> <input type="file" id="logoFile"> <select id="monthSelect"> <option>Select Month</option> <option>Apr-26</option> <option>Mar-26</option> <option>Feb-26</option> </select> <input id="empCode" placeholder="Enter Emp Code"> <button class="green" onclick="generate()">GENERATE PAYSLIP</button> </div> <!-- PREVIEW --> <div class="panel previewPanel"> <h3>SAMPLE PDF PREVIEW</h3> <div id="preview" class="preview"></div> </div> </div> <script> let payroll=[] let payslipCount=0 let zipCount=0 function login(){ if(user.value==="admin" && pass.value==="Rud@03"){ localStorage.device="bound" deviceStatus.innerHTML="Device Bound : ✔ Yes" }else{ alert("Invalid login") } } function logout(){ location.reload() } function loadExcel(){ let file=excelFile.files[0] let reader=new FileReader() reader.onload=function(e){ let data=new Uint8Array(e.target.result) let wb=XLSX.read(data,{type:'array'}) let sheet=wb.Sheets[wb.SheetNames[0]] payroll=XLSX.utils.sheet_to_json(sheet) empCount.innerText=payroll.length updateTime.innerText=new Date().toLocaleString() } reader.readAsArrayBuffer(file) } function generate(){ let code=empCode.value let emp=payroll.find(e=>e["Emp Code"]==code) if(!emp){ alert("Employee not found") return } preview.innerHTML=` <h2>RUDRANSH ENTERPRISES</h2> <table> <tr><td>Basic</td><td>₹${emp.Basic}</td></tr> <tr><td>HRA</td><td>₹${emp.HRA}</td></tr> <tr><td>Allowance</td><td>₹${emp.Allowance}</td></tr> <tr><td>Bonus</td><td>₹${emp.Bonus}</td></tr> </table> <hr> <table> <tr><td>PF</td><td>₹${emp["PF@12%"]}</td></tr> <tr><td>ESI</td><td>₹${emp["ESI@.75%"]}</td></tr> </table> <div class="net">NET IN HAND : ₹${emp["Net In Hand"]}</div> ` payslipCount++ document.getElementById("payslipCount").innerText=payslipCount } function downloadZIP(){ let zip=new JSZip() payroll.forEach(emp=>{ zip.file(emp["Emp Code"]+".txt","Payslip Generated") }) zip.generateAsync({type:"blob"}).then(function(content){ saveAs(content,"Payslips.zip") }) zipCount++ document.getElementById("zipCount").innerText=zipCount } </script> </body> </html>
+```html
+<!DOCTYPE html>
+<html>
+<head>
+<title>Payroll Dashboard</title>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+<style>
+
+body{
+font-family:Arial;
+margin:0;
+background:#f4f6f9;
+}
+
+.header{
+background:#2c3e50;
+color:white;
+padding:15px;
+font-size:20px;
+}
+
+.container{
+padding:20px;
+}
+
+.card{
+background:white;
+padding:20px;
+margin-bottom:20px;
+border-radius:6px;
+box-shadow:0 2px 6px rgba(0,0,0,0.1);
+}
+
+button{
+padding:10px 15px;
+background:#3498db;
+border:none;
+color:white;
+cursor:pointer;
+border-radius:4px;
+}
+
+button:hover{
+background:#2980b9;
+}
+
+input{
+padding:8px;
+margin:5px 0;
+width:100%;
+}
+
+table{
+width:100%;
+border-collapse:collapse;
+margin-top:10px;
+}
+
+table th, table td{
+border:1px solid #ddd;
+padding:8px;
+text-align:left;
+}
+
+table th{
+background:#34495e;
+color:white;
+}
+
+.login-box{
+width:300px;
+margin:120px auto;
+background:white;
+padding:30px;
+border-radius:6px;
+box-shadow:0 2px 6px rgba(0,0,0,0.2);
+}
+
+.payslip{
+width:600px;
+margin:auto;
+background:white;
+padding:20px;
+border:1px solid #ccc;
+}
+
+</style>
+</head>
+
+<body>
+
+<div id="loginPage">
+
+<div class="login-box">
+
+<h2>Admin Login</h2>
+
+<input type="text" id="username" placeholder="Username">
+<input type="password" id="password" placeholder="Password">
+
+<button onclick="login()">Login</button>
+
+</div>
+
+</div>
+
+<div id="dashboard" style="display:none">
+
+<div class="header">
+Payroll Dashboard
+</div>
+
+<div class="container">
+
+<div class="card">
+
+<h3>Upload Excel</h3>
+
+<input type="file" id="excelFile">
+
+<button onclick="importExcel()">Import Excel</button>
+
+</div>
+
+<div class="card">
+
+<h3>Employees</h3>
+
+<table id="employeeTable">
+
+<thead>
+<tr>
+<th>Emp Code</th>
+<th>Name</th>
+<th>Designation</th>
+<th>Month</th>
+<th>Gross</th>
+<th>Net</th>
+<th>Payslip</th>
+</tr>
+</thead>
+
+<tbody></tbody>
+
+</table>
+
+</div>
+
+</div>
+
+</div>
+
+<div id="payslipPage" style="display:none">
+
+<div class="container">
+
+<button onclick="back()">Back</button>
+
+<div class="payslip" id="payslipContent"></div>
+
+<button onclick="printPayslip()">Print Payslip</button>
+
+</div>
+
+</div>
+
+<script>
+
+const adminUser="Rudransh";
+const adminPass="Rud@03";
+
+let employees=[];
+let project="";
+let location="";
+
+function login(){
+
+let u=document.getElementById("username").value;
+let p=document.getElementById("password").value;
+
+if(u===adminUser && p===adminPass){
+
+document.getElementById("loginPage").style.display="none";
+document.getElementById("dashboard").style.display="block";
+
+}else{
+
+alert("Invalid Login");
+
+}
+
+}
+
+function importExcel(){
+
+const file=document.getElementById('excelFile').files[0];
+
+const reader=new FileReader();
+
+reader.onload=function(e){
+
+const data=new Uint8Array(e.target.result);
+const workbook=XLSX.read(data,{type:'array'});
+
+const sheetName=workbook.SheetNames[0];
+
+let parts=sheetName.split("-");
+project=parts[0]||"";
+location=parts[1]||"";
+
+const sheet=workbook.Sheets[sheetName];
+
+employees=XLSX.utils.sheet_to_json(sheet);
+
+renderTable();
+
+};
+
+reader.readAsArrayBuffer(file);
+
+}
+
+function renderTable(){
+
+const tbody=document.querySelector("#employeeTable tbody");
+
+tbody.innerHTML="";
+
+employees.forEach((emp,i)=>{
+
+let row=`
+
+<tr>
+
+<td>${emp["Emp Code"]}</td>
+<td>${emp["Name"]}</td>
+<td>${emp["Designation"]}</td>
+<td>${emp["Month"]}</td>
+<td>${emp["Gross"]}</td>
+<td>${emp["Net In Hand"]}</td>
+
+<td>
+<button onclick="generatePayslip(${i})">View</button>
+</td>
+
+</tr>
+
+`;
+
+tbody.innerHTML+=row;
+
+});
+
+}
+
+function generatePayslip(i){
+
+const e=employees[i];
+
+document.getElementById("dashboard").style.display="none";
+document.getElementById("payslipPage").style.display="block";
+
+document.getElementById("payslipContent").innerHTML=`
+
+<h2 style="text-align:center">Salary Payslip</h2>
+
+<p><b>Project:</b> ${project}</p>
+<p><b>Location:</b> ${location}</p>
+
+<hr>
+
+<p><b>Employee Code:</b> ${e["Emp Code"]}</p>
+<p><b>Name:</b> ${e["Name"]}</p>
+<p><b>Designation:</b> ${e["Designation"]}</p>
+<p><b>Month:</b> ${e["Month"]}</p>
+
+<hr>
+
+<table>
+
+<tr><th>Earnings</th><th>Amount</th></tr>
+
+<tr><td>Basic</td><td>${e["Basic"]}</td></tr>
+<tr><td>HRA</td><td>${e["HRA"]}</td></tr>
+<tr><td>Allowance</td><td>${e["Allowance"]}</td></tr>
+<tr><td>Bonus</td><td>${e["Bonus"]}</td></tr>
+<tr><td><b>Gross</b></td><td><b>${e["Gross"]}</b></td></tr>
+
+</table>
+
+<br>
+
+<table>
+
+<tr><th>Deductions</th><th>Amount</th></tr>
+
+<tr><td>PF</td><td>${e["PF@12%"]}</td></tr>
+<tr><td>ESI</td><td>${e["ESI@.75%"]}</td></tr>
+<tr><td>LWF</td><td>${e["LWF"]}</td></tr>
+
+</table>
+
+<br>
+
+<h3>Net In Hand : ${e["Net In Hand"]}</h3>
+
+`;
+
+}
+
+function back(){
+
+document.getElementById("payslipPage").style.display="none";
+document.getElementById("dashboard").style.display="block";
+
+}
+
+function printPayslip(){
+
+window.print();
+
+}
+
+</script>
+
+</body>
+</html>
+```
