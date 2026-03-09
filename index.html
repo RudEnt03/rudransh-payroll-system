@@ -334,14 +334,18 @@ function showDashboard(role, code){
   document.getElementById("loginPage").style.display="none";
   document.getElementById("dashboard").style.display="block";
   document.getElementById("loginMsg").innerText="";
-  if(role=="emp"){ document.getElementById("file").style.display="none"; }
-  else{ document.getElementById("file").style.display="inline-block"; }
-
-  // render existing data if any
-  if(employees.length>0){
-    populateFilters();
-    render(employees);
+  if(role=="emp"){ 
+      document.getElementById("file").style.display="none"; 
+      // Filter to show only this employee
+      const empData = employees.filter(e => e.code === code);
+      render(empData);
   }
+  else{ 
+      document.getElementById("file").style.display="inline-block"; 
+      render(employees);
+  }
+
+  populateFilters();
 }
 
 // RESET DEVICE
@@ -536,13 +540,4 @@ function showPS(e){
 <div class="row"><span>LWF</span><span>${rupee(e.lwf)}</span></div>
 <div class="row"><span>Advance</span><span>${rupee(e.advance)}</span></div>
 <div class="section"></div>
-<div class="row net"><span>Net Pay</span><span>${rupee(e.net)}</span></div>`;
-}
-
-function closePS(){ document.getElementById("modal").style.display="none"; }
-function toggleTheme(){ document.body.classList.toggle("dark"); }
-
-</script>
-
-</body>
-</html>
+<div class="row
