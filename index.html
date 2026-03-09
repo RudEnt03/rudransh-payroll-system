@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Payroll Dashboard</title>
+<title>Rudransh Enterprises Payroll System</title>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
@@ -17,7 +17,7 @@ background:#eef2f7;
 header{
 background:linear-gradient(90deg,#4e73df,#36b9cc);
 color:white;
-padding:18px;
+padding:15px;
 display:flex;
 justify-content:space-between;
 align-items:center;
@@ -25,16 +25,6 @@ align-items:center;
 
 .container{
 padding:20px;
-}
-
-.controls{
-display:flex;
-justify-content:space-between;
-margin-bottom:20px;
-}
-
-input{
-padding:8px;
 }
 
 .cards{
@@ -52,17 +42,6 @@ text-align:center;
 box-shadow:0 2px 6px rgba(0,0,0,0.1);
 }
 
-.card h3{
-margin:0;
-color:#4e73df;
-}
-
-.card p{
-font-size:22px;
-font-weight:bold;
-margin-top:8px;
-}
-
 table{
 width:100%;
 border-collapse:collapse;
@@ -74,30 +53,35 @@ th{
 background:#4e73df;
 color:white;
 padding:10px;
-cursor:pointer;
 }
 
 td{
 padding:10px;
-text-align:center;
 border-bottom:1px solid #eee;
-}
-
-tr:hover{
-background:#f1f3f9;
+text-align:center;
 }
 
 button{
 padding:6px 12px;
 border:none;
 border-radius:4px;
-cursor:pointer;
-color:white;
 background:#1cc88a;
+color:white;
+cursor:pointer;
 }
 
 .view{
 background:#36b9cc;
+}
+
+.loginBox{
+width:320px;
+margin:120px auto;
+background:white;
+padding:25px;
+border-radius:8px;
+text-align:center;
+box-shadow:0 2px 6px rgba(0,0,0,0.1);
 }
 
 #modal{
@@ -118,18 +102,6 @@ padding:25px;
 border-radius:8px;
 }
 
-.psHeader{
-text-align:center;
-border-bottom:3px solid #4e73df;
-margin-bottom:15px;
-padding-bottom:10px;
-}
-
-.company{
-font-size:20px;
-font-weight:bold;
-}
-
 .row{
 display:flex;
 justify-content:space-between;
@@ -142,51 +114,72 @@ border-bottom:2px solid #ddd;
 margin-top:10px;
 }
 
-.net{
-font-size:18px;
-font-weight:bold;
-color:#4e73df;
-}
-
-.footer{
-text-align:center;
-margin-top:15px;
-}
-
-.dark{
-background:#1f2933;
-color:white;
-}
-
-.dark table{background:#2c3e50;color:white;}
-.dark th{background:#111827;}
-.dark .card{background:#2c3e50;}
-
 </style>
 </head>
 
 <body>
 
+<!-- LOGIN PAGE -->
+
+<div id="loginPage">
+
+<div class="loginBox">
+
+<h3>Employee Login</h3>
+
+<input id="empCode" placeholder="Employee Code"><br><br>
+<input id="password" type="password" placeholder="Password"><br><br>
+
+<button onclick="login()">Login</button>
+
+<br><br>
+
+<button onclick="adminLogin()">Admin Login</button>
+
+</div>
+
+</div>
+
+<!-- DASHBOARD -->
+
+<div id="app" style="display:none">
+
 <header>
-<h2>Payroll Dashboard</h2>
-<button onclick="toggleTheme()">Theme</button>
+
+<h2>Rudransh Enterprises Payroll Dashboard</h2>
+
+<button onclick="logout()">Logout</button>
+
 </header>
 
 <div class="container">
 
-<div class="controls">
 <input type="file" id="file">
-<input type="text" id="search" placeholder="Search employee">
-</div>
+<input id="search" placeholder="Search employee">
 
 <div class="cards">
-<div class="card"><h3>Total Employees</h3><p id="cEmp">0</p></div>
-<div class="card"><h3>Total Gross</h3><p id="cGross">0</p></div>
-<div class="card"><h3>Total Net</h3><p id="cNet">0</p></div>
+
+<div class="card">
+<h3>Total Employees</h3>
+<p id="cEmp">0</p>
+</div>
+
+<div class="card">
+<h3>Total Gross</h3>
+<p id="cGross">0</p>
+</div>
+
+<div class="card">
+<h3>Total Net</h3>
+<p id="cNet">0</p>
+</div>
+
 </div>
 
 <table>
+
 <thead>
+
 <tr>
 <th>Emp Code</th>
 <th>Name</th>
@@ -197,26 +190,44 @@ color:white;
 <th>Net</th>
 <th>Payslip</th>
 </tr>
+
 </thead>
+
 <tbody id="tbody"></tbody>
+
 </table>
 
 </div>
+
+</div>
+
+<!-- ADMIN PANEL -->
+
+<div id="adminPanel" style="display:none;padding:20px">
+
+<h3>Admin Control Panel</h3>
+
+<input id="resetEmp" placeholder="Employee Code">
+
+<button onclick="resetEmployee()">Reset Employee Device</button>
+
+<button onclick="closeAdmin()">Close</button>
+
+</div>
+
+<!-- PAYSLIP -->
 
 <div id="modal">
 
 <div class="payslip">
 
-<div class="psHeader">
-<div class="company">Your Company Pvt Ltd</div>
-Salary Payslip
-</div>
+<h3 style="text-align:center">Rudransh Enterprises</h3>
+<h4 style="text-align:center">Salary Payslip</h4>
 
 <div id="psBody"></div>
 
-<div class="footer">
-<button onclick="window.print()">Print</button>
-<button onclick="window.print()">Download PDF</button>
+<div style="text-align:center;margin-top:15px">
+<button onclick="window.print()">Print / PDF</button>
 <button onclick="closePS()">Close</button>
 </div>
 
@@ -227,6 +238,25 @@ Salary Payslip
 <script>
 
 let employees=[];
+
+function isMobile(){
+return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+}
+
+function formatINR(num){
+num=Math.round(Number(num)||0);
+return "₹ "+num.toLocaleString('en-IN');
+}
+
+function formatMonth(v){
+if(typeof v==="number"){
+let d=XLSX.SSF.parse_date_code(v);
+return new Date(d.y,d.m-1).toLocaleString('default',{month:'long',year:'numeric'});
+}
+return v;
+}
+
+/* EXCEL IMPORT */
 
 document.getElementById("file").addEventListener("change",e=>{
 
@@ -245,6 +275,7 @@ const sheet=wb.Sheets[name];
 const rows=XLSX.utils.sheet_to_json(sheet);
 
 let parts=name.split("_");
+
 let project=parts[0]||"";
 let location=parts[1]||"";
 
@@ -255,17 +286,17 @@ employees.push({
 code:r["Emp Code"],
 name:r["Name"],
 designation:r["Designation"],
-month:r["Month"],
-basic:r["Basic"]||0,
-hra:r["HRA"]||0,
-allow:r["Allowance"]||0,
-bonus:r["Bonus"]||0,
-gross:r["Gross"]||0,
-pf:r["PF@12%"]||0,
-esi:r["ESI@.75%"]||0,
-lwf:r["LWF"]||0,
-advance:r["Advance Paid"]||0,
-net:r["Net In Hand"]||0,
+month:formatMonth(r["Month"]),
+basic:r["Basic"],
+hra:r["HRA"],
+allow:r["Allowance"],
+bonus:r["Bonus"],
+gross:r["Gross"],
+pf:r["PF@12%"],
+esi:r["ESI@.75%"],
+lwf:r["LWF"],
+advance:r["Advance Paid"],
+net:r["Net In Hand"],
 project:project,
 location:location
 
@@ -283,9 +314,12 @@ reader.readAsArrayBuffer(e.target.files[0]);
 
 });
 
+/* DASHBOARD */
+
 function render(data){
 
 let tb=document.getElementById("tbody");
+
 tb.innerHTML="";
 
 let gross=0;
@@ -303,18 +337,21 @@ tb.innerHTML+=`
 <td>${e.project}</td>
 <td>${e.location}</td>
 <td>${e.month}</td>
-<td>${e.gross}</td>
-<td>${e.net}</td>
+<td>${formatINR(e.gross)}</td>
+<td>${formatINR(e.net)}</td>
 <td><button class="view" onclick='showPS(${JSON.stringify(e)})'>View</button></td>
-</tr>`;
+</tr>
+`;
 
 });
 
 document.getElementById("cEmp").innerText=data.length;
-document.getElementById("cGross").innerText=gross;
-document.getElementById("cNet").innerText=net;
+document.getElementById("cGross").innerText=formatINR(gross);
+document.getElementById("cNet").innerText=formatINR(net);
 
 }
+
+/* SEARCH */
 
 document.getElementById("search").addEventListener("keyup",function(){
 
@@ -325,6 +362,8 @@ let f=employees.filter(e=>e.code.toLowerCase().includes(v)||e.name.toLowerCase()
 render(f);
 
 });
+
+/* PAYSLIP */
 
 function showPS(e){
 
@@ -340,20 +379,23 @@ document.getElementById("psBody").innerHTML=`
 <div class="row"><b>Month</b><span>${e.month}</span></div>
 
 <div class="section">Earnings</div>
-<div class="row"><span>Basic</span><span>${e.basic}</span></div>
-<div class="row"><span>HRA</span><span>${e.hra}</span></div>
-<div class="row"><span>Allowance</span><span>${e.allow}</span></div>
-<div class="row"><span>Bonus</span><span>${e.bonus}</span></div>
-<div class="row"><b>Gross</b><b>${e.gross}</b></div>
+
+<div class="row"><span>Basic</span><span>${formatINR(e.basic)}</span></div>
+<div class="row"><span>HRA</span><span>${formatINR(e.hra)}</span></div>
+<div class="row"><span>Allowance</span><span>${formatINR(e.allow)}</span></div>
+<div class="row"><span>Bonus</span><span>${formatINR(e.bonus)}</span></div>
+<div class="row"><b>Gross</b><b>${formatINR(e.gross)}</b></div>
 
 <div class="section">Deductions</div>
-<div class="row"><span>PF</span><span>${e.pf}</span></div>
-<div class="row"><span>ESI</span><span>${e.esi}</span></div>
-<div class="row"><span>LWF</span><span>${e.lwf}</span></div>
-<div class="row"><span>Advance</span><span>${e.advance}</span></div>
+
+<div class="row"><span>PF</span><span>${formatINR(e.pf)}</span></div>
+<div class="row"><span>ESI</span><span>${formatINR(e.esi)}</span></div>
+<div class="row"><span>LWF</span><span>${formatINR(e.lwf)}</span></div>
+<div class="row"><span>Advance</span><span>${formatINR(e.advance)}</span></div>
 
 <div class="section"></div>
-<div class="row net"><span>Net Pay</span><span>${e.net}</span></div>
+
+<div class="row"><b>Net Pay</b><b>${formatINR(e.net)}</b></div>
 
 `;
 
@@ -363,8 +405,72 @@ function closePS(){
 document.getElementById("modal").style.display="none";
 }
 
-function toggleTheme(){
-document.body.classList.toggle("dark");
+/* LOGIN */
+
+function login(){
+
+if(!isMobile()){
+alert("Employee login allowed only from mobile device.");
+return;
+}
+
+let code=document.getElementById("empCode").value;
+let pass=document.getElementById("password").value;
+
+let device=navigator.userAgent;
+
+let stored=localStorage.getItem("device_"+code);
+
+if(stored && stored!==device){
+alert("Device mismatch. Contact Admin.");
+return;
+}
+
+if(pass==="1234"){
+
+localStorage.setItem("device_"+code,device);
+
+document.getElementById("loginPage").style.display="none";
+document.getElementById("app").style.display="block";
+
+}else{
+alert("Invalid password");
+}
+
+}
+
+/* ADMIN */
+
+function adminLogin(){
+
+let pass=prompt("Enter Admin Password");
+
+if(pass==="Rud@03"){
+document.getElementById("adminPanel").style.display="block";
+}else{
+alert("Wrong password");
+}
+
+}
+
+/* RESET */
+
+function resetEmployee(){
+
+let code=document.getElementById("resetEmp").value;
+
+localStorage.removeItem("device_"+code);
+
+alert("Device reset completed");
+
+}
+
+function closeAdmin(){
+document.getElementById("adminPanel").style.display="none";
+}
+
+function logout(){
+location.reload();
 }
 
 </script>
