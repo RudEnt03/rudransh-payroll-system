@@ -2,8 +2,6 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-
 <title>Payroll Dashboard</title>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -11,151 +9,183 @@
 <style>
 
 body{
-font-family:Arial;
+font-family:Segoe UI;
 margin:0;
-background:#f2f4f7;
+background:#eef2f7;
 }
 
 header{
-background:#1f2937;
+background:linear-gradient(90deg,#4e73df,#36b9cc);
 color:white;
-padding:15px;
-font-size:20px;
+padding:18px;
+display:flex;
+justify-content:space-between;
+align-items:center;
 }
 
 .container{
 padding:20px;
 }
 
-.card{
-background:white;
-padding:20px;
+.controls{
+display:flex;
+justify-content:space-between;
 margin-bottom:20px;
-border-radius:8px;
-box-shadow:0 2px 8px rgba(0,0,0,0.1);
-}
-
-button{
-background:#2563eb;
-color:white;
-border:none;
-padding:8px 14px;
-border-radius:5px;
-cursor:pointer;
 }
 
 input{
 padding:8px;
-margin:5px;
+}
+
+.cards{
+display:flex;
+gap:15px;
+margin-bottom:20px;
+}
+
+.card{
+flex:1;
+background:white;
+padding:20px;
+border-radius:8px;
+text-align:center;
+box-shadow:0 2px 6px rgba(0,0,0,0.1);
+}
+
+.card h3{
+margin:0;
+color:#4e73df;
+}
+
+.card p{
+font-size:22px;
+font-weight:bold;
+margin-top:8px;
 }
 
 table{
 width:100%;
 border-collapse:collapse;
-margin-top:10px;
-}
-
-th,td{
-border:1px solid #ddd;
-padding:8px;
+background:white;
+box-shadow:0 2px 6px rgba(0,0,0,0.1);
 }
 
 th{
-background:#e5e7eb;
+background:#4e73df;
+color:white;
+padding:10px;
+cursor:pointer;
 }
 
-.summary{
-display:flex;
-gap:20px;
-flex-wrap:wrap;
+td{
+padding:10px;
+text-align:center;
+border-bottom:1px solid #eee;
 }
 
-.summary div{
-background:white;
-padding:15px;
-border-radius:6px;
-box-shadow:0 2px 6px rgba(0,0,0,0.1);
-min-width:150px;
+tr:hover{
+background:#f1f3f9;
 }
 
-.login{
-width:320px;
-margin:140px auto;
-background:white;
-padding:30px;
-border-radius:10px;
-box-shadow:0 5px 12px rgba(0,0,0,0.2);
+button{
+padding:6px 12px;
+border:none;
+border-radius:4px;
+cursor:pointer;
+color:white;
+background:#1cc88a;
+}
+
+.view{
+background:#36b9cc;
+}
+
+#modal{
+display:none;
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:rgba(0,0,0,0.5);
 }
 
 .payslip{
+background:white;
 width:700px;
-margin:auto;
-padding:20px;
-font-family:Arial;
+margin:40px auto;
+padding:25px;
+border-radius:8px;
 }
 
-.payslip table{
-width:100%;
-border-collapse:collapse;
+.psHeader{
+text-align:center;
+border-bottom:3px solid #4e73df;
+margin-bottom:15px;
+padding-bottom:10px;
 }
 
-.payslip td,.payslip th{
-border:1px solid #333;
-padding:6px;
+.company{
+font-size:20px;
+font-weight:bold;
 }
+
+.row{
+display:flex;
+justify-content:space-between;
+margin:6px 0;
+}
+
+.section{
+font-weight:bold;
+border-bottom:2px solid #ddd;
+margin-top:10px;
+}
+
+.net{
+font-size:18px;
+font-weight:bold;
+color:#4e73df;
+}
+
+.footer{
+text-align:center;
+margin-top:15px;
+}
+
+.dark{
+background:#1f2933;
+color:white;
+}
+
+.dark table{background:#2c3e50;color:white;}
+.dark th{background:#111827;}
+.dark .card{background:#2c3e50;}
 
 </style>
 </head>
 
 <body>
 
-<!-- LOGIN -->
-
-<div id="loginPage" class="login">
-
-<h3>Payroll Login</h3>
-
-<input id="username" placeholder="Username"><br>
-<input id="password" type="password" placeholder="Password"><br>
-
-<button id="loginBtn">Login</button>
-
-</div>
-
-
-<!-- APP -->
-
-<div id="app" style="display:none">
-
-<header>Payroll Dashboard</header>
+<header>
+<h2>Payroll Dashboard</h2>
+<button onclick="toggleTheme()">Theme</button>
+</header>
 
 <div class="container">
 
-<div class="card">
-
-<input type="file" id="excelFile">
-
-<button id="importBtn">Import Excel</button>
-
-<input id="searchBox" placeholder="Search Employee">
-
-<button id="bulkBtn">Bulk Print</button>
-
+<div class="controls">
+<input type="file" id="file">
+<input type="text" id="search" placeholder="Search employee">
 </div>
 
-<div class="summary">
-
-<div>Total Employees<br><b id="empCount">0</b></div>
-<div>Total Gross<br><b id="grossSum">0</b></div>
-<div>Total PF<br><b id="pfSum">0</b></div>
-<div>Total ESI<br><b id="esiSum">0</b></div>
-
+<div class="cards">
+<div class="card"><h3>Total Employees</h3><p id="cEmp">0</p></div>
+<div class="card"><h3>Total Gross</h3><p id="cGross">0</p></div>
+<div class="card"><h3>Total Net</h3><p id="cNet">0</p></div>
 </div>
 
-<div class="card">
-
-<table id="empTable">
-
+<table>
 <thead>
 <tr>
 <th>Emp Code</th>
@@ -168,11 +198,26 @@ padding:6px;
 <th>Payslip</th>
 </tr>
 </thead>
-
-<tbody></tbody>
-
+<tbody id="tbody"></tbody>
 </table>
 
+</div>
+
+<div id="modal">
+
+<div class="payslip">
+
+<div class="psHeader">
+<div class="company">Your Company Pvt Ltd</div>
+Salary Payslip
+</div>
+
+<div id="psBody"></div>
+
+<div class="footer">
+<button onclick="window.print()">Print</button>
+<button onclick="window.print()">Download PDF</button>
+<button onclick="closePS()">Close</button>
 </div>
 
 </div>
@@ -181,124 +226,78 @@ padding:6px;
 
 <script>
 
-window.onload=function(){
+let employees=[];
 
-let employees=[]
-let project=""
-let location=""
+document.getElementById("file").addEventListener("change",e=>{
 
-document.getElementById("loginBtn").onclick=function(){
+const reader=new FileReader();
 
-let user=document.getElementById("username").value
-let pass=document.getElementById("password").value
+reader.onload=function(evt){
 
-if(user==="Rudransh" && pass==="Rud@03"){
+const data=new Uint8Array(evt.target.result);
+const wb=XLSX.read(data,{type:'array'});
 
-document.getElementById("loginPage").style.display="none"
-document.getElementById("app").style.display="block"
+employees=[];
 
-}else{
+wb.SheetNames.forEach(name=>{
 
-alert("Invalid Login")
+const sheet=wb.Sheets[name];
+const rows=XLSX.utils.sheet_to_json(sheet);
 
-}
+let parts=name.split("_");
+let project=parts[0]||"";
+let location=parts[1]||"";
 
-}
-
-document.getElementById("importBtn").onclick=function(){
-
-let file=document.getElementById("excelFile").files[0]
-
-if(!file){
-
-alert("Select Excel File")
-return
-
-}
-
-let reader=new FileReader()
-
-reader.onload=function(e){
-
-let data=new Uint8Array(e.target.result)
-
-let workbook=XLSX.read(data,{type:'array'})
-
-let sheetName=workbook.SheetNames[0]
-
-let parts=sheetName.split("-")
-
-project=parts[0]||""
-location=parts[1]||""
-
-let sheet=workbook.Sheets[sheetName]
-
-let json=XLSX.utils.sheet_to_json(sheet)
-
-employees=[]
-
-json.forEach(r=>{
+rows.forEach(r=>{
 
 employees.push({
 
 code:r["Emp Code"],
 name:r["Name"],
-month:excelDate(r["Month"]),
-basic:Number(r["Basic"])||0,
-hra:Number(r["HRA"])||0,
-allowance:Number(r["Allowance"])||0,
-gross:Number(r["Gross"])||0,
-pf:Number(r["PF@12%"])||0,
-esi:Number(r["ESI@.75%"])||0,
-net:Number(r["Net In Hand"])||0,
+designation:r["Designation"],
+month:r["Month"],
+basic:r["Basic"]||0,
+hra:r["HRA"]||0,
+allow:r["Allowance"]||0,
+bonus:r["Bonus"]||0,
+gross:r["Gross"]||0,
+pf:r["PF@12%"]||0,
+esi:r["ESI@.75%"]||0,
+lwf:r["LWF"]||0,
+advance:r["Advance Paid"]||0,
+net:r["Net In Hand"]||0,
 project:project,
 location:location
 
-})
+});
 
-})
+});
 
-render()
+});
 
-}
+render(employees);
 
-reader.readAsArrayBuffer(file)
+};
 
-}
+reader.readAsArrayBuffer(e.target.files[0]);
 
-function excelDate(serial){
+});
 
-if(typeof serial==="number"){
+function render(data){
 
-let date=new Date((serial-25569)*86400*1000)
+let tb=document.getElementById("tbody");
+tb.innerHTML="";
 
-return date.toLocaleString("default",{month:"long",year:"numeric"})
+let gross=0;
+let net=0;
 
-}
+data.forEach(e=>{
 
-return serial
+gross+=Number(e.gross);
+net+=Number(e.net);
 
-}
-
-function render(){
-
-let tbody=document.querySelector("#empTable tbody")
-
-tbody.innerHTML=""
-
-let gross=0
-let pf=0
-let esi=0
-
-employees.forEach((e,i)=>{
-
-gross+=e.gross
-pf+=e.pf
-esi+=e.esi
-
-let tr=document.createElement("tr")
-
-tr.innerHTML=`
+tb.innerHTML+=`
+<tr>
 <td>${e.code}</td>
 <td>${e.name}</td>
 <td>${e.project}</td>
@@ -306,126 +305,66 @@ tr.innerHTML=`
 <td>${e.month}</td>
 <td>${e.gross}</td>
 <td>${e.net}</td>
-<td><button onclick="showPayslip(${i})">View</button></td>
-`
+<td><button class="view" onclick='showPS(${JSON.stringify(e)})'>View</button></td>
+</tr>`;
 
-tbody.appendChild(tr)
+});
 
-})
-
-document.getElementById("empCount").innerText=employees.length
-document.getElementById("grossSum").innerText=gross
-document.getElementById("pfSum").innerText=pf
-document.getElementById("esiSum").innerText=esi
+document.getElementById("cEmp").innerText=data.length;
+document.getElementById("cGross").innerText=gross;
+document.getElementById("cNet").innerText=net;
 
 }
 
-document.getElementById("searchBox").onkeyup=function(){
+document.getElementById("search").addEventListener("keyup",function(){
 
-let text=this.value.toLowerCase()
+let v=this.value.toLowerCase();
 
-document.querySelectorAll("#empTable tbody tr").forEach(r=>{
+let f=employees.filter(e=>e.code.toLowerCase().includes(v)||e.name.toLowerCase().includes(v));
 
-r.style.display=r.innerText.toLowerCase().includes(text)?"":"none"
+render(f);
 
-})
+});
 
-}
+function showPS(e){
 
-window.showPayslip=function(i){
+document.getElementById("modal").style.display="block";
 
-let e=employees[i]
+document.getElementById("psBody").innerHTML=`
 
-let w=window.open()
+<div class="row"><b>Emp Code</b><span>${e.code}</span></div>
+<div class="row"><b>Name</b><span>${e.name}</span></div>
+<div class="row"><b>Designation</b><span>${e.designation}</span></div>
+<div class="row"><b>Project</b><span>${e.project}</span></div>
+<div class="row"><b>Location</b><span>${e.location}</span></div>
+<div class="row"><b>Month</b><span>${e.month}</span></div>
 
-w.document.write(`
+<div class="section">Earnings</div>
+<div class="row"><span>Basic</span><span>${e.basic}</span></div>
+<div class="row"><span>HRA</span><span>${e.hra}</span></div>
+<div class="row"><span>Allowance</span><span>${e.allow}</span></div>
+<div class="row"><span>Bonus</span><span>${e.bonus}</span></div>
+<div class="row"><b>Gross</b><b>${e.gross}</b></div>
 
-<div class="payslip">
+<div class="section">Deductions</div>
+<div class="row"><span>PF</span><span>${e.pf}</span></div>
+<div class="row"><span>ESI</span><span>${e.esi}</span></div>
+<div class="row"><span>LWF</span><span>${e.lwf}</span></div>
+<div class="row"><span>Advance</span><span>${e.advance}</span></div>
 
-<h2 style="text-align:center">Salary Payslip</h2>
+<div class="section"></div>
+<div class="row net"><span>Net Pay</span><span>${e.net}</span></div>
 
-<table>
-
-<tr>
-<td><b>Employee</b></td>
-<td>${e.name}</td>
-<td><b>Code</b></td>
-<td>${e.code}</td>
-</tr>
-
-<tr>
-<td><b>Project</b></td>
-<td>${e.project}</td>
-<td><b>Location</b></td>
-<td>${e.location}</td>
-</tr>
-
-<tr>
-<td><b>Month</b></td>
-<td>${e.month}</td>
-<td></td>
-<td></td>
-</tr>
-
-</table>
-
-<br>
-
-<table>
-
-<tr>
-<th>Earnings</th>
-<th>Amount</th>
-<th>Deductions</th>
-<th>Amount</th>
-</tr>
-
-<tr>
-<td>Basic</td>
-<td>${e.basic}</td>
-<td>PF</td>
-<td>${e.pf}</td>
-</tr>
-
-<tr>
-<td>HRA</td>
-<td>${e.hra}</td>
-<td>ESI</td>
-<td>${e.esi}</td>
-</tr>
-
-<tr>
-<td>Allowance</td>
-<td>${e.allowance}</td>
-<td></td>
-<td></td>
-</tr>
-
-<tr>
-<th>Gross</th>
-<th>${e.gross}</th>
-<th>Net Pay</th>
-<th>${e.net}</th>
-</tr>
-
-</table>
-
-<br>
-
-<button onclick="window.print()">Print</button>
-
-</div>
-
-`)
+`;
 
 }
 
-document.getElementById("bulkBtn").onclick=function(){
-
-employees.forEach((e,i)=>showPayslip(i))
-
+function closePS(){
+document.getElementById("modal").style.display="none";
 }
 
+function toggleTheme(){
+document.body.classList.toggle("dark");
 }
 
 </script>
