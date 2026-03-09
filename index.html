@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <html>
 <head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Payroll System</title>
+<title>Payroll Dashboard</title>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
@@ -12,7 +13,7 @@
 body{
 font-family:Arial;
 margin:0;
-background:#f4f6f9;
+background:#f2f4f7;
 }
 
 header{
@@ -38,7 +39,7 @@ button{
 background:#2563eb;
 color:white;
 border:none;
-padding:8px 15px;
+padding:8px 14px;
 border-radius:5px;
 cursor:pointer;
 }
@@ -104,12 +105,11 @@ padding:6px;
 }
 
 </style>
-
 </head>
 
 <body>
 
-<!-- LOGIN PAGE -->
+<!-- LOGIN -->
 
 <div id="loginPage" class="login">
 
@@ -118,11 +118,12 @@ padding:6px;
 <input id="username" placeholder="Username"><br>
 <input id="password" type="password" placeholder="Password"><br>
 
-<button onclick="login()">Login</button>
+<button id="loginBtn">Login</button>
 
 </div>
 
-<!-- MAIN APP -->
+
+<!-- APP -->
 
 <div id="app" style="display:none">
 
@@ -134,11 +135,11 @@ padding:6px;
 
 <input type="file" id="excelFile">
 
-<button onclick="importExcel()">Import Excel</button>
+<button id="importBtn">Import Excel</button>
 
-<input id="searchBox" placeholder="Search Employee" onkeyup="searchEmployee()">
+<input id="searchBox" placeholder="Search Employee">
 
-<button onclick="bulkPrint()">Bulk Print Payslip</button>
+<button id="bulkBtn">Bulk Print</button>
 
 </div>
 
@@ -156,7 +157,6 @@ padding:6px;
 <table id="empTable">
 
 <thead>
-
 <tr>
 <th>Emp Code</th>
 <th>Name</th>
@@ -167,7 +167,6 @@ padding:6px;
 <th>Net</th>
 <th>Payslip</th>
 </tr>
-
 </thead>
 
 <tbody></tbody>
@@ -182,11 +181,13 @@ padding:6px;
 
 <script>
 
+window.onload=function(){
+
 let employees=[]
 let project=""
 let location=""
 
-function login(){
+document.getElementById("loginBtn").onclick=function(){
 
 let user=document.getElementById("username").value
 let pass=document.getElementById("password").value
@@ -204,14 +205,13 @@ alert("Invalid Login")
 
 }
 
-function importExcel(){
+document.getElementById("importBtn").onclick=function(){
 
 let file=document.getElementById("excelFile").files[0]
 
 if(!file){
 
 alert("Select Excel File")
-
 return
 
 }
@@ -222,14 +222,14 @@ reader.onload=function(e){
 
 let data=new Uint8Array(e.target.result)
 
-let workbook=XLSX.read(data,{type:"array"})
+let workbook=XLSX.read(data,{type:'array'})
 
 let sheetName=workbook.SheetNames[0]
 
-let split=sheetName.split("-")
+let parts=sheetName.split("-")
 
-project=split[0]||""
-location=split[1]||""
+project=parts[0]||""
+location=parts[1]||""
 
 let sheet=workbook.Sheets[sheetName]
 
@@ -243,7 +243,7 @@ employees.push({
 
 code:r["Emp Code"],
 name:r["Name"],
-month:convertDate(r["Month"]),
+month:excelDate(r["Month"]),
 basic:Number(r["Basic"])||0,
 hra:Number(r["HRA"])||0,
 allowance:Number(r["Allowance"])||0,
@@ -266,7 +266,7 @@ reader.readAsArrayBuffer(file)
 
 }
 
-function convertDate(serial){
+function excelDate(serial){
 
 if(typeof serial==="number"){
 
@@ -299,7 +299,6 @@ esi+=e.esi
 let tr=document.createElement("tr")
 
 tr.innerHTML=`
-
 <td>${e.code}</td>
 <td>${e.name}</td>
 <td>${e.project}</td>
@@ -308,7 +307,6 @@ tr.innerHTML=`
 <td>${e.gross}</td>
 <td>${e.net}</td>
 <td><button onclick="showPayslip(${i})">View</button></td>
-
 `
 
 tbody.appendChild(tr)
@@ -322,7 +320,19 @@ document.getElementById("esiSum").innerText=esi
 
 }
 
-function showPayslip(i){
+document.getElementById("searchBox").onkeyup=function(){
+
+let text=this.value.toLowerCase()
+
+document.querySelectorAll("#empTable tbody tr").forEach(r=>{
+
+r.style.display=r.innerText.toLowerCase().includes(text)?"":"none"
+
+})
+
+}
+
+window.showPayslip=function(i){
 
 let e=employees[i]
 
@@ -410,23 +420,11 @@ w.document.write(`
 
 }
 
-function bulkPrint(){
+document.getElementById("bulkBtn").onclick=function(){
 
 employees.forEach((e,i)=>showPayslip(i))
 
 }
-
-function searchEmployee(){
-
-let text=document.getElementById("searchBox").value.toLowerCase()
-
-let rows=document.querySelectorAll("#empTable tbody tr")
-
-rows.forEach(r=>{
-
-r.style.display=r.innerText.toLowerCase().includes(text)?"":"none"
-
-})
 
 }
 
