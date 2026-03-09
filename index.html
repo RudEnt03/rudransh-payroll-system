@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
+
 <meta charset="UTF-8">
 <title>Rudransh Enterprises Payroll System</title>
 
@@ -75,7 +76,7 @@ background:#f0f0f0;
 
 <body>
 
-<!-- LOGIN PAGE -->
+<!-- LOGIN -->
 
 <div class="card" id="loginPage">
 
@@ -176,7 +177,7 @@ background:#f0f0f0;
 let employees=[];
 
 
-/* LOGIN NAVIGATION */
+/* NAVIGATION */
 
 function showAdminLogin(){
 
@@ -237,7 +238,7 @@ generatePayslip(emp);
 }
 
 
-/* EXCEL IMPORT */
+/* IMPORT EXCEL */
 
 function importExcel(){
 
@@ -295,7 +296,7 @@ let tbody=document.querySelector("#employeeTable tbody");
 
 tbody.innerHTML="";
 
-employees.forEach(e=>{
+employees.forEach((e,i)=>{
 
 let row=`<tr>
 
@@ -311,13 +312,7 @@ let row=`<tr>
 <td>${e.net}</td>
 
 <td>
-
-<button onclick='generatePayslip(${JSON.stringify(e)})'>
-
-View
-
-</button>
-
+<button onclick="viewPayslip(${i})">View</button>
 </td>
 
 </tr>`;
@@ -329,7 +324,18 @@ tbody.innerHTML+=row;
 }
 
 
-/* PAYSLIP */
+/* VIEW PAYSLIP */
+
+function viewPayslip(index){
+
+let emp=employees[index];
+
+generatePayslip(emp);
+
+}
+
+
+/* GENERATE PAYSLIP */
 
 function generatePayslip(emp){
 
