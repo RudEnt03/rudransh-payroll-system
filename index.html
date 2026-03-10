@@ -2,19 +2,81 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Payroll Dashboard</title>
+<title>Rudransh Payroll System</title>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js?v=3"></script>
 
 <style>
-body{font-family:Segoe UI;margin:0;background:#eef2f7}
-header{background:#4e73df;color:white;padding:15px}
-.container{padding:20px}
-table{width:100%;border-collapse:collapse;background:white}
-th{background:#4e73df;color:white;padding:10px}
-td{padding:10px;border-bottom:1px solid #eee;text-align:center}
-button{padding:6px 12px;background:#4e73df;color:white;border:none;border-radius:4px}
-select,input{padding:8px;margin:6px}
+
+body{
+font-family:Segoe UI;
+margin:0;
+background:#eef2f7;
+}
+
+header{
+background:#4e73df;
+color:white;
+padding:15px;
+text-align:center;
+}
+
+.container{
+padding:20px;
+}
+
+input,select{
+padding:8px;
+margin:5px;
+width:200px;
+max-width:90%;
+}
+
+button{
+padding:8px 14px;
+background:#4e73df;
+color:white;
+border:none;
+border-radius:4px;
+cursor:pointer;
+}
+
+table{
+width:100%;
+border-collapse:collapse;
+background:white;
+margin-top:20px;
+}
+
+th{
+background:#4e73df;
+color:white;
+padding:10px;
+}
+
+td{
+padding:10px;
+border-bottom:1px solid #eee;
+text-align:center;
+}
+
+#loginPage{
+text-align:center;
+margin-top:120px;
+}
+
+#empPanel{
+text-align:center;
+margin-top:120px;
+}
+
+#payslip{
+text-align:center;
+margin-top:50px;
+}
+
 </style>
 
 </head>
@@ -23,7 +85,7 @@ select,input{padding:8px;margin:6px}
 
 <!-- LOGIN -->
 
-<div id="loginPage" style="text-align:center;margin-top:120px">
+<div id="loginPage">
 
 <h2>Payroll Login</h2>
 
@@ -44,7 +106,7 @@ select,input{padding:8px;margin:6px}
 
 <button onclick="login()">Login</button>
 
-<div id="msg" style="color:red"></div>
+<div id="msg" style="color:red;margin-top:10px"></div>
 
 </div>
 
@@ -52,7 +114,7 @@ select,input{padding:8px;margin:6px}
 
 <div id="adminDash" style="display:none">
 
-<header>Payroll Admin Dashboard</header>
+<header>Rudransh Payroll Dashboard</header>
 
 <div class="container">
 
@@ -61,6 +123,7 @@ select,input{padding:8px;margin:6px}
 <table>
 
 <thead>
+
 <tr>
 <th>Emp Code</th>
 <th>Name</th>
@@ -68,6 +131,7 @@ select,input{padding:8px;margin:6px}
 <th>Gross</th>
 <th>Net</th>
 </tr>
+
 </thead>
 
 <tbody id="tbody"></tbody>
@@ -80,7 +144,7 @@ select,input{padding:8px;margin:6px}
 
 <!-- EMPLOYEE PANEL -->
 
-<div id="empPanel" style="display:none;text-align:center;margin-top:120px">
+<div id="empPanel" style="display:none">
 
 <h2>Employee Payslip</h2>
 
@@ -88,13 +152,13 @@ select,input{padding:8px;margin:6px}
 
 <br><br>
 
-<button onclick="showPayslip()">View Payslip</button>
+<button onclick="viewPayslip()">View Payslip</button>
 
 </div>
 
 <!-- PAYSLIP -->
 
-<div id="payslip" style="display:none;text-align:center">
+<div id="payslip" style="display:none">
 
 <h2>Payslip</h2>
 
@@ -108,20 +172,29 @@ let employees = JSON.parse(localStorage.getItem("payroll_data") || "[]")
 
 let currentEmp = ""
 
-function rupee(v){ return "₹"+Number(v).toLocaleString("en-IN") }
+function rupee(v){
+
+return "₹"+Number(v).toLocaleString("en-IN")
+
+}
+
+function normalize(code){
+
+return String(code).replace(/\s+/g,"").trim().toUpperCase()
+
+}
 
 function login(){
 
-const role=document.getElementById("role").value
-const code=document.getElementById("empCode").value.trim()
-const pwd=document.getElementById("password").value
+const role = document.getElementById("role").value
+const code = normalize(document.getElementById("empCode").value)
+const pwd = normalize(document.getElementById("password").value)
 
 if(role==="admin"){
 
-if(pwd!=="Rud@03"){
+if(pwd!=="RUD@03"){
 
-document.getElementById("msg").innerText="Wrong admin password"
-
+document.getElementById("msg").innerText="Invalid admin password"
 return
 
 }
@@ -137,22 +210,16 @@ else{
 
 if(code!==pwd){
 
-document.getElementById("msg").innerText="Password must equal Emp Code"
-
+document.getElementById("msg").innerText="Password must be same as Emp Code"
 return
 
 }
 
-let empRecords = employees.filter(e =>
-
-String(e.code).trim().toUpperCase() === code.toUpperCase()
-
-)
+let empRecords = employees.filter(e => normalize(e.code)===code)
 
 if(empRecords.length===0){
 
 document.getElementById("msg").innerText="No payslip found for this emp."
-
 return
 
 }
@@ -170,31 +237,27 @@ loadMonths(empRecords)
 
 function loadMonths(records){
 
-let dd=document.getElementById("empMonth")
+let dropdown=document.getElementById("empMonth")
 
-dd.innerHTML=""
+dropdown.innerHTML=""
 
 let months=[...new Set(records.map(r=>r.month))]
 
 months.forEach(m=>{
 
-dd.innerHTML+=`<option value="${m}">${m}</option>`
+dropdown.innerHTML+=`<option value="${m}">${m}</option>`
 
 })
 
 }
 
-function showPayslip(){
+function viewPayslip(){
 
-let m=document.getElementById("empMonth").value
+let month=document.getElementById("empMonth").value
 
-let emp = employees.find(e =>
+let emp=employees.find(e=>normalize(e.code)===currentEmp && e.month===month)
 
-e.code===currentEmp && e.month===m
-
-)
-
-if(!emp) return
+if(!emp)return
 
 document.getElementById("payslip").style.display="block"
 
@@ -204,7 +267,7 @@ Emp Code : ${emp.code}<br>
 Name : ${emp.name}<br>
 Month : ${emp.month}<br>
 Gross : ${rupee(emp.gross)}<br>
-Net : ${rupee(emp.net)}
+Net In Hand : ${rupee(emp.net)}
 
 `
 
@@ -212,21 +275,21 @@ Net : ${rupee(emp.net)}
 
 document.getElementById("file").addEventListener("change", e=>{
 
-const reader = new FileReader()
+const reader=new FileReader()
 
-reader.onload = function(evt){
+reader.onload=function(evt){
 
-const data = new Uint8Array(evt.target.result)
+const data=new Uint8Array(evt.target.result)
 
-const wb = XLSX.read(data,{type:'array'})
+const wb=XLSX.read(data,{type:'array'})
 
-employees = []
+employees=[]
 
 wb.SheetNames.forEach(name=>{
 
-const sheet = wb.Sheets[name]
+const sheet=wb.Sheets[name]
 
-const rows = XLSX.utils.sheet_to_json(sheet)
+const rows=XLSX.utils.sheet_to_json(sheet)
 
 rows.forEach(r=>{
 
@@ -234,24 +297,20 @@ let rec={}
 
 for(let k in r) rec[k.trim().toLowerCase()] = r[k]
 
-let month = rec['month']
+let month=rec['month']
 
-if(typeof month === "number"){
+if(typeof month==="number"){
 
-month = XLSX.SSF.format("mmm-yy",month)
+month=XLSX.SSF.format("mmm-yy",month)
 
 }
 
 employees.push({
 
-code:(rec['emp code']||"").toString().trim(),
-
+code:(rec['emp code']||"").toString(),
 name:rec['name']||"",
-
 month:month,
-
 gross:Number(rec['gross']||0),
-
 net:Number(rec['net in hand']||0)
 
 })
