@@ -65,7 +65,6 @@ button{padding:6px 12px;border:none;border-radius:4px;cursor:pointer;color:white
 <h2>Payroll Dashboard</h2>
 <button onclick="toggleTheme()">Theme</button>
 </header>
-
 <div class="container">
 <div class="controls">
 <input type="file" id="file">
@@ -88,13 +87,22 @@ button{padding:6px 12px;border:none;border-radius:4px;cursor:pointer;color:white
 <tr>
 <th class="checkbox-col"><input type="checkbox" id="selectAllChk" onclick="toggleSelectAll(this)"></th>
 <th>Emp Code</th>
-<th>Name</th>
-<th>Project</th>
-<th>Location</th>
+<th>Name / UAN / ESI</th>
+<th>Designation</th>
 <th>Month</th>
+<th>M Days</th>
+<th>P Days</th>
+<th>Basic</th>
+<th>HRA</th>
+<th>Allowance</th>
+<th>Leave</th>
+<th>Bonus</th>
 <th>Gross</th>
-<th>Net</th>
-<th>Payslip</th>
+<th>PF@12%</th>
+<th>ESI@.75%</th>
+<th>LWF</th>
+<th>Advance Paid</th>
+<th>Net In Hand</th>
 </tr>
 </thead>
 <tbody id="tbody"></tbody>
@@ -115,225 +123,124 @@ Salary Payslip
 </div>
 </div>
 </div>
-</div>
 
 <script>
-let employees = JSON.parse(localStorage.getItem("payroll_data") || "[]");
-let empDevice = JSON.parse(localStorage.getItem("emp_device") || "{}");
-let allSelected = false;
-const githubFolder = "https://raw.githubusercontent.com/RudEnt03/rudransh-payroll-system/main/";
+let employees = [];
+let empDevice = JSON.parse(localStorage.getItem("emp_device")||"{}");
+let allSelected=false;
 
-// RUPEE FORMAT
+// Format currency
 function rupee(v){ return "₹"+Math.round(v).toLocaleString("en-IN"); }
 
-// UPDATE EMP/ADMIN ID
+// Login
 function updateAdminID(){
-  const role = document.getElementById("role").value;
-  const empInput = document.getElementById("empCode");
-  if(role=="admin"){ empInput.value="Admin"; empInput.disabled=true; }
+  const role=document.getElementById("role").value;
+  const empInput=document.getElementById("empCode");
+  if(role=="admin"){ empInput.value="Admin"; empInput.disabled=true; } 
   else{ empInput.value=""; empInput.disabled=false; }
 }
 
-// LOGIN FUNCTION
 function login(){
-  const role = document.getElementById("role").value;
-  const code = document.getElementById("empCode").value.trim();
-  const pwd = document.getElementById("password").value;
-  const ua = navigator.userAgent;
-
+  const role=document.getElementById("role").value;
+  const code=document.getElementById("empCode").value.trim();
+  const pwd=document.getElementById("password").value;
+  const ua=navigator.userAgent;
   if(role=="emp"){
-    if(!/Mobi|Android/i.test(ua)){
-      document.getElementById("loginMsg").innerText="Employee login only on mobile!";
-      return;
-    }
+    if(!/Mobi|Android/i.test(ua)){ document.getElementById("loginMsg").innerText="Employee login only on mobile!"; return;}
     if(!code){ document.getElementById("loginMsg").innerText="Enter Employee Code"; return;}
     if(pwd!=code){ document.getElementById("loginMsg").innerText="Password must be same as Emp Code"; return;}
-    if(empDevice[code] && empDevice[code]!=ua){
-      document.getElementById("loginMsg").innerText="This emp code bound to another device. Contact Admin.";
-      return;
-    }
-    empDevice[code] = ua;
+    if(empDevice[code] && empDevice[code]!=ua){ document.getElementById("loginMsg").innerText="This emp code bound to another device. Contact Admin."; return;}
+    empDevice[code]=ua;
     localStorage.setItem("emp_device", JSON.stringify(empDevice));
-
-    // Fetch from GitHub for mobile
-    fetchExcelAndRender(code);
-
-  } else {
+    showDashboard(role, code);
+  }else{
     if(pwd!="Rud@03"){ document.getElementById("loginMsg").innerText="Invalid Admin Password"; return;}
-    showDashboard(role,"admin");
+    showDashboard(role, "admin");
   }
 }
 
-// FETCH EXCEL FROM GITHUB (EMP MOBILE)
-function fetchExcelAndRender(empCode){
-  const fileUrl = githubFolder + "Apollo-Tepla-Rudransh-Manpower (Feb-26).xlsx";
-  fetch(fileUrl).then(r=>r.arrayBuffer()).then(data=>{
-    const wb = XLSX.read(data,{type:"array"});
-    employees = [];
-    wb.SheetNames.forEach(name=>{
-      const sheet = wb.Sheets[name];
-      const rows = XLSX.utils.sheet_to_json(sheet);
-      rows.forEach(r=>{
-        const record = {};
-        for(let k in r) record[k.trim().toLowerCase()]=r[k];
-        let monthVal = record['month']||"N/A";
-        employees.push({
-          code: record['emp code'] || "N/A",
-          name: record['name'] || "N/A",
-          month: monthVal,
-          gross: Number(record['gross']||0),
-          net: Number(record['net in hand']||0)
-        });
-      });
-    });
-    showDashboard("emp",empCode);
-    filterPayslip(empCode);
-  }).catch(err=>{
-    document.getElementById("loginMsg").innerText="Failed to load payroll data from GitHub";
-  });
-}
-
-// SHOW DASHBOARD
+// Show Dashboard
 function showDashboard(role, code){
   document.getElementById("loginPage").style.display="none";
   document.getElementById("dashboard").style.display="block";
-  document.getElementById("loginMsg").innerText="";
-  document.getElementById("file").style.display = role=="emp"?"none":"inline-block";
-
-  if(employees.length>0){
-    populateFilters();
-    render(employees);
-  }
+  if(role=="emp"){ document.getElementById("file").style.display="none"; }
+  else{ document.getElementById("file").style.display="inline-block"; }
+  if(employees.length>0){ render(employees); }
 }
 
-// RESET DEVICE
+// Reset device
 function resetDevice(){
-  const code = prompt("Enter Emp Code to reset device:");
+  const code=prompt("Enter Emp Code to reset device:");
   if(code && empDevice[code]){ delete empDevice[code]; localStorage.setItem("emp_device", JSON.stringify(empDevice)); alert("Device reset for "+code);}
   else{ alert("No device binding found."); }
 }
 
-// FILE UPLOAD (ADMIN)
+// File upload
 document.getElementById("file").addEventListener("change", e=>{
-    const reader = new FileReader();
-    reader.onload = function(evt){
-        const data = new Uint8Array(evt.target.result);
-        const wb = XLSX.read(data,{type:'array'});
-        wb.SheetNames.forEach(name=>{
-            const sheet = wb.Sheets[name];
-            const rows = XLSX.utils.sheet_to_json(sheet);
-            let parts = name.split("_");
-            let project = parts[0]||"", location=parts[1]||"";
-            rows.forEach(r=>{
-                const record={};
-                for(let k in r) record[k.trim().toLowerCase()]=r[k];
-                let monthValue = record['month'];
-                if(typeof monthValue==='number') monthValue=XLSX.SSF.format("mmm-yy",monthValue);
-                else if(!monthValue) monthValue="N/A";
-                employees.push({
-                    code: record['emp code']||"N/A",
-                    name: record['name']||"N/A",
-                    designation: record['designation']||"",
-                    month: monthValue,
-                    basic:Number(record['basic']||0),
-                    hra:Number(record['hra']||0),
-                    allow:Number(record['allowance']||0),
-                    bonus:Number(record['bonus']||0),
-                    gross:Number(record['gross']||0),
-                    pf:Number(record['pf@12%']||0),
-                    esi:Number(record['esi@.75%']||0),
-                    lwf:Number(record['lwf']||0),
-                    advance:Number(record['advance paid']||0),
-                    net:Number(record['net in hand']||0),
-                    project:project,
-                    location:location
-                });
-            });
+  const reader=new FileReader();
+  reader.onload=function(evt){
+    const data=new Uint8Array(evt.target.result);
+    const wb=XLSX.read(data,{type:'array'});
+    employees=[];
+    wb.SheetNames.forEach(name=>{
+      const sheet=wb.Sheets[name];
+      const rows=XLSX.utils.sheet_to_json(sheet,{defval:""});
+      rows.forEach(r=>{
+        employees.push({
+          code:r["Emp Code"]||"N/A",
+          name:r["Name"]||"N/A",
+          designation:r["Designation"]||"",
+          uan:r["UAN No"]||"",
+          esi:r["ESI No"]||"",
+          month:r["Month"]||"N/A",
+          m_days:r["M Days"]||0,
+          p_days:r["P Days"]||0,
+          basic:Number(r["Basic"]||0),
+          hra:Number(r["HRA"]||0),
+          allow:Number(r["Allowance"]||0),
+          leave:Number(r["Leave"]||0),
+          bonus:Number(r["Bonus"]||0),
+          gross:Number(r["Gross"]||0),
+          pf:Number(r["PF@12%"]||0),
+          esi_amt:Number(r["ESI@.75%"]||0),
+          lwf:Number(r["LWF"]||0),
+          advance:Number(r["Advance Paid"]||0),
+          net:Number(r["Net In Hand"]||0)
         });
-        localStorage.setItem("payroll_data",JSON.stringify(employees));
-        populateFilters();
-        render(employees);
-    };
-    reader.readAsArrayBuffer(e.target.files[0]);
+      });
+    });
+    localStorage.setItem("payroll_data", JSON.stringify(employees));
+    render(employees);
+  };
+  reader.readAsArrayBuffer(e.target.files[0]);
 });
 
-// POPULATE FILTERS
-function populateFilters(){
-    const projSelect=document.getElementById("filterProject");
-    const monthSelect=document.getElementById("filterMonth");
-    projSelect.innerHTML='<option value="all">All Projects</option>';
-    monthSelect.innerHTML='<option value="all">All Months</option>';
-    let projSet=new Set(), monthSet=new Set();
-    employees.forEach(e=>{projSet.add(e.project||"");monthSet.add(e.month||"");});
-    projSet.forEach(p=>{if(p) projSelect.innerHTML+='<option value="'+p+'">'+p+'</option>';});
-    monthSet.forEach(m=>{if(m) monthSelect.innerHTML+='<option value="'+m+'">'+m+'</option>';});
-}
-
-// FILTER PAYSLIP
-function filterPayslip(empCode=null){
-    const proj = document.getElementById("filterProject").value;
-    const month = document.getElementById("filterMonth").value;
-    let filtered = employees.filter(e=>(!empCode || e.code==empCode) && (proj==="all"||e.project===proj) && (month==="all"||e.month===month));
-    render(filtered);
-}
-
-// SELECT ALL / DESELECT ALL
-function toggleSelectAll(chk){
-    const boxes=document.querySelectorAll('.empChk'); boxes.forEach(c=>c.checked=chk.checked);
-    allSelected=chk.checked;
-}
-function selectAllEmployees(){
-    const boxes=document.querySelectorAll('.empChk'); allSelected=!allSelected; boxes.forEach(c=>c.checked=allSelected);
-}
-
-// BULK PAYSLIP
-function bulkPayslip(){
-    const boxes=document.querySelectorAll('.empChk:checked');
-    if(boxes.length==0){alert("No employees selected!"); return;}
-    document.getElementById("modal").style.display="block";
-    let html="";
-    boxes.forEach(c=>{
-        const e=employees.find(emp=>emp.code===c.value); if(!e) return;
-        html+=`<div class="payslip"><div class="psHeader"><div class="company">Rudransh Enterprises</div>Salary Payslip</div>
-<div class="row"><b>Emp Code</b><span>${e.code}</span></div>
-<div class="row"><b>Name</b><span>${e.name}</span></div>
-<div class="row"><b>Designation</b><span>${e.designation||""}</span></div>
-<div class="row"><b>Project</b><span>${e.project||""}</span></div>
-<div class="row"><b>Location</b><span>${e.location||""}</span></div>
-<div class="row"><b>Month</b><span>${e.month}</span></div>
-<div class="section">Earnings</div>
-<div class="row"><span>Basic</span><span>${rupee(e.basic||0)}</span></div>
-<div class="row"><span>HRA</span><span>${rupee(e.hra||0)}</span></div>
-<div class="row"><span>Allowance</span><span>${rupee(e.allow||0)}</span></div>
-<div class="row"><span>Bonus</span><span>${rupee(e.bonus||0)}</span></div>
-<div class="row"><b>Gross</b><b>${rupee(e.gross||0)}</b></div>
-<div class="section">Deductions</div>
-<div class="row"><span>PF</span><span>${rupee(e.pf||0)}</span></div>
-<div class="row"><span>ESI</span><span>${rupee(e.esi||0)}</span></div>
-<div class="row"><span>LWF</span><span>${rupee(e.lwf||0)}</span></div>
-<div class="row"><span>Advance</span><span>${rupee(e.advance||0)}</span></div>
-<div class="section"></div>
-<div class="row net"><span>Net Pay</span><span>${rupee(e.net||0)}</span></div></div><hr>`;
-    });
-    document.getElementById("psBody").innerHTML=html;
-}
-
-// RENDER TABLE
+// Render Table
 function render(data){
   let tb=document.getElementById("tbody"); tb.innerHTML="";
   let gross=0, net=0;
   data.forEach(e=>{
-    gross+=Number(e.gross||0); net+=Number(e.net||0);
-    tb.innerHTML+=`<tr>
+    gross+=e.gross; net+=e.net;
+    tb.innerHTML+=`
+<tr>
 <td class="checkbox-col"><input type="checkbox" class="empChk" value="${e.code}"></td>
 <td>${e.code}</td>
-<td>${e.name}</td>
-<td>${e.project||""}</td>
-<td>${e.location||""}</td>
+<td>${e.name}<br><small>UAN:${e.uan} | ESI:${e.esi}</small></td>
+<td>${e.designation}</td>
 <td>${e.month}</td>
-<td>${rupee(e.gross||0)}</td>
-<td>${rupee(e.net||0)}</td>
-<td><button class="view" onclick='showPS(${JSON.stringify(e)})'>View</button></td>
+<td>${e.m_days}</td>
+<td>${e.p_days}</td>
+<td>${rupee(e.basic)}</td>
+<td>${rupee(e.hra)}</td>
+<td>${rupee(e.allow)}</td>
+<td>${e.leave}</td>
+<td>${rupee(e.bonus)}</td>
+<td>${rupee(e.gross)}</td>
+<td>${rupee(e.pf)}</td>
+<td>${rupee(e.esi_amt)}</td>
+<td>${rupee(e.lwf)}</td>
+<td>${rupee(e.advance)}</td>
+<td>${rupee(e.net)}</td>
 </tr>`;
   });
   document.getElementById("cEmp").innerText=data.length;
@@ -341,35 +248,48 @@ function render(data){
   document.getElementById("cNet").innerText=rupee(net);
 }
 
-// SEARCH
+// Search
 document.getElementById("search").addEventListener("keyup",function(){
-  let v=this.value.toLowerCase();
-  let f=employees.filter(e=>e.code.toLowerCase().includes(v)||e.name.toLowerCase().includes(v));
+  const v=this.value.toLowerCase();
+  const f=employees.filter(e=>e.code.toLowerCase().includes(v)||e.name.toLowerCase().includes(v));
   render(f);
 });
 
-// SINGLE PAYSLIP
+// Select All
+function toggleSelectAll(chk){
+  document.querySelectorAll('.empChk').forEach(c=>c.checked=chk.checked);
+  allSelected=chk.checked;
+}
+
+function selectAllEmployees(){
+  allSelected=!allSelected;
+  document.querySelectorAll('.empChk').forEach(c=>c.checked=allSelected);
+}
+
+// Single Payslip
 function showPS(e){
   document.getElementById("modal").style.display="block";
-  document.getElementById("psBody").innerHTML=`<div class="row"><b>Emp Code</b><span>${e.code}</span></div>
+  document.getElementById("psBody").innerHTML=`
+<div class="row"><b>Emp Code</b><span>${e.code}</span></div>
 <div class="row"><b>Name</b><span>${e.name}</span></div>
-<div class="row"><b>Designation</b><span>${e.designation||""}</span></div>
-<div class="row"><b>Project</b><span>${e.project||""}</span></div>
-<div class="row"><b>Location</b><span>${e.location||""}</span></div>
+<div class="row"><b>UAN</b><span>${e.uan}</span></div>
+<div class="row"><b>ESI</b><span>${e.esi}</span></div>
+<div class="row"><b>Designation</b><span>${e.designation}</span></div>
 <div class="row"><b>Month</b><span>${e.month}</span></div>
+<div class="row"><b>M Days</b><span>${e.m_days}</span></div>
+<div class="row"><b>P Days</b><span>${e.p_days}</span></div>
 <div class="section">Earnings</div>
-<div class="row"><span>Basic</span><span>${rupee(e.basic||0)}</span></div>
-<div class="row"><span>HRA</span><span>${rupee(e.hra||0)}</span></div>
-<div class="row"><span>Allowance</span><span>${rupee(e.allow||0)}</span></div>
-<div class="row"><span>Bonus</span><span>${rupee(e.bonus||0)}</span></div>
-<div class="row"><b>Gross</b><b>${rupee(e.gross||0)}</b></div>
+<div class="row"><span>Basic</span><span>${rupee(e.basic)}</span></div>
+<div class="row"><span>HRA</span><span>${rupee(e.hra)}</span></div>
+<div class="row"><span>Allowance</span><span>${rupee(e.allow)}</span></div>
+<div class="row"><span>Bonus</span><span>${rupee(e.bonus)}</span></div>
+<div class="row"><b>Gross</b><b>${rupee(e.gross)}</b></div>
 <div class="section">Deductions</div>
-<div class="row"><span>PF</span><span>${rupee(e.pf||0)}</span></div>
-<div class="row"><span>ESI</span><span>${rupee(e.esi||0)}</span></div>
-<div class="row"><span>LWF</span><span>${rupee(e.lwf||0)}</span></div>
-<div class="row"><span>Advance</span><span>${rupee(e.advance||0)}</span></div>
-<div class="section"></div>
-<div class="row net"><span>Net Pay</span><span>${rupee(e.net||0)}</span></div>`;
+<div class="row"><span>PF</span><span>${rupee(e.pf)}</span></div>
+<div class="row"><span>ESI</span><span>${rupee(e.esi_amt)}</span></div>
+<div class="row"><span>LWF</span><span>${rupee(e.lwf)}</span></div>
+<div class="row"><span>Advance</span><span>${rupee(e.advance)}</span></div>
+<div class="row net"><span>Net Pay</span><span>${rupee(e.net)}</span></div>`;
 }
 
 function closePS(){ document.getElementById("modal").style.display="none"; }
