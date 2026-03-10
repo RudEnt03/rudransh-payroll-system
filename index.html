@@ -7,29 +7,38 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
 <style>
-body{font-family:Segoe UI;margin:0;background:#eef2f7;}
-header{background:linear-gradient(90deg,#4e73df,#36b9cc);color:white;padding:18px;display:flex;justify-content:space-between;}
+body{font-family:Arial;margin:0;background:#eef2f7}
+header{background:#4e73df;color:white;padding:15px}
 .container{padding:20px}
-
-.controls{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px}
-input,select{padding:8px}
-
+input,select,button{padding:8px;margin:5px}
 table{width:100%;border-collapse:collapse;background:white}
 th{background:#4e73df;color:white;padding:10px}
 td{padding:10px;text-align:center;border-bottom:1px solid #eee}
 
-button{padding:6px 12px;border:none;border-radius:4px;background:#1cc88a;color:white;cursor:pointer}
+#loginPage{
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:#eef2f7;
+display:flex;
+align-items:center;
+justify-content:center
+}
 
-#loginPage{position:fixed;top:0;left:0;width:100%;height:100%;background:#eef2f7;display:flex;justify-content:center;align-items:center}
-
-#loginBox{background:white;padding:30px;border-radius:8px;width:300px}
+#loginBox{
+background:white;
+padding:25px;
+border-radius:8px;
+width:300px
+}
 </style>
 </head>
 
 <body>
 
 <div id="loginPage">
-
 <div id="loginBox">
 
 <h3>Login</h3>
@@ -45,10 +54,7 @@ button{padding:6px 12px;border:none;border-radius:4px;background:#1cc88a;color:w
 
 <button onclick="login()">Login</button>
 
-<div id="loginMsg"></div>
-
 </div>
-
 </div>
 
 <div id="dashboard" style="display:none">
@@ -59,26 +65,17 @@ button{padding:6px 12px;border:none;border-radius:4px;background:#1cc88a;color:w
 
 <div class="container">
 
-<div class="controls">
-
 <input type="file" id="file">
 
-</div>
-
 <table>
-
 <thead>
-
 <tr>
-
 <th>Emp Code</th>
 <th>Name</th>
 <th>Month</th>
 <th>Gross</th>
 <th>Net</th>
-
 </tr>
-
 </thead>
 
 <tbody id="tbody"></tbody>
@@ -91,9 +88,8 @@ button{padding:6px 12px;border:none;border-radius:4px;background:#1cc88a;color:w
 
 <script>
 
-let employees=JSON.parse(localStorage.getItem("payroll_data")||"[]")
-
-let currentEmp=null
+let employees = JSON.parse(localStorage.getItem("payroll_data") || "[]")
+let currentEmp = null
 
 function login(){
 
@@ -101,9 +97,9 @@ const role=document.getElementById("role").value
 const code=document.getElementById("empCode").value.trim()
 const pwd=document.getElementById("password").value
 
-if(role=="admin"){
+if(role==="admin"){
 
-if(pwd!="Rud@03"){
+if(pwd!=="Rud@03"){
 alert("Wrong admin password")
 return
 }
@@ -115,8 +111,8 @@ render(employees)
 
 }else{
 
-if(pwd!=code){
-alert("Password must be same as Emp Code")
+if(pwd!==code){
+alert("Password must match employee code")
 return
 }
 
@@ -131,24 +127,21 @@ showEmployeePanel(code)
 function showEmployeePanel(code){
 
 document.getElementById("loginPage").style.display="none"
-document.getElementById("dashboard").style.display="block"
 
-document.querySelector(".container").innerHTML=`
-
-<div style="background:white;padding:25px;border-radius:8px;max-width:400px;margin:auto;text-align:center">
+document.body.innerHTML=`
+<div style="padding:30px;text-align:center">
 
 <h3>Select Month</h3>
 
-<select id="empMonth" style="width:100%;padding:8px;margin-bottom:15px">
-
+<select id="empMonth">
 <option value="">Select Month</option>
-
 </select>
+
+<br><br>
 
 <button onclick="generateEmpPayslip()">Generate Payslip</button>
 
 </div>
-
 `
 
 populateEmpMonths(code)
@@ -159,21 +152,17 @@ function populateEmpMonths(code){
 
 const dropdown=document.getElementById("empMonth")
 
-/* FIXED FILTER */
-
-const empData=employees.filter(e=>
-
+const empData = employees.filter(e =>
 e.code &&
-
-e.code!="N/A" &&
-
-String(e.code).trim().toUpperCase()==String(code).trim().toUpperCase()
-
+e.code !== "N/A" &&
+String(e.code).trim().toUpperCase() === String(code).trim().toUpperCase()
 )
 
-/* REMOVE INVALID MONTH */
-
-const months=[...new Set(empData.map(e=>e.month).filter(m=>m && m!="N/A"))]
+const months=[...new Set(
+empData
+.map(e=>e.month)
+.filter(m=>m && m!=="N/A")
+)]
 
 dropdown.innerHTML='<option value="">Select Month</option>'
 
@@ -189,9 +178,9 @@ const month=document.getElementById("empMonth").value
 
 const emp=employees.find(e=>
 
-String(e.code).trim().toUpperCase()==String(currentEmp).trim().toUpperCase()
+String(e.code).trim().toUpperCase()===String(currentEmp).trim().toUpperCase()
 
-&& e.month==month
+&& e.month===month
 
 )
 
@@ -211,13 +200,11 @@ const reader=new FileReader()
 reader.onload=function(evt){
 
 const data=new Uint8Array(evt.target.result)
-
 const wb=XLSX.read(data,{type:'array'})
 
 wb.SheetNames.forEach(name=>{
 
 const sheet=wb.Sheets[name]
-
 const rows=XLSX.utils.sheet_to_json(sheet)
 
 rows.forEach(r=>{
@@ -241,24 +228,11 @@ monthValue=date.toLocaleString('en-US',{month:'short',year:'2-digit'})
 
 }
 
-else if(typeof monthValue==='string'){
-
-const d=new Date(monthValue)
-
-if(!isNaN(d)){
-
-monthValue=d.toLocaleString('en-US',{month:'short',year:'2-digit'})
-
-}
-
-}
-
 employees.push({
 
 code:record['emp code']||"N/A",
 name:record['name']||"N/A",
 month:monthValue||"N/A",
-
 gross:Number(record['gross']||0),
 net:Number(record['net in hand']||0)
 
@@ -281,7 +255,6 @@ reader.readAsArrayBuffer(e.target.files[0])
 function render(data){
 
 let tb=document.getElementById("tbody")
-
 tb.innerHTML=""
 
 data.forEach(e=>{
@@ -289,13 +262,11 @@ data.forEach(e=>{
 tb.innerHTML+=`
 
 <tr>
-
 <td>${e.code}</td>
 <td>${e.name}</td>
 <td>${e.month}</td>
 <td>${e.gross}</td>
 <td>${e.net}</td>
-
 </tr>
 
 `
