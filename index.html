@@ -7,7 +7,6 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
 <style>
-/* (YOUR ORIGINAL CSS — UNCHANGED) */
 body{font-family:Segoe UI;margin:0;background:#eef2f7;}
 header{background:linear-gradient(90deg,#4e73df,#36b9cc);color:white;padding:18px;display:flex;justify-content:space-between;align-items:center;}
 .container{padding:20px;}
@@ -35,6 +34,7 @@ button{padding:6px 12px;border:none;border-radius:4px;cursor:pointer;color:white
 .dark table{background:#2c3e50;color:white;}
 .dark th{background:#111827;}
 .dark .card{background:#2c3e50;}
+
 #loginPage{position:fixed;top:0; left:0;width:100%; height:100%;background:#eef2f7;display:flex;justify-content:center;align-items:center;}
 #loginBox{background:white;padding:30px;border-radius:8px;width:300px;box-shadow:0 2px 10px rgba(0,0,0,0.2);}
 #loginBox h2{text-align:center;margin-bottom:20px;color:#4e73df;}
@@ -47,7 +47,6 @@ button{padding:6px 12px;border:none;border-radius:4px;cursor:pointer;color:white
 
 <body>
 
-<!-- LOGIN PAGE -->
 <div id="loginPage">
 <div id="loginBox">
 <h2>Login</h2>
@@ -140,40 +139,52 @@ else{empInput.value="";empInput.disabled=false;}
 }
 
 function login(){
+
 const role=document.getElementById("role").value;
 const code=document.getElementById("empCode").value.trim();
 const pwd=document.getElementById("password").value;
 const ua=navigator.userAgent;
 
 if(role=="emp"){
-if(!/Mobi|Android/i.test(ua)){document.getElementById("loginMsg").innerText="Employee login only on mobile!";return;}
-if(!code){document.getElementById("loginMsg").innerText="Enter Employee Code";return;}
-if(pwd!=code){document.getElementById("loginMsg").innerText="Password must be same as Emp Code";return;}
 
-if(empDevice[code] && empDevice[code]!=ua){
-document.getElementById("loginMsg").innerText="This emp code bound to another device.";
+if(!/Mobi|Android/i.test(ua)){
+document.getElementById("loginMsg").innerText="Employee login only on mobile!";
 return;
 }
 
-empDevice[code]=ua;
-localStorage.setItem("emp_device",JSON.stringify(empDevice));
+if(pwd!=code){
+document.getElementById("loginMsg").innerText="Password must be same as Emp Code";
+return;
+}
 
-let empRecords=employees.filter(e=>String(e.code).trim().toUpperCase()==code.toUpperCase());
+let empRecords=employees.filter(e=>
+String(e.code||"").replace(/\s+/g,"").toUpperCase()===
+String(code||"").replace(/\s+/g,"").toUpperCase()
+);
 
 if(empRecords.length==0){
-document.getElementById("loginMsg").innerText="No payslip found for this employee.";
+document.getElementById("loginMsg").innerText="No payslip found for this emp.";
 return;
 }
 
-showEmployeePayslip(empRecords);
+showDashboard();
+render(empRecords);
 
 }else{
-if(pwd!="Rud@03"){document.getElementById("loginMsg").innerText="Invalid Admin Password";return;}
-showDashboard();
+
+if(pwd!="Rud@03"){
+document.getElementById("loginMsg").innerText="Invalid Admin Password";
+return;
 }
+
+showDashboard();
+
+}
+
 }
 
 function showDashboard(){
+
 document.getElementById("loginPage").style.display="none";
 document.getElementById("dashboard").style.display="block";
 
@@ -181,17 +192,6 @@ if(employees.length>0){
 populateFilters();
 render(employees);
 }
-}
-
-function showEmployeePayslip(records){
-
-document.getElementById("loginPage").style.display="none";
-document.getElementById("dashboard").style.display="block";
-
-document.querySelector(".controls").style.display="none";
-document.querySelector(".cards").style.display="none";
-
-render(records);
 
 }
 
@@ -201,12 +201,12 @@ if(code && empDevice[code]){
 delete empDevice[code];
 localStorage.setItem("emp_device",JSON.stringify(empDevice));
 alert("Device reset done");
-}else{alert("No device binding found");}
+}else{
+alert("No device binding found.");
+}
 }
 
-/* ========= EXCEL IMPORT FIXED ========= */
-
-document.getElementById("file").addEventListener("change",e=>{
+document.getElementById("file").addEventListener("change", e => {
 
 const reader=new FileReader();
 
@@ -229,37 +229,30 @@ rows.forEach(r=>{
 const record={};
 for(let k in r) record[k.trim().toLowerCase()]=r[k];
 
-let empCode=(record['emp code']||"").toString().trim();
-
-if(!empCode) return;  /* FIX ignore blank rows */
+let empCode=(record['emp code']||"").toString().replace(/\s+/g,"").trim();
+if(!empCode) return;
 
 let monthValue=record['month'];
-
 if(typeof monthValue==='number'){
 monthValue=XLSX.SSF.format("mmm-yy",monthValue);
 }
-
-if(!monthValue) return; /* FIX ignore bad months */
 
 employees.push({
 
 code:empCode.toUpperCase(),
 name:record['name']||"",
 designation:record['designation']||"",
-month:monthValue,
+month:monthValue||"",
 
 basic:Number(record['basic']||0),
 hra:Number(record['hra']||0),
 allow:Number(record['allowance']||0),
 bonus:Number(record['bonus']||0),
-
 gross:Number(record['gross']||0),
-
 pf:Number(record['pf@12%']||0),
 esi:Number(record['esi@.75%']||0),
 lwf:Number(record['lwf']||0),
 advance:Number(record['advance paid']||0),
-
 net:Number(record['net in hand']||0),
 
 project:project,
@@ -281,8 +274,6 @@ render(employees);
 reader.readAsArrayBuffer(e.target.files[0]);
 
 });
-
-/* ===================================== */
 
 function populateFilters(){
 
@@ -367,31 +358,25 @@ function showPS(e){
 document.getElementById("modal").style.display="block";
 
 document.getElementById("psBody").innerHTML=`
-
 <div class="row"><b>Emp Code</b><span>${e.code}</span></div>
 <div class="row"><b>Name</b><span>${e.name}</span></div>
 <div class="row"><b>Designation</b><span>${e.designation}</span></div>
 <div class="row"><b>Project</b><span>${e.project}</span></div>
 <div class="row"><b>Location</b><span>${e.location}</span></div>
 <div class="row"><b>Month</b><span>${e.month}</span></div>
-
 <div class="section">Earnings</div>
 <div class="row"><span>Basic</span><span>${rupee(e.basic)}</span></div>
 <div class="row"><span>HRA</span><span>${rupee(e.hra)}</span></div>
 <div class="row"><span>Allowance</span><span>${rupee(e.allow)}</span></div>
 <div class="row"><span>Bonus</span><span>${rupee(e.bonus)}</span></div>
 <div class="row"><b>Gross</b><b>${rupee(e.gross)}</b></div>
-
 <div class="section">Deductions</div>
 <div class="row"><span>PF</span><span>${rupee(e.pf)}</span></div>
 <div class="row"><span>ESI</span><span>${rupee(e.esi)}</span></div>
 <div class="row"><span>LWF</span><span>${rupee(e.lwf)}</span></div>
 <div class="row"><span>Advance</span><span>${rupee(e.advance)}</span></div>
-
 <div class="section"></div>
-<div class="row net"><span>Net Pay</span><span>${rupee(e.net)}</span></div>
-`;
-
+<div class="row net"><span>Net Pay</span><span>${rupee(e.net)}</span></div>`;
 }
 
 function closePS(){document.getElementById("modal").style.display="none";}
