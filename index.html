@@ -487,4 +487,12 @@ function generatePayslipHTML(e){
 
 function showPS(e){
   document.getElementById("modal").style.display="block";
-  document.getElementById("psBody").innerHTML = generatePays
+  document.getElementById("psBody").innerHTML = generatePayslipHTML(e);
+}
+
+function closePS(){ document.getElementById("modal").style.display="none"; }
+function toggleTheme(){ document.body.classList.toggle("dark"); }
+</script>
+
+</body>
+</html>
