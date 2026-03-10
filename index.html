@@ -3,200 +3,44 @@
 <head>
 <meta charset="UTF-8">
 <title>Payroll Dashboard</title>
-
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-
 <style>
-body{
-font-family:Segoe UI;
-margin:0;
-background:#eef2f7;
-}
-
-header{
-background:linear-gradient(90deg,#4e73df,#36b9cc);
-color:white;
-padding:18px;
-display:flex;
-justify-content:space-between;
-align-items:center;
-}
-
-.container{
-padding:20px;
-}
-
-.controls{
-display:flex;
-justify-content:space-between;
-margin-bottom:20px;
-gap:10px;
-flex-wrap:wrap;
-}
-
-input, select{
-padding:8px;
-margin-bottom:10px;
-}
-
-.cards{
-display:flex;
-gap:15px;
-margin-bottom:20px;
-flex-wrap:wrap;
-}
-
-.card{
-flex:1;
-background:white;
-padding:20px;
-border-radius:8px;
-text-align:center;
-box-shadow:0 2px 6px rgba(0,0,0,0.1);
-}
-
-.card h3{
-margin:0;
-color:#4e73df;
-}
-
-.card p{
-font-size:22px;
-font-weight:bold;
-margin-top:8px;
-}
-
-table{
-width:100%;
-border-collapse:collapse;
-background:white;
-box-shadow:0 2px 6px rgba(0,0,0,0.1);
-}
-
-th{
-background:#4e73df;
-color:white;
-padding:10px;
-cursor:pointer;
-}
-
-td{
-padding:10px;
-text-align:center;
-border-bottom:1px solid #eee;
-}
-
-tr:hover{
-background:#f1f3f9;
-}
-
-button{
-padding:6px 12px;
-border:none;
-border-radius:4px;
-cursor:pointer;
-color:white;
-background:#1cc88a;
-}
-
-.view{
-background:#36b9cc;
-}
-
-#modal{
-display:none;
-position:fixed;
-top:0;
-left:0;
-width:100%;
-height:100%;
-background:rgba(0,0,0,0.5);
-overflow-y:auto;
-}
-
-.payslip{
-background:white;
-width:700px;
-margin:40px auto;
-padding:25px;
-border-radius:8px;
-}
-
-.psHeader{
-text-align:center;
-border-bottom:3px solid #4e73df;
-margin-bottom:15px;
-padding-bottom:10px;
-}
-
-.company{
-font-size:20px;
-font-weight:bold;
-}
-
-.row{
-display:flex;
-justify-content:space-between;
-margin:6px 0;
-}
-
-.section{
-font-weight:bold;
-border-bottom:2px solid #ddd;
-margin-top:10px;
-}
-
-.net{
-font-size:18px;
-font-weight:bold;
-color:#4e73df;
-}
-
-.footer{
-text-align:center;
-margin-top:15px;
-}
-
-.dark{
-background:#1f2933;
-color:white;
-}
-
+body{font-family:Segoe UI;margin:0;background:#eef2f7;}
+header{background:linear-gradient(90deg,#4e73df,#36b9cc);color:white;padding:18px;display:flex;justify-content:space-between;align-items:center;}
+.container{padding:20px;}
+.controls{display:flex;justify-content:space-between;margin-bottom:20px;gap:10px;flex-wrap:wrap;}
+input, select{padding:8px;margin-bottom:10px;}
+.cards{display:flex;gap:15px;margin-bottom:20px;flex-wrap:wrap;}
+.card{flex:1;background:white;padding:20px;border-radius:8px;text-align:center;box-shadow:0 2px 6px rgba(0,0,0,0.1);}
+.card h3{margin:0;color:#4e73df;}
+.card p{font-size:22px;font-weight:bold;margin-top:8px;}
+table{width:100%;border-collapse:collapse;background:white;box-shadow:0 2px 6px rgba(0,0,0,0.1);}
+th{background:#4e73df;color:white;padding:10px;cursor:pointer;}
+td{padding:10px;text-align:center;border-bottom:1px solid #eee;}
+tr:hover{background:#f1f3f9;}
+button{padding:6px 12px;border:none;border-radius:4px;cursor:pointer;color:white;background:#1cc88a;}
+.view{background:#36b9cc;}
+#modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);overflow-y:auto;}
+.payslip{background:white;width:700px;margin:40px auto;padding:25px;border-radius:8px;}
+.psHeader{text-align:center;border-bottom:3px solid #4e73df;margin-bottom:15px;padding-bottom:10px;}
+.company{font-size:20px;font-weight:bold;}
+.row{display:flex;justify-content:space-between;margin:6px 0;}
+.section{font-weight:bold;border-bottom:2px solid #ddd;margin-top:10px;}
+.net{font-size:18px;font-weight:bold;color:#4e73df;}
+.footer{text-align:center;margin-top:15px;}
+.dark{background:#1f2933;color:white;}
 .dark table{background:#2c3e50;color:white;}
 .dark th{background:#111827;}
 .dark .card{background:#2c3e50;}
-
-/* LOGIN PAGE */
-#loginPage{
-position:fixed;
-top:0; left:0;
-width:100%; height:100%;
-background:#eef2f7;
-display:flex;
-justify-content:center;
-align-items:center;
-}
-
-#loginBox{
-background:white;
-padding:30px;
-border-radius:8px;
-width:300px;
-box-shadow:0 2px 10px rgba(0,0,0,0.2);
-}
-
+#loginPage{position:fixed;top:0;left:0;width:100%;height:100%;background:#eef2f7;display:flex;justify-content:center;align-items:center;}
+#loginBox{background:white;padding:30px;border-radius:8px;width:300px;box-shadow:0 2px 10px rgba(0,0,0,0.2);}
 #loginBox h2{text-align:center;margin-bottom:20px;color:#4e73df;}
-
 #loginBox input, #loginBox select{margin-bottom:10px;padding:8px;width:100%;border:1px solid #ccc;border-radius:4px;}
-
 #loginBox button{width:100%;background:#4e73df;margin-top:10px;}
-
 #resetBtn{background:#e74a3b;margin-top:5px;}
-
 .checkbox-col{width:40px;}
 </style>
 </head>
-
 <body>
 
 <!-- LOGIN PAGE -->
@@ -217,14 +61,11 @@ box-shadow:0 2px 10px rgba(0,0,0,0.2);
 
 <!-- PAYROLL DASHBOARD -->
 <div id="dashboard" style="display:none;">
-
 <header>
 <h2>Payroll Dashboard</h2>
 <button onclick="toggleTheme()">Theme</button>
 </header>
-
 <div class="container">
-
 <div class="controls">
 <input type="file" id="file">
 <input type="text" id="search" placeholder="Search employee">
@@ -234,13 +75,11 @@ box-shadow:0 2px 10px rgba(0,0,0,0.2);
 <button onclick="bulkPayslip()">Generate Bulk Payslips</button>
 <button onclick="selectAllEmployees()">Select All / Deselect All</button>
 </div>
-
 <div class="cards">
 <div class="card"><h3>Total Employees</h3><p id="cEmp">0</p></div>
 <div class="card"><h3>Total Gross</h3><p id="cGross">0</p></div>
 <div class="card"><h3>Total Net</h3><p id="cNet">0</p></div>
 </div>
-
 <table>
 <thead>
 <tr>
@@ -257,43 +96,31 @@ box-shadow:0 2px 10px rgba(0,0,0,0.2);
 </thead>
 <tbody id="tbody"></tbody>
 </table>
-
 </div>
 
 <div id="modal">
-
 <div class="payslip">
-
 <div class="psHeader">
 <div class="company">Rudransh Enterprises</div>
 Salary Payslip
 </div>
-
 <div id="psBody"></div>
-
 <div class="footer">
 <button onclick="window.print()">Print</button>
 <button onclick="window.print()">Download PDF</button>
 <button onclick="closePS()">Close</button>
 </div>
-
 </div>
-
 </div>
-
 </div>
 
 <script>
-
-// Load persisted employees if any
 let employees = JSON.parse(localStorage.getItem("payroll_data") || "[]");
 let empDevice = JSON.parse(localStorage.getItem("emp_device") || "{}");
 let allSelected = false;
 
-// Currency formatting
-function rupee(v){ return "₹"+Number(v).toLocaleString("en-IN"); }
+function rupee(v){ return "₹"+Math.round(v).toLocaleString("en-IN"); }
 
-// Update admin ID automatically
 function updateAdminID(){
   const role = document.getElementById("role").value;
   const empInput = document.getElementById("empCode");
@@ -301,67 +128,59 @@ function updateAdminID(){
   else{ empInput.value=""; empInput.disabled=false; }
 }
 
-// LOGIN
 function login(){
   const role = document.getElementById("role").value;
   const code = document.getElementById("empCode").value.trim();
   const pwd = document.getElementById("password").value;
   const ua = navigator.userAgent;
 
-  if(role=="emp"){
-    // for testing: allow desktop too
-    if(!code){ document.getElementById("loginMsg").innerText="Enter Employee Code"; return;}
-    if(pwd!=code){ document.getElementById("loginMsg").innerText="Password must be same as Emp Code"; return;}
-    if(empDevice[code] && empDevice[code]!=ua){ document.getElementById("loginMsg").innerText="This emp code bound to another device. Contact Admin."; return;}
+  if(role === "admin"){
+    if(code !== "Admin"){ document.getElementById("loginMsg").innerText="Invalid Admin ID"; return; }
+    if(pwd !== "Rud@03"){ document.getElementById("loginMsg").innerText="Invalid Admin Password"; return; }
+    showDashboard("admin", "admin");
+  }
+  else if(role === "emp"){
+    if(!code){ document.getElementById("loginMsg").innerText="Enter Employee Code"; return; }
+    if(pwd !== code){ document.getElementById("loginMsg").innerText="Password must be same as Emp Code"; return; }
+    if(empDevice[code] && empDevice[code] !== ua){
+      document.getElementById("loginMsg").innerText="This emp code bound to another device. Contact Admin."; 
+      return;
+    }
     empDevice[code] = ua;
     localStorage.setItem("emp_device", JSON.stringify(empDevice));
     showEmployeeDashboard(code);
-  }else{
-    if(pwd!="Rud@03"){ document.getElementById("loginMsg").innerText="Invalid Admin Password"; return;}
-    showDashboard(role, "admin");
   }
 }
 
-// SHOW EMPLOYEE DASHBOARD (MOBILE)
+function showDashboard(role, code){
+  document.getElementById("loginPage").style.display="none";
+  document.getElementById("dashboard").style.display="block";
+  document.getElementById("loginMsg").innerText="";
+  if(role=="emp"){ document.getElementById("file").style.display="none"; }
+  else{ document.getElementById("file").style.display="inline-block"; }
+
+  if(employees.length>0){
+    populateFilters();
+    render(employees);
+  }
+}
+
 function showEmployeeDashboard(code){
   document.getElementById("loginPage").style.display="none";
   document.getElementById("dashboard").style.display="block";
-  document.getElementById("file").style.display="none"; // employee cannot upload
-  document.getElementById("loginMsg").innerText="";
-
-  // Filter employee's own records
-  const empRecords = employees.filter(e => e.code===code);
-
-  if(empRecords.length===0){
-    document.getElementById("tbody").innerHTML='<tr><td colspan="9" style="color:red;">No records found</td></tr>';
-    return;
-  }
-
-  // populate month dropdown
-  const monthSelect = document.getElementById("filterMonth");
-  monthSelect.innerHTML='<option value="all">Select Month</option>';
-  const monthSet = new Set();
-  empRecords.forEach(r=> monthSet.add(r.month));
-  monthSet.forEach(m => monthSelect.innerHTML+='<option value="'+m+'">'+m+'</option>');
-
-  // render first month by default
-  render(empRecords.filter(r=>r.month===[...monthSet][0]));
-  // add event listener for month change
-  monthSelect.onchange = function(){
-    const m = this.value;
-    const filtered = empRecords.filter(r=>r.month===m);
-    render(filtered);
-  };
+  document.getElementById("file").style.display="none";
+  populateFilters();
+  const empRecords = employees.filter(e=>e.code===code);
+  render(empRecords);
+  if(empRecords.length===0){ alert("No payslip found for this Employee."); }
 }
 
-// RESET DEVICE
 function resetDevice(){
   const code = prompt("Enter Emp Code to reset device:");
   if(code && empDevice[code]){ delete empDevice[code]; localStorage.setItem("emp_device", JSON.stringify(empDevice)); alert("Device reset for "+code);}
   else{ alert("No device binding found."); }
 }
 
-// FILE UPLOAD (ADMIN ONLY)
 document.getElementById("file").addEventListener("change", e => {
     const reader = new FileReader();
     reader.onload = function(evt) {
@@ -406,110 +225,59 @@ document.getElementById("file").addEventListener("change", e => {
         });
 
         localStorage.setItem("payroll_data", JSON.stringify(employees));
-
         populateFilters();
         render(employees);
     };
     reader.readAsArrayBuffer(e.target.files[0]);
 });
 
-// POPULATE FILTERS (ADMIN)
 function populateFilters(){
     const projSelect = document.getElementById("filterProject");
     const monthSelect = document.getElementById("filterMonth");
-
     projSelect.innerHTML = '<option value="all">All Projects</option>';
     monthSelect.innerHTML = '<option value="all">All Months</option>';
-
     let projSet = new Set(), monthSet = new Set();
     employees.forEach(e => { projSet.add(e.project); monthSet.add(e.month); });
-
-    projSet.forEach(p => projSelect.innerHTML += '<option value="' + p + '">' + p + '</option>');
-    monthSet.forEach(m => monthSelect.innerHTML += '<option value="' + m + '">' + m + '</option>');
+    projSet.forEach(p => projSelect.innerHTML += '<option value="'+p+'">'+p+'</option>');
+    monthSet.forEach(m => monthSelect.innerHTML += '<option value="'+m+'">'+m+'</option>');
 }
 
-// FILTER PAYSLIP (ADMIN)
 function filterPayslip(){
     const proj = document.getElementById("filterProject").value;
     const month = document.getElementById("filterMonth").value;
-
     let filtered = employees.filter(e =>
         (proj==="all"||e.project===proj) && (month==="all"||e.month===month)
     );
-
     render(filtered);
 }
 
-// SELECT ALL / DESELECT ALL
 function toggleSelectAll(chk){
     const checkboxes = document.querySelectorAll('.empChk');
     checkboxes.forEach(c => c.checked = chk.checked);
     allSelected = chk.checked;
 }
 
-// BULK SELECT ALL / DESELECT ALL
 function selectAllEmployees(){
     const checkboxes = document.querySelectorAll('.empChk');
     allSelected = !allSelected;
     checkboxes.forEach(c => c.checked = allSelected);
 }
 
-// BULK PAYSLIP
 function bulkPayslip(){
     const checkboxes = document.querySelectorAll('.empChk:checked');
     if(checkboxes.length==0){ alert("No employees selected for payslip!"); return; }
-
     document.getElementById("modal").style.display="block";
     let html = "";
     checkboxes.forEach(c=>{
         const e = employees.find(emp=>emp.code===c.value);
         if(!e) return;
-        html+=generatePayslipHTML(e);
+        html += generatePayslipHTML(e);
     });
     document.getElementById("psBody").innerHTML = html;
 }
 
-// RENDER TABLE
-function render(data){
-  let tb=document.getElementById("tbody"); tb.innerHTML="";
-  let gross=0, net=0;
-  data.forEach(e=>{
-    gross+=Number(e.gross); net+=Number(e.net);
-    tb.innerHTML+=`
-<tr>
-<td class="checkbox-col"><input type="checkbox" class="empChk" value="${e.code}"></td>
-<td>${e.code}</td>
-<td>${e.name}</td>
-<td>${e.project}</td>
-<td>${e.location}</td>
-<td>${e.month}</td>
-<td>${rupee(e.gross)}</td>
-<td>${rupee(e.net)}</td>
-<td><button class="view" onclick='showPS(${JSON.stringify(e)})'>View</button></td>
-</tr>`;
-  });
-  document.getElementById("cEmp").innerText=data.length;
-  document.getElementById("cGross").innerText=rupee(gross);
-  document.getElementById("cNet").innerText=rupee(net);
-}
-
-// SEARCH
-document.getElementById("search").addEventListener("keyup",function(){
-  let v=this.value.toLowerCase();
-  let f=employees.filter(e=>e.code.toLowerCase().includes(v)||e.name.toLowerCase().includes(v));
-  render(f);
-});
-
-// SINGLE PAYSLIP
-function showPS(e){
-  document.getElementById("modal").style.display="block";
-  document.getElementById("psBody").innerHTML=generatePayslipHTML(e);
-}
-
-// GENERATE PAYSLIP HTML
 function generatePayslipHTML(e){
-  return `
-<div class="payslip">
+    return `<div class="payslip">
 <div class="psHeader"><div class="company">Rudransh Enterprises</div>Salary Payslip</div>
 <div class="row"><b>Emp Code</b><span>${e.code}</span></div>
 <div class="row"><b>Name</b><span>${e.name}</span></div>
@@ -533,10 +301,42 @@ function generatePayslipHTML(e){
 </div><hr>`;
 }
 
+function render(data){
+  let tb=document.getElementById("tbody"); tb.innerHTML="";
+  let gross=0, net=0;
+  data.forEach(e=>{
+    gross+=Number(e.gross); net+=Number(e.net);
+    tb.innerHTML+=`<tr>
+<td class="checkbox-col"><input type="checkbox" class="empChk" value="${e.code}"></td>
+<td>${e.code}</td>
+<td>${e.name}</td>
+<td>${e.project}</td>
+<td>${e.location}</td>
+<td>${e.month}</td>
+<td>${rupee(e.gross)}</td>
+<td>${rupee(e.net)}</td>
+<td><button class="view" onclick='showPS(${JSON.stringify(e)})'>View</button></td>
+</tr>`;
+  });
+  document.getElementById("cEmp").innerText=data.length;
+  document.getElementById("cGross").innerText=rupee(gross);
+  document.getElementById("cNet").innerText=rupee(net);
+}
+
+document.getElementById("search").addEventListener("keyup",function(){
+  let v=this.value.toLowerCase();
+  let f=employees.filter(e=>e.code.toLowerCase().includes(v)||e.name.toLowerCase().includes(v));
+  render(f);
+});
+
+function showPS(e){
+  document.getElementById("modal").style.display="block";
+  document.getElementById("psBody").innerHTML = generatePayslipHTML(e);
+}
+
 function closePS(){ document.getElementById("modal").style.display="none"; }
 function toggleTheme(){ document.body.classList.toggle("dark"); }
 
 </script>
-
 </body>
 </html>
