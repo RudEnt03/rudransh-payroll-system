@@ -2,135 +2,215 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Employee Payslip</title>
+<title>Payroll Dashboard - Employee</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 body{font-family:Segoe UI;margin:0;background:#eef2f7;}
-#loginPage{position:fixed;top:0;left:0;width:100%;height:100%;display:flex;justify-content:center;align-items:center;background:#eef2f7;}
-#loginBox{background:white;padding:30px;border-radius:8px;width:300px;box-shadow:0 2px 10px rgba(0,0,0,0.2);}
-#loginBox h2{text-align:center;margin-bottom:20px;color:#4e73df;}
-#loginBox input,#loginBox select{width:100%;padding:8px;margin-bottom:10px;border:1px solid #ccc;border-radius:4px;}
-#loginBox button{width:100%;padding:8px;background:#4e73df;color:white;border:none;border-radius:4px;cursor:pointer;}
-#loginMsg{color:red;margin-top:10px;text-align:center;}
-#dashboard{display:none;padding:20px;}
-select,input,button{margin-bottom:10px;padding:6px;}
-#psBody{margin-top:20px;background:white;padding:15px;border-radius:8px;box-shadow:0 2px 6px rgba(0,0,0,0.1);}
+header{background:linear-gradient(90deg,#4e73df,#36b9cc);color:white;padding:18px;display:flex;justify-content:space-between;align-items:center;}
+.container{padding:20px;}
+.controls{display:flex;justify-content:space-between;margin-bottom:20px;gap:10px;flex-wrap:wrap;}
+input, select{padding:8px;margin-bottom:10px;}
+.cards{display:flex;gap:15px;margin-bottom:20px;flex-wrap:wrap;}
+.card{flex:1;background:white;padding:20px;border-radius:8px;text-align:center;box-shadow:0 2px 6px rgba(0,0,0,0.1);}
+.card h3{margin:0;color:#4e73df;}
+.card p{font-size:22px;font-weight:bold;margin-top:8px;}
+table{width:100%;border-collapse:collapse;background:white;box-shadow:0 2px 6px rgba(0,0,0,0.1);}
+th{background:#4e73df;color:white;padding:10px;cursor:pointer;}
+td{padding:10px;text-align:center;border-bottom:1px solid #eee;}
+tr:hover{background:#f1f3f9;}
+button{padding:6px 12px;border:none;border-radius:4px;cursor:pointer;color:white;background:#1cc88a;}
+.view{background:#36b9cc;}
+#modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);overflow-y:auto;}
+.payslip{background:white;width:700px;margin:40px auto;padding:25px;border-radius:8px;}
+.psHeader{text-align:center;border-bottom:3px solid #4e73df;margin-bottom:15px;padding-bottom:10px;}
+.company{font-size:20px;font-weight:bold;}
 .row{display:flex;justify-content:space-between;margin:6px 0;}
 .section{font-weight:bold;border-bottom:2px solid #ddd;margin-top:10px;}
 .net{font-size:18px;font-weight:bold;color:#4e73df;}
+.footer{text-align:center;margin-top:15px;}
+.dark{background:#1f2933;color:white;}
+.dark table{background:#2c3e50;color:white;}
+.dark th{background:#111827;}
+.dark .card{background:#2c3e50;}
+#loginPage{position:fixed;top:0;left:0;width:100%;height:100%;background:#eef2f7;display:flex;justify-content:center;align-items:center;}
+#loginBox{background:white;padding:30px;border-radius:8px;width:300px;box-shadow:0 2px 10px rgba(0,0,0,0.2);}
+#loginBox h2{text-align:center;margin-bottom:20px;color:#4e73df;}
+#loginBox input, #loginBox select{margin-bottom:10px;padding:8px;width:100%;border:1px solid #ccc;border-radius:4px;}
+#loginBox button{width:100%;background:#4e73df;margin-top:10px;}
+#resetBtn{background:#e74a3b;margin-top:5px;}
+.checkbox-col{width:40px;}
 </style>
 </head>
 <body>
 
+<!-- LOGIN PAGE -->
 <div id="loginPage">
   <div id="loginBox">
-    <h2>Employee Login</h2>
+    <h2>Login</h2>
+    <select id="role" onchange="updateAdminID()">
+      <option value="emp">Employee</option>
+      <option value="admin">Admin</option>
+    </select>
     <input type="text" id="empCode" placeholder="Employee Code">
-    <input type="password" id="password" placeholder="Password (same as Emp Code)">
-    <input type="file" id="file">
-    <select id="filterMonth"><option value="">Select Month</option></select>
-    <button onclick="empLogin()">Login & Show Payslip</button>
-    <div id="loginMsg"></div>
+    <input type="password" id="password" placeholder="Password">
+    <button onclick="login()">Login</button>
+    <button id="resetBtn" onclick="resetDevice()">Reset Device</button>
+    <div id="loginMsg" style="color:red;margin-top:10px;"></div>
   </div>
 </div>
 
-<div id="dashboard">
-  <h2>Salary Payslip</h2>
-  <div id="psBody"></div>
+<!-- PAYROLL DASHBOARD -->
+<div id="dashboard" style="display:none;">
+<header>
+<h2>Payroll Dashboard</h2>
+<button onclick="toggleTheme()">Theme</button>
+</header>
+<div class="container">
+<div class="controls">
+<input type="text" id="search" placeholder="Search employee">
+<select id="filterMonth"><option value="all">Select Month</option></select>
+<button onclick="filterPayslip()">Filter Payslip</button>
+</div>
+<div class="cards">
+<div class="card"><h3>Total Employees</h3><p id="cEmp">0</p></div>
+<div class="card"><h3>Total Gross</h3><p id="cGross">0</p></div>
+<div class="card"><h3>Total Net</h3><p id="cNet">0</p></div>
+</div>
+<table>
+<thead>
+<tr>
+<th>Emp Code</th>
+<th>Name</th>
+<th>Month</th>
+<th>Gross</th>
+<th>Net</th>
+<th>Payslip</th>
+</tr>
+</thead>
+<tbody id="tbody"></tbody>
+</table>
+</div>
+
+<div id="modal">
+<div class="payslip">
+<div class="psHeader">
+<div class="company">Rudransh Enterprises</div>
+Salary Payslip
+</div>
+<div id="psBody"></div>
+<div class="footer">
+<button onclick="window.print()">Print</button>
+<button onclick="window.print()">Download PDF</button>
+<button onclick="closePS()">Close</button>
+</div>
+</div>
 </div>
 
 <script>
-// Employees storage
 let employees = [];
-let selectedMonth = "";
-const psBody = document.getElementById('psBody');
+const githubFolder = "https://raw.githubusercontent.com/RudEnt03/rudransh-payroll-system/main/"; // Excel under main
 
-// Load Excel
-document.getElementById("file").addEventListener("change", e=>{
-    const reader = new FileReader();
-    reader.onload = evt=>{
-        const data = new Uint8Array(evt.target.result);
-        const wb = XLSX.read(data,{type:'array'});
-        employees=[];
-        let monthsSet=new Set();
-        wb.SheetNames.forEach(name=>{
-            const sheet = wb.Sheets[name];
-            const rows = XLSX.utils.sheet_to_json(sheet,{defval:''});
-            rows.forEach(r=>{
-                const emp={
-                    code:String(r['Emp Code']||'').trim(),
-                    name:String(r['Name']||'').trim(),
-                    designation:String(r['Designation']||'').trim(),
-                    project:String(r['Project']||'').trim(),
-                    location:String(r['Location']||'').trim(),
-                    month:String(r['Month']||'').trim(),
-                    basic:Number(r['Basic']||0),
-                    hra:Number(r['HRA']||0),
-                    allow:Number(r['Allowance']||0),
-                    bonus:Number(r['Bonus']||0),
-                    gross:Number(r['Gross']||0),
-                    pf:Number(r['PF']||0),
-                    esi:Number(r['ESI']||0),
-                    lwf:Number(r['LWF']||0),
-                    advance:Number(r['Advance']||0),
-                    net:Number(r['Net']||0)
-                };
-                employees.push(emp);
-                if(emp.month) monthsSet.add(emp.month);
-            });
-        });
-        // Populate month dropdown
-        const monthSel=document.getElementById('filterMonth');
-        monthSel.innerHTML='<option value="">Select Month</option>';
-        monthsSet.forEach(m=>{monthSel.innerHTML+='<option value="'+m+'">'+m+'</option>';});
-        document.getElementById('loginMsg').innerText="Excel loaded successfully!";
-    };
-    reader.readAsArrayBuffer(e.target.files[0]);
-});
+function rupee(v){ return "₹"+Math.round(v).toLocaleString("en-IN"); }
 
-// Format currency
-function rupee(v){ return "₹"+v.toLocaleString('en-IN'); }
-
-// Employee login
-function empLogin(){
-    const code=document.getElementById('empCode').value.trim();
-    const pwd=document.getElementById('password').value.trim();
-    selectedMonth=document.getElementById('filterMonth').value;
-
-    if(!code || !pwd){document.getElementById('loginMsg').innerText="Enter code and password";return;}
-    if(code!==pwd){document.getElementById('loginMsg').innerText="Password must match Emp Code";return;}
-    if(!selectedMonth){document.getElementById('loginMsg').innerText="Select Month";return;}
-    if(employees.length==0){document.getElementById('loginMsg').innerText="Upload Excel first";return;}
-
-    const emp=employees.find(e=>e.code===code && e.month===selectedMonth);
-    if(!emp){document.getElementById('loginMsg').innerText="No records found";return;}
-
-    // Show payslip
-    psBody.innerHTML=`
-      <div class="row"><b>Emp Code</b><span>${emp.code}</span></div>
-      <div class="row"><b>Name</b><span>${emp.name}</span></div>
-      <div class="row"><b>Designation</b><span>${emp.designation}</span></div>
-      <div class="row"><b>Project</b><span>${emp.project}</span></div>
-      <div class="row"><b>Location</b><span>${emp.location}</span></div>
-      <div class="row"><b>Month</b><span>${emp.month}</span></div>
-      <div class="section">Earnings</div>
-      <div class="row"><span>Basic</span><span>${rupee(emp.basic)}</span></div>
-      <div class="row"><span>HRA</span><span>${rupee(emp.hra)}</span></div>
-      <div class="row"><span>Allowance</span><span>${rupee(emp.allow)}</span></div>
-      <div class="row"><span>Bonus</span><span>${rupee(emp.bonus)}</span></div>
-      <div class="row"><b>Gross</b><b>${rupee(emp.gross)}</b></div>
-      <div class="section">Deductions</div>
-      <div class="row"><span>PF</span><span>${rupee(emp.pf)}</span></div>
-      <div class="row"><span>ESI</span><span>${rupee(emp.esi)}</span></div>
-      <div class="row"><span>LWF</span><span>${rupee(emp.lwf)}</span></div>
-      <div class="row"><span>Advance</span><span>${rupee(emp.advance)}</span></div>
-      <div class="section"></div>
-      <div class="row net"><span>Net Pay</span><span>${rupee(emp.net)}</span></div>
-    `;
-    document.getElementById('loginPage').style.display='none';
-    document.getElementById('dashboard').style.display='block';
+function updateAdminID(){
+  const role = document.getElementById("role").value;
+  const empInput = document.getElementById("empCode");
+  if(role=="admin"){ empInput.value="Admin"; empInput.disabled=true; }
+  else{ empInput.value=""; empInput.disabled=false; }
 }
-</script>
 
+function login(){
+  const role = document.getElementById("role").value;
+  const code = document.getElementById("empCode").value.trim();
+  const pwd = document.getElementById("password").value;
+  if(role=="emp"){
+    if(!code){ document.getElementById("loginMsg").innerText="Enter Employee Code"; return;}
+    if(pwd!=code){ document.getElementById("loginMsg").innerText="Password must be same as Emp Code"; return;}
+    fetchExcelAndRender(code);
+  } else {
+    if(pwd!="Rud@03"){ document.getElementById("loginMsg").innerText="Invalid Admin Password"; return;}
+    document.getElementById("loginMsg").innerText="Admin login - use original dashboard";
+  }
+}
+
+function fetchExcelAndRender(empCode){
+  // Example: fetch single excel file for demo
+  const fileUrl = githubFolder + "Apollo-Tepla-Rudransh-Manpower (Feb-26).xlsx";
+  fetch(fileUrl).then(r => r.arrayBuffer()).then(data=>{
+    const wb = XLSX.read(data,{type:"array"});
+    employees = [];
+    wb.SheetNames.forEach(name=>{
+      const sheet = wb.Sheets[name];
+      const rows = XLSX.utils.sheet_to_json(sheet);
+      rows.forEach(r=>{
+        const record = {};
+        for(let k in r) record[k.trim().toLowerCase()]=r[k];
+        let monthVal = record['month']||"N/A";
+        employees.push({
+          code: record['emp code'] || "N/A",
+          name: record['name'] || "N/A",
+          month: monthVal,
+          gross: Number(record['gross']||0),
+          net: Number(record['net in hand']||0)
+        });
+      });
+    });
+    populateMonthFilter();
+    filterPayslip(empCode);
+  }).catch(err=>{
+    document.getElementById("loginMsg").innerText="Failed to load payroll data from GitHub";
+  });
+}
+
+function populateMonthFilter(){
+  const monthSelect = document.getElementById("filterMonth");
+  monthSelect.innerHTML = '<option value="all">Select Month</option>';
+  const monthSet = new Set();
+  employees.forEach(e=>monthSet.add(e.month));
+  monthSet.forEach(m=>{ monthSelect.innerHTML += `<option value="${m}">${m}</option>`; });
+}
+
+function filterPayslip(empCode=null){
+  const month = document.getElementById("filterMonth").value;
+  let filtered = employees.filter(e=>(!empCode || e.code==empCode) && (month==="all"||e.month===month));
+  render(filtered);
+}
+
+function render(data){
+  const tb=document.getElementById("tbody");
+  tb.innerHTML="";
+  let gross=0, net=0;
+  data.forEach(e=>{
+    gross+=Number(e.gross); net+=Number(e.net);
+    tb.innerHTML+=`<tr>
+<td>${e.code}</td>
+<td>${e.name}</td>
+<td>${e.month}</td>
+<td>${rupee(e.gross)}</td>
+<td>${rupee(e.net)}</td>
+<td><button class="view" onclick='showPS(${JSON.stringify(e)})'>View</button></td>
+</tr>`;
+  });
+  document.getElementById("cEmp").innerText=data.length;
+  document.getElementById("cGross").innerText=rupee(gross);
+  document.getElementById("cNet").innerText=rupee(net);
+  document.getElementById("loginPage").style.display="none";
+  document.getElementById("dashboard").style.display="block";
+}
+
+function showPS(e){
+  document.getElementById("modal").style.display="block";
+  document.getElementById("psBody").innerHTML=`
+<div class="row"><b>Emp Code</b><span>${e.code}</span></div>
+<div class="row"><b>Name</b><span>${e.name}</span></div>
+<div class="row"><b>Month</b><span>${e.month}</span></div>
+<div class="row"><b>Gross</b><span>${rupee(e.gross)}</span></div>
+<div class="row net"><span>Net Pay</span><span>${rupee(e.net)}</span></div>`;
+}
+
+function closePS(){ document.getElementById("modal").style.display="none"; }
+function toggleTheme(){ document.body.classList.toggle("dark"); }
+function resetDevice(){ alert("Device reset function only works in original system."); }
+</script>
 </body>
 </html>
