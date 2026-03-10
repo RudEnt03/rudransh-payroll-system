@@ -2,201 +2,134 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Employee Payslip Login</title>
+<title>Employee Payslip</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
-body{font-family:Segoe UI;background:#eef2f7;margin:0;}
-#loginBox{width:300px;background:white;padding:30px;border-radius:8px;box-shadow:0 2px 10px rgba(0,0,0,0.2);margin:100px auto;}
-#loginBox h2{text-align:center;color:#4e73df;margin-bottom:20px;}
-#loginBox input, #loginBox select, #loginBox button{width:100%;margin-bottom:10px;padding:8px;border-radius:4px;border:1px solid #ccc;}
-#loginBox button{background:#4e73df;color:white;border:none;}
-#loginMsg{color:red;text-align:center;margin-top:10px;}
+body{font-family:Segoe UI;margin:0;background:#eef2f7;}
+#loginPage{position:fixed;top:0;left:0;width:100%;height:100%;display:flex;justify-content:center;align-items:center;background:#eef2f7;}
+#loginBox{background:white;padding:30px;border-radius:8px;width:300px;box-shadow:0 2px 10px rgba(0,0,0,0.2);}
+#loginBox h2{text-align:center;margin-bottom:20px;color:#4e73df;}
+#loginBox input,#loginBox select{width:100%;padding:8px;margin-bottom:10px;border:1px solid #ccc;border-radius:4px;}
+#loginBox button{width:100%;padding:8px;background:#4e73df;color:white;border:none;border-radius:4px;cursor:pointer;}
+#loginMsg{color:red;margin-top:10px;text-align:center;}
 #dashboard{display:none;padding:20px;}
-.controls{margin-bottom:20px;}
-select, input{padding:8px;margin-right:10px;}
-table{width:100%;border-collapse:collapse;background:white;margin-top:10px;}
-th, td{padding:10px;text-align:center;border-bottom:1px solid #eee;}
-th{background:#4e73df;color:white;}
-.view{background:#36b9cc;color:white;padding:5px 10px;border:none;border-radius:4px;cursor:pointer;}
-#modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);}
-.payslip{background:white;width:700px;margin:40px auto;padding:25px;border-radius:8px;}
-.psHeader{text-align:center;border-bottom:3px solid #4e73df;margin-bottom:15px;padding-bottom:10px;}
-.company{font-size:20px;font-weight:bold;}
+select,input,button{margin-bottom:10px;padding:6px;}
+#psBody{margin-top:20px;background:white;padding:15px;border-radius:8px;box-shadow:0 2px 6px rgba(0,0,0,0.1);}
 .row{display:flex;justify-content:space-between;margin:6px 0;}
 .section{font-weight:bold;border-bottom:2px solid #ddd;margin-top:10px;}
 .net{font-size:18px;font-weight:bold;color:#4e73df;}
-.footer{text-align:center;margin-top:15px;}
 </style>
 </head>
 <body>
 
-<!-- LOGIN -->
-<div id="loginBox">
-<h2>Employee Login</h2>
-<input type="text" id="empCode" placeholder="Employee Code">
-<input type="password" id="password" placeholder="Password">
-<input type="file" id="fileInput">
-<button onclick="login()">Login</button>
-<div id="loginMsg"></div>
+<div id="loginPage">
+  <div id="loginBox">
+    <h2>Employee Login</h2>
+    <input type="text" id="empCode" placeholder="Employee Code">
+    <input type="password" id="password" placeholder="Password (same as Emp Code)">
+    <input type="file" id="file">
+    <select id="filterMonth"><option value="">Select Month</option></select>
+    <button onclick="empLogin()">Login & Show Payslip</button>
+    <div id="loginMsg"></div>
+  </div>
 </div>
 
-<!-- DASHBOARD -->
 <div id="dashboard">
-<div class="controls">
-<label>Month:</label>
-<select id="filterMonth"><option value="all">All Months</option></select>
-<button onclick="filterPayslip()">Generate Payslip</button>
-</div>
-
-<table>
-<thead>
-<tr>
-<th>Emp Code</th>
-<th>Name</th>
-<th>Project</th>
-<th>Location</th>
-<th>Month</th>
-<th>Gross</th>
-<th>Net</th>
-<th>Payslip</th>
-</tr>
-</thead>
-<tbody id="tbody"></tbody>
-</table>
-</div>
-
-<!-- MODAL -->
-<div id="modal">
-<div class="payslip">
-<div class="psHeader"><div class="company">Rudransh Enterprises</div>Salary Payslip</div>
-<div id="psBody"></div>
-<div class="footer">
-<button onclick="window.print()">Print</button>
-<button onclick="closePS()">Close</button>
-</div>
-</div>
+  <h2>Salary Payslip</h2>
+  <div id="psBody"></div>
 </div>
 
 <script>
-// Employees array
+// Employees storage
 let employees = [];
+let selectedMonth = "";
+const psBody = document.getElementById('psBody');
 
-// Load Excel for testing
-document.getElementById('fileInput').addEventListener('change', e=>{
+// Load Excel
+document.getElementById("file").addEventListener("change", e=>{
     const reader = new FileReader();
     reader.onload = evt=>{
         const data = new Uint8Array(evt.target.result);
         const wb = XLSX.read(data,{type:'array'});
-        employees = [];
+        employees=[];
+        let monthsSet=new Set();
         wb.SheetNames.forEach(name=>{
             const sheet = wb.Sheets[name];
-            const rows = XLSX.utils.sheet_to_json(sheet);
+            const rows = XLSX.utils.sheet_to_json(sheet,{defval:''});
             rows.forEach(r=>{
-                employees.push({
-                    code: r['Emp Code'],
-                    name: r['Name'],
-                    designation: r['Designation']||'',
-                    project: r['Project']||'',
-                    location: r['Location']||'',
-                    month: r['Month'],
-                    basic: Number(r['Basic']||0),
-                    hra: Number(r['HRA']||0),
-                    allow: Number(r['Allowance']||0),
-                    bonus: Number(r['Bonus']||0),
-                    gross: Number(r['Gross']||0),
-                    pf: Number(r['PF']||0),
-                    esi: Number(r['ESI']||0),
-                    lwf: Number(r['LWF']||0),
-                    advance: Number(r['Advance']||0),
-                    net: Number(r['Net']||0)
-                });
+                const emp={
+                    code:String(r['Emp Code']||'').trim(),
+                    name:String(r['Name']||'').trim(),
+                    designation:String(r['Designation']||'').trim(),
+                    project:String(r['Project']||'').trim(),
+                    location:String(r['Location']||'').trim(),
+                    month:String(r['Month']||'').trim(),
+                    basic:Number(r['Basic']||0),
+                    hra:Number(r['HRA']||0),
+                    allow:Number(r['Allowance']||0),
+                    bonus:Number(r['Bonus']||0),
+                    gross:Number(r['Gross']||0),
+                    pf:Number(r['PF']||0),
+                    esi:Number(r['ESI']||0),
+                    lwf:Number(r['LWF']||0),
+                    advance:Number(r['Advance']||0),
+                    net:Number(r['Net']||0)
+                };
+                employees.push(emp);
+                if(emp.month) monthsSet.add(emp.month);
             });
         });
-        alert('Excel loaded! Now enter Emp Code and Password.');
-        populateMonthDropdown();
+        // Populate month dropdown
+        const monthSel=document.getElementById('filterMonth');
+        monthSel.innerHTML='<option value="">Select Month</option>';
+        monthsSet.forEach(m=>{monthSel.innerHTML+='<option value="'+m+'">'+m+'</option>';});
+        document.getElementById('loginMsg').innerText="Excel loaded successfully!";
     };
     reader.readAsArrayBuffer(e.target.files[0]);
 });
 
-// Populate month dropdown
-function populateMonthDropdown(){
-    const monthSelect = document.getElementById('filterMonth');
-    monthSelect.innerHTML = '<option value="all">All Months</option>';
-    const months = new Set();
-    employees.forEach(e=>{ if(e.month) months.add(e.month); });
-    months.forEach(m=>monthSelect.innerHTML += `<option value="${m}">${m}</option>`);
-}
+// Format currency
+function rupee(v){ return "₹"+v.toLocaleString('en-IN'); }
 
-// Login
-function login(){
-    const code = document.getElementById('empCode').value.trim();
-    const pwd = document.getElementById('password').value;
-    if(!code || !pwd){document.getElementById('loginMsg').innerText='Enter both fields'; return;}
-    if(code!==pwd){document.getElementById('loginMsg').innerText='Password must be same as Emp Code'; return;}
-    // Check if employee exists
-    const empExists = employees.some(e=>e.code===code);
-    if(!empExists){document.getElementById('loginMsg').innerText='No records found for this Emp Code'; return;}
-    // Success
-    document.getElementById('loginBox').style.display='none';
+// Employee login
+function empLogin(){
+    const code=document.getElementById('empCode').value.trim();
+    const pwd=document.getElementById('password').value.trim();
+    selectedMonth=document.getElementById('filterMonth').value;
+
+    if(!code || !pwd){document.getElementById('loginMsg').innerText="Enter code and password";return;}
+    if(code!==pwd){document.getElementById('loginMsg').innerText="Password must match Emp Code";return;}
+    if(!selectedMonth){document.getElementById('loginMsg').innerText="Select Month";return;}
+    if(employees.length==0){document.getElementById('loginMsg').innerText="Upload Excel first";return;}
+
+    const emp=employees.find(e=>e.code===code && e.month===selectedMonth);
+    if(!emp){document.getElementById('loginMsg').innerText="No records found";return;}
+
+    // Show payslip
+    psBody.innerHTML=`
+      <div class="row"><b>Emp Code</b><span>${emp.code}</span></div>
+      <div class="row"><b>Name</b><span>${emp.name}</span></div>
+      <div class="row"><b>Designation</b><span>${emp.designation}</span></div>
+      <div class="row"><b>Project</b><span>${emp.project}</span></div>
+      <div class="row"><b>Location</b><span>${emp.location}</span></div>
+      <div class="row"><b>Month</b><span>${emp.month}</span></div>
+      <div class="section">Earnings</div>
+      <div class="row"><span>Basic</span><span>${rupee(emp.basic)}</span></div>
+      <div class="row"><span>HRA</span><span>${rupee(emp.hra)}</span></div>
+      <div class="row"><span>Allowance</span><span>${rupee(emp.allow)}</span></div>
+      <div class="row"><span>Bonus</span><span>${rupee(emp.bonus)}</span></div>
+      <div class="row"><b>Gross</b><b>${rupee(emp.gross)}</b></div>
+      <div class="section">Deductions</div>
+      <div class="row"><span>PF</span><span>${rupee(emp.pf)}</span></div>
+      <div class="row"><span>ESI</span><span>${rupee(emp.esi)}</span></div>
+      <div class="row"><span>LWF</span><span>${rupee(emp.lwf)}</span></div>
+      <div class="row"><span>Advance</span><span>${rupee(emp.advance)}</span></div>
+      <div class="section"></div>
+      <div class="row net"><span>Net Pay</span><span>${rupee(emp.net)}</span></div>
+    `;
+    document.getElementById('loginPage').style.display='none';
     document.getElementById('dashboard').style.display='block';
-    filterPayslip();
 }
-
-// Filter payslip by month
-function filterPayslip(){
-    const code = document.getElementById('empCode').value.trim();
-    const month = document.getElementById('filterMonth').value;
-    const filtered = employees.filter(e=>e.code===code && (month==='all'||e.month===month));
-    render(filtered);
-}
-
-// Render table
-function render(data){
-    const tbody = document.getElementById('tbody');
-    tbody.innerHTML = '';
-    data.forEach(e=>{
-        tbody.innerHTML += `
-<tr>
-<td>${e.code}</td>
-<td>${e.name}</td>
-<td>${e.project}</td>
-<td>${e.location}</td>
-<td>${e.month}</td>
-<td>₹${e.gross.toLocaleString('en-IN')}</td>
-<td>₹${e.net.toLocaleString('en-IN')}</td>
-<td><button class="view" onclick='showPS(${JSON.stringify(e)})'>View</button></td>
-</tr>
-`;
-    });
-}
-
-// Show payslip modal
-function showPS(e){
-    document.getElementById('modal').style.display='block';
-    document.getElementById('psBody').innerHTML=`
-<div class="row"><b>Emp Code</b><span>${e.code}</span></div>
-<div class="row"><b>Name</b><span>${e.name}</span></div>
-<div class="row"><b>Designation</b><span>${e.designation}</span></div>
-<div class="row"><b>Project</b><span>${e.project}</span></div>
-<div class="row"><b>Location</b><span>${e.location}</span></div>
-<div class="row"><b>Month</b><span>${e.month}</span></div>
-<div class="section">Earnings</div>
-<div class="row"><span>Basic</span><span>₹${e.basic.toLocaleString('en-IN')}</span></div>
-<div class="row"><span>HRA</span><span>₹${e.hra.toLocaleString('en-IN')}</span></div>
-<div class="row"><span>Allowance</span><span>₹${e.allow.toLocaleString('en-IN')}</span></div>
-<div class="row"><span>Bonus</span><span>₹${e.bonus.toLocaleString('en-IN')}</span></div>
-<div class="row"><b>Gross</b><b>₹${e.gross.toLocaleString('en-IN')}</b></div>
-<div class="section">Deductions</div>
-<div class="row"><span>PF</span><span>₹${e.pf.toLocaleString('en-IN')}</span></div>
-<div class="row"><span>ESI</span><span>₹${e.esi.toLocaleString('en-IN')}</span></div>
-<div class="row"><span>LWF</span><span>₹${e.lwf.toLocaleString('en-IN')}</span></div>
-<div class="row"><span>Advance</span><span>₹${e.advance.toLocaleString('en-IN')}</span></div>
-<div class="section"></div>
-<div class="row net"><span>Net Pay</span><span>₹${e.net.toLocaleString('en-IN')}</span></div>
-`;
-}
-
-function closePS(){document.getElementById('modal').style.display='none';}
 </script>
 
 </body>
