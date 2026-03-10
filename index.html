@@ -8,60 +8,147 @@
 
 <style>
 body{font-family:Segoe UI;margin:0;background:#eef2f7;}
-header{background:linear-gradient(90deg,#4e73df,#36b9cc);color:white;padding:18px;display:flex;justify-content:space-between;align-items:center;}
+
+header{
+background:linear-gradient(90deg,#4e73df,#36b9cc);
+color:white;
+padding:18px;
+display:flex;
+justify-content:space-between;
+align-items:center;
+}
+
 .container{padding:20px;}
-.controls{display:flex;justify-content:space-between;margin-bottom:20px;gap:10px;flex-wrap:wrap;}
-input, select{padding:8px;margin-bottom:10px;}
+
+.controls{
+display:flex;
+justify-content:space-between;
+margin-bottom:20px;
+gap:10px;
+flex-wrap:wrap;
+}
+
+input,select{padding:8px;margin-bottom:10px;}
+
 .cards{display:flex;gap:15px;margin-bottom:20px;flex-wrap:wrap;}
-.card{flex:1;background:white;padding:20px;border-radius:8px;text-align:center;box-shadow:0 2px 6px rgba(0,0,0,0.1);}
+
+.card{
+flex:1;
+background:white;
+padding:20px;
+border-radius:8px;
+text-align:center;
+box-shadow:0 2px 6px rgba(0,0,0,0.1);
+}
+
 .card h3{margin:0;color:#4e73df;}
 .card p{font-size:22px;font-weight:bold;margin-top:8px;}
-table{width:100%;border-collapse:collapse;background:white;box-shadow:0 2px 6px rgba(0,0,0,0.1);}
-th{background:#4e73df;color:white;padding:10px;cursor:pointer;}
+
+table{
+width:100%;
+border-collapse:collapse;
+background:white;
+box-shadow:0 2px 6px rgba(0,0,0,0.1);
+}
+
+th{background:#4e73df;color:white;padding:10px;}
 td{padding:10px;text-align:center;border-bottom:1px solid #eee;}
-tr:hover{background:#f1f3f9;}
-button{padding:6px 12px;border:none;border-radius:4px;cursor:pointer;color:white;background:#1cc88a;}
+
+button{
+padding:6px 12px;
+border:none;
+border-radius:4px;
+cursor:pointer;
+color:white;
+background:#1cc88a;
+}
+
 .view{background:#36b9cc;}
 
-#modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);overflow-y:auto;}
-.payslip{background:white;width:700px;margin:40px auto;padding:25px;border-radius:8px;}
+#modal{
+display:none;
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:rgba(0,0,0,0.5);
+overflow-y:auto;
+}
 
-.psHeader{text-align:center;border-bottom:3px solid #4e73df;margin-bottom:15px;padding-bottom:10px;}
+.payslip{
+background:white;
+width:700px;
+margin:40px auto;
+padding:25px;
+border-radius:8px;
+}
+
+.psHeader{
+text-align:center;
+border-bottom:3px solid #4e73df;
+margin-bottom:15px;
+padding-bottom:10px;
+}
+
 .company{font-size:20px;font-weight:bold;}
 
 .row{display:flex;justify-content:space-between;margin:6px 0;}
-.section{font-weight:bold;border-bottom:2px solid #ddd;margin-top:10px;}
-.net{font-size:18px;font-weight:bold;color:#4e73df;}
+
+.section{
+font-weight:bold;
+border-bottom:2px solid #ddd;
+margin-top:10px;
+}
+
+.net{
+font-size:18px;
+font-weight:bold;
+color:#4e73df;
+}
 
 .footer{text-align:center;margin-top:15px;}
 
-.dark{background:#1f2933;color:white;}
-.dark table{background:#2c3e50;color:white;}
-.dark th{background:#111827;}
-.dark .card{background:#2c3e50;}
+#loginPage{
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:#eef2f7;
+display:flex;
+justify-content:center;
+align-items:center;
+}
 
-#loginPage{position:fixed;top:0;left:0;width:100%;height:100%;background:#eef2f7;display:flex;justify-content:center;align-items:center;}
-#loginBox{background:white;padding:30px;border-radius:8px;width:300px;box-shadow:0 2px 10px rgba(0,0,0,0.2);}
-#loginBox h2{text-align:center;margin-bottom:20px;color:#4e73df;}
-#loginBox input,#loginBox select{margin-bottom:10px;padding:8px;width:100%;border:1px solid #ccc;border-radius:4px;}
-#loginBox button{width:100%;background:#4e73df;margin-top:10px;}
-#resetBtn{background:#e74a3b;margin-top:5px;}
+#loginBox{
+background:white;
+padding:30px;
+border-radius:8px;
+width:300px;
+box-shadow:0 2px 10px rgba(0,0,0,0.2);
+}
 
-.checkbox-col{width:40px;}
+#loginBox input,#loginBox select{
+margin-bottom:10px;
+padding:8px;
+width:100%;
+}
 
 #empPanel{
 display:none;
-padding:30px;
 text-align:center;
+padding:40px;
 }
-
 </style>
 </head>
 
 <body>
 
+<!-- LOGIN -->
 <div id="loginPage">
 <div id="loginBox">
+
 <h2>Login</h2>
 
 <select id="role" onchange="updateAdminID()">
@@ -73,9 +160,9 @@ text-align:center;
 <input type="password" id="password" placeholder="Password">
 
 <button onclick="login()">Login</button>
-<button id="resetBtn" onclick="resetDevice()">Reset Device</button>
 
 <div id="loginMsg" style="color:red;margin-top:10px;"></div>
+
 </div>
 </div>
 
@@ -94,11 +181,11 @@ text-align:center;
 </div>
 
 
+<!-- ADMIN DASHBOARD -->
 <div id="dashboard" style="display:none;">
 
 <header>
 <h2>Payroll Dashboard</h2>
-<button onclick="toggleTheme()">Theme</button>
 </header>
 
 <div class="container">
@@ -108,9 +195,7 @@ text-align:center;
 <input type="text" id="search" placeholder="Search employee">
 <select id="filterProject"><option value="all">All Projects</option></select>
 <select id="filterMonth"><option value="all">All Months</option></select>
-<button onclick="filterPayslip()">Filter Payslip</button>
-<button onclick="bulkPayslip()">Generate Bulk Payslips</button>
-<button onclick="selectAllEmployees()">Select All / Deselect All</button>
+<button onclick="filterPayslip()">Filter</button>
 </div>
 
 <div class="cards">
@@ -122,7 +207,6 @@ text-align:center;
 <table>
 <thead>
 <tr>
-<th class="checkbox-col"><input type="checkbox" id="selectAllChk" onclick="toggleSelectAll(this)"></th>
 <th>Emp Code</th>
 <th>Name</th>
 <th>Project</th>
@@ -139,11 +223,11 @@ text-align:center;
 </table>
 
 </div>
-
 </div>
 
 
 <div id="modal">
+
 <div class="payslip">
 
 <div class="psHeader">
@@ -155,62 +239,49 @@ Salary Payslip
 
 <div class="footer">
 <button onclick="window.print()">Print</button>
-<button onclick="window.print()">Download PDF</button>
 <button onclick="closePS()">Close</button>
 </div>
 
 </div>
+
 </div>
 
 
 <script>
 
 let employees = JSON.parse(localStorage.getItem("payroll_data") || "[]");
-let empDevice = JSON.parse(localStorage.getItem("emp_device") || "{}");
 let loggedEmp="";
-let allSelected=false;
 
-function rupee(v){ return "₹"+Math.round(v).toLocaleString("en-IN"); }
+function rupee(v){return "₹"+Number(v).toLocaleString("en-IN");}
 
 function updateAdminID(){
+
 const role=document.getElementById("role").value;
 const empInput=document.getElementById("empCode");
 
-if(role=="admin"){
+if(role==="admin"){
 empInput.value="Admin";
 empInput.disabled=true;
 }else{
 empInput.value="";
 empInput.disabled=false;
 }
+
 }
+
 
 function login(){
 
 const role=document.getElementById("role").value;
 const code=document.getElementById("empCode").value.trim();
 const pwd=document.getElementById("password").value;
-const ua=navigator.userAgent;
 
-if(role=="emp"){
+if(role==="emp"){
 
-if(!/Mobi|Android/i.test(ua)){
-document.getElementById("loginMsg").innerText="Employee login only on mobile!";
+if(pwd!==code){
+document.getElementById("loginMsg").innerText="Password must match Emp Code";
 return;
 }
-
-if(pwd!=code){
-document.getElementById("loginMsg").innerText="Password must be Emp Code";
-return;
-}
-
-if(empDevice[code] && empDevice[code]!=ua){
-document.getElementById("loginMsg").innerText="Device already bound.";
-return;
-}
-
-empDevice[code]=ua;
-localStorage.setItem("emp_device",JSON.stringify(empDevice));
 
 loggedEmp=code;
 
@@ -221,7 +292,7 @@ populateEmployeeMonths();
 
 }else{
 
-if(pwd!="Rud@03"){
+if(pwd!=="Rud@03"){
 document.getElementById("loginMsg").innerText="Invalid Admin Password";
 return;
 }
@@ -231,6 +302,7 @@ document.getElementById("dashboard").style.display="block";
 
 populateFilters();
 render(employees);
+
 }
 
 }
@@ -239,23 +311,44 @@ render(employees);
 
 function populateEmployeeMonths(){
 
-const monthSelect=document.getElementById("empMonth");
+employees = JSON.parse(localStorage.getItem("payroll_data") || "[]");
 
+const monthSelect=document.getElementById("empMonth");
 monthSelect.innerHTML="";
 
-let set=new Set();
+let monthSet=new Set();
 
 employees.forEach(e=>{
-if(e.code==loggedEmp){
-set.add(e.month);
+
+if(
+String(e.code).trim().toLowerCase() ===
+String(loggedEmp).trim().toLowerCase()
+){
+if(e.month){
+monthSet.add(e.month);
 }
+}
+
 });
 
-set.forEach(m=>{
+if(monthSet.size===0){
+
+let opt=document.createElement("option");
+opt.textContent="No Payslip Available";
+monthSelect.appendChild(opt);
+
+return;
+
+}
+
+monthSet.forEach(m=>{
+
 let opt=document.createElement("option");
 opt.value=m;
 opt.textContent=m;
+
 monthSelect.appendChild(opt);
+
 });
 
 }
@@ -264,11 +357,17 @@ monthSelect.appendChild(opt);
 
 function generateEmployeePayslip(){
 
-const month=document.getElementById("empMonth").value;
+const m=document.getElementById("empMonth").value;
 
-const e=employees.find(emp=>emp.code==loggedEmp && emp.month==month);
+const e=employees.find(emp=>
+emp.code.trim().toLowerCase()===loggedEmp.trim().toLowerCase()
+&& emp.month===m
+);
 
-if(!e){ alert("Payslip not found"); return; }
+if(!e){
+alert("Payslip not found");
+return;
+}
 
 showPS(e);
 
@@ -276,13 +375,14 @@ showPS(e);
 
 
 
-document.getElementById("file").addEventListener("change", e => {
+document.getElementById("file").addEventListener("change", e=>{
 
 const reader=new FileReader();
 
 reader.onload=function(evt){
 
 const data=new Uint8Array(evt.target.result);
+
 const wb=XLSX.read(data,{type:'array'});
 
 wb.SheetNames.forEach(name=>{
@@ -290,40 +390,21 @@ wb.SheetNames.forEach(name=>{
 const sheet=wb.Sheets[name];
 const rows=XLSX.utils.sheet_to_json(sheet);
 
-let parts=name.split("_");
-let project=parts[0]||"";
-let location=parts[1]||"";
-
 rows.forEach(r=>{
 
-const record={};
+const rec={};
 
-for(let k in r) record[k.trim().toLowerCase()]=r[k];
-
-let monthValue=record['month'];
-
-if(typeof monthValue==='number'){
-monthValue=XLSX.SSF.format("mmm-yy",monthValue);
-}
+for(let k in r) rec[k.trim().toLowerCase()]=r[k];
 
 employees.push({
 
-code:record['emp code']||"",
-name:record['name']||"",
-designation:record['designation']||"",
-month:monthValue||"",
-basic:Number(record['basic']||0),
-hra:Number(record['hra']||0),
-allow:Number(record['allowance']||0),
-bonus:Number(record['bonus']||0),
-gross:Number(record['gross']||0),
-pf:Number(record['pf@12%']||0),
-esi:Number(record['esi@.75%']||0),
-lwf:Number(record['lwf']||0),
-advance:Number(record['advance paid']||0),
-net:Number(record['net in hand']||0),
-project:project,
-location:location
+code:rec['emp code']||"",
+name:rec['name']||"",
+month:rec['month']||"",
+gross:rec['gross']||0,
+net:rec['net in hand']||0,
+project:"",
+location:""
 
 });
 
@@ -342,92 +423,46 @@ reader.readAsArrayBuffer(e.target.files[0]);
 
 });
 
+
 function populateFilters(){
 
-const projSelect=document.getElementById("filterProject");
-const monthSelect=document.getElementById("filterMonth");
+const proj=document.getElementById("filterProject");
+const month=document.getElementById("filterMonth");
 
-projSelect.innerHTML='<option value="all">All Projects</option>';
-monthSelect.innerHTML='<option value="all">All Months</option>';
+proj.innerHTML='<option value="all">All Projects</option>';
+month.innerHTML='<option value="all">All Months</option>';
 
-let projSet=new Set(), monthSet=new Set();
+let mset=new Set();
 
-employees.forEach(e=>{
-projSet.add(e.project);
-monthSet.add(e.month);
-});
+employees.forEach(e=>mset.add(e.month));
 
-projSet.forEach(p=>{
-projSelect.innerHTML+=`<option value="${p}">${p}</option>`;
-});
-
-monthSet.forEach(m=>{
-monthSelect.innerHTML+=`<option value="${m}">${m}</option>`;
+mset.forEach(m=>{
+month.innerHTML+=`<option value="${m}">${m}</option>`;
 });
 
 }
+
+
 
 function filterPayslip(){
 
-const proj=document.getElementById("filterProject").value;
-const month=document.getElementById("filterMonth").value;
+const m=document.getElementById("filterMonth").value;
 
-let filtered=employees.filter(e=>
-(proj==="all"||e.project===proj) &&
-(month==="all"||e.month===month)
-);
+let data=employees.filter(e=>m==="all"||e.month===m);
 
-render(filtered);
+render(data);
 
 }
 
-function toggleSelectAll(chk){
 
-document.querySelectorAll('.empChk').forEach(c=>c.checked=chk.checked);
-allSelected=chk.checked;
-
-}
-
-function selectAllEmployees(){
-
-allSelected=!allSelected;
-document.querySelectorAll('.empChk').forEach(c=>c.checked=allSelected);
-
-}
-
-function bulkPayslip(){
-
-const checkboxes=document.querySelectorAll('.empChk:checked');
-
-if(checkboxes.length==0){
-alert("No employees selected");
-return;
-}
-
-document.getElementById("modal").style.display="block";
-
-let html="";
-
-checkboxes.forEach(c=>{
-
-const e=employees.find(emp=>emp.code===c.value);
-
-if(!e) return;
-
-html+=`<div class="row"><b>${e.name}</b> - ${e.month} - ${rupee(e.net)}</div><hr>`;
-
-});
-
-document.getElementById("psBody").innerHTML=html;
-
-}
 
 function render(data){
 
 let tb=document.getElementById("tbody");
+
 tb.innerHTML="";
 
-let gross=0, net=0;
+let gross=0,net=0;
 
 data.forEach(e=>{
 
@@ -436,7 +471,6 @@ net+=Number(e.net);
 
 tb.innerHTML+=`
 <tr>
-<td class="checkbox-col"><input type="checkbox" class="empChk" value="${e.code}"></td>
 <td>${e.code}</td>
 <td>${e.name}</td>
 <td>${e.project}</td>
@@ -445,7 +479,8 @@ tb.innerHTML+=`
 <td>${rupee(e.gross)}</td>
 <td>${rupee(e.net)}</td>
 <td><button class="view" onclick='showPS(${JSON.stringify(e)})'>View</button></td>
-</tr>`;
+</tr>
+`;
 
 });
 
@@ -455,41 +490,27 @@ document.getElementById("cNet").innerText=rupee(net);
 
 }
 
-document.getElementById("search").addEventListener("keyup",function(){
 
-let v=this.value.toLowerCase();
-
-let f=employees.filter(e=>
-e.code.toLowerCase().includes(v) ||
-e.name.toLowerCase().includes(v)
-);
-
-render(f);
-
-});
 
 function showPS(e){
 
 document.getElementById("modal").style.display="block";
 
 document.getElementById("psBody").innerHTML=`
+
 <div class="row"><b>Emp Code</b><span>${e.code}</span></div>
 <div class="row"><b>Name</b><span>${e.name}</span></div>
-<div class="row"><b>Designation</b><span>${e.designation}</span></div>
-<div class="row"><b>Project</b><span>${e.project}</span></div>
-<div class="row"><b>Location</b><span>${e.location}</span></div>
 <div class="row"><b>Month</b><span>${e.month}</span></div>
 <div class="row net"><span>Net Pay</span><span>${rupee(e.net)}</span></div>
+
 `;
 
 }
 
+
+
 function closePS(){
 document.getElementById("modal").style.display="none";
-}
-
-function toggleTheme(){
-document.body.classList.toggle("dark");
 }
 
 </script>
