@@ -57,12 +57,7 @@ function rupee(v){ return "₹"+Number(v).toLocaleString("en-IN"); }
 function login(){
   const code = document.getElementById("empCode").value.trim();
   const pwd = document.getElementById("password").value;
-  const ua = navigator.userAgent;
 
-  if(!/Mobi|Android/i.test(ua)){
-    document.getElementById("loginMsg").innerText="Employee login only on mobile!";
-    return;
-  }
   if(!code){ document.getElementById("loginMsg").innerText="Enter Employee Code"; return;}
   if(pwd!==code){ document.getElementById("loginMsg").innerText="Password must match Employee Code"; return;}
 
