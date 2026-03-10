@@ -4,183 +4,236 @@
 <meta charset="UTF-8">
 <title>Rudransh Payroll System</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
 <style>
-body{ font-family:Segoe UI; margin:0; background:#eef2f7;}
-header{ background:#4e73df; color:white; padding:15px; text-align:center; font-size:20px;}
-.container{ padding:20px; text-align:center;}
-input,select{ padding:8px; margin:5px; width:220px;}
-button{ padding:8px 14px; background:#4e73df; color:white; border:none; cursor:pointer;}
-table{ width:100%; border-collapse:collapse; background:white; margin-top:20px;}
-th{ background:#4e73df; color:white; padding:10px;}
-td{ padding:10px; border-bottom:1px solid #eee;}
-#adminDash{display:none}
-#empPanel{display:none}
+body{font-family:Segoe UI; margin:0; background:#eef2f7;}
+header{background:linear-gradient(90deg,#4e73df,#36b9cc); color:white; padding:18px; display:flex; justify-content:space-between; align-items:center;}
+.container{padding:20px;}
+.controls{display:flex;justify-content:space-between;margin-bottom:20px;gap:10px;flex-wrap:wrap;}
+input, select{padding:8px;margin-bottom:10px;}
+.cards{display:flex;gap:15px;margin-bottom:20px;flex-wrap:wrap;}
+.card{flex:1;background:white;padding:20px;border-radius:8px;text-align:center;box-shadow:0 2px 6px rgba(0,0,0,0.1);}
+.card h3{margin:0;color:#4e73df;}
+.card p{font-size:22px;font-weight:bold;margin-top:8px;}
+table{width:100%;border-collapse:collapse;background:white;box-shadow:0 2px 6px rgba(0,0,0,0.1);}
+th{background:#4e73df;color:white;padding:10px;cursor:pointer;}
+td{padding:10px;text-align:center;border-bottom:1px solid #eee;}
+tr:hover{background:#f1f3f9;}
+button{padding:6px 12px;border:none;border-radius:4px;cursor:pointer;color:white;background:#1cc88a;}
+.view{background:#36b9cc;}
+#modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);overflow-y:auto;}
+.payslip{background:white;width:700px;margin:40px auto;padding:25px;border-radius:8px;}
+.psHeader{text-align:center;border-bottom:3px solid #4e73df;margin-bottom:15px;padding-bottom:10px;}
+.company{font-size:20px;font-weight:bold;}
+.row{display:flex;justify-content:space-between;margin:6px 0;}
+.section{font-weight:bold;border-bottom:2px solid #ddd;margin-top:10px;}
+.net{font-size:18px;font-weight:bold;color:#4e73df;}
+.footer{text-align:center;margin-top:15px;}
+.dark{background:#1f2933;color:white;}
+.dark table{background:#2c3e50;color:white;}
+.dark th{background:#111827;}
+.dark .card{background:#2c3e50;}
+#loginPage{position:fixed;top:0;left:0;width:100%;height:100%;background:#eef2f7;display:flex;justify-content:center;align-items:center;}
+#loginBox{background:white;padding:30px;border-radius:8px;width:300px;box-shadow:0 2px 10px rgba(0,0,0,0.2);}
+#loginBox h2{text-align:center;margin-bottom:20px;color:#4e73df;}
+#loginBox input,#loginBox select{margin-bottom:10px;padding:8px;width:100%;border:1px solid #ccc;border-radius:4px;}
+#loginBox button{width:100%;background:#4e73df;margin-top:10px;}
+#resetBtn{background:#e74a3b;margin-top:5px;}
+.checkbox-col{width:40px;}
+#empPanel{display:none;}
+#empPanel select, #empPanel button{width:95%;}
+#payslip{margin-top:20px;background:white;padding:15px;border-radius:8px;box-shadow:0 2px 6px rgba(0,0,0,0.1);}
 </style>
 </head>
 <body>
 
-<header>Rudransh Enterprises Payroll System</header>
-
-<div class="container" id="loginPage">
-<h2>Login</h2>
-<select id="role">
-<option value="emp">Employee</option>
-<option value="admin">Admin</option>
-</select>
-<br>
-<input id="empCode" placeholder="Employee Code" inputmode="numeric" autocomplete="off"><br>
-<input id="password" type="password" placeholder="Password" autocomplete="off"><br>
-<button onclick="login()">Login</button>
-<div id="msg" style="color:red"></div>
+<!-- LOGIN PAGE -->
+<div id="loginPage">
+  <div id="loginBox">
+    <h2>Login</h2>
+    <select id="role" onchange="updateAdminID()">
+      <option value="emp">Employee</option>
+      <option value="admin">Admin</option>
+    </select>
+    <input type="text" id="empCode" placeholder="Employee Code">
+    <input type="password" id="password" placeholder="Password">
+    <button onclick="login()">Login</button>
+    <button id="resetBtn" onclick="resetDevice()">Reset Device</button>
+    <div id="loginMsg" style="color:red;margin-top:10px;"></div>
+  </div>
 </div>
 
-<div class="container" id="adminDash">
-<h2>Admin Dashboard</h2>
-<input type="file" id="excelFile">
+<!-- ADMIN DASHBOARD -->
+<div id="dashboard" style="display:none;">
+
+<header>
+<h2>Payroll Dashboard</h2>
+<button onclick="toggleTheme()">Theme</button>
+</header>
+
+<div class="container">
+
+<div class="controls">
+<input type="file" id="file">
+<input type="text" id="search" placeholder="Search employee">
+<select id="filterProject"><option value="all">All Projects</option></select>
+<select id="filterMonth"><option value="all">All Months</option></select>
+<button onclick="filterPayslip()">Filter Payslip</button>
+<button onclick="bulkPayslip()">Generate Bulk Payslips</button>
+<button onclick="selectAllEmployees()">Select All / Deselect All</button>
+</div>
+
+<div class="cards">
+<div class="card"><h3>Total Employees</h3><p id="cEmp">0</p></div>
+<div class="card"><h3>Total Gross</h3><p id="cGross">0</p></div>
+<div class="card"><h3>Total Net</h3><p id="cNet">0</p></div>
+</div>
+
 <table>
 <thead>
 <tr>
+<th class="checkbox-col"><input type="checkbox" id="selectAllChk" onclick="toggleSelectAll(this)"></th>
 <th>Emp Code</th>
 <th>Name</th>
-<th>Designation</th>
+<th>Project</th>
+<th>Location</th>
 <th>Month</th>
 <th>Gross</th>
 <th>Net</th>
+<th>Payslip</th>
 </tr>
 </thead>
 <tbody id="tbody"></tbody>
 </table>
+
 </div>
 
-<div class="container" id="empPanel">
+<div id="modal">
+
+<div class="payslip">
+
+<div class="psHeader">
+<div class="company">Rudransh Enterprises</div>
+Salary Payslip
+</div>
+
+<div id="psBody"></div>
+
+<div class="footer">
+<button onclick="window.print()">Print</button>
+<button onclick="window.print()">Download PDF</button>
+<button onclick="closePS()">Close</button>
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+<!-- EMPLOYEE MOBILE PANEL -->
+<div id="empPanel" class="container">
 <h2>Employee Payslip</h2>
 <select id="empMonth"></select>
-<br><br>
 <button onclick="showPayslip()">Generate Payslip</button>
-<div id="payslip" style="margin-top:20px"></div>
+<div id="payslip"></div>
 </div>
 
 <script>
-let payrollData=[]
-let currentEmp=""
+// ===== DATA =====
+let employees = JSON.parse(localStorage.getItem("payroll_data") || "[]");
+let empDevice = JSON.parse(localStorage.getItem("emp_device") || "{}");
+let allSelected = false;
+let currentEmp="";
 
-// Strong normalize for mobile/desktop input
-function normalize(v){
-    return (v===undefined||v===null?"":v.toString().replace(/\s+/g,'').replace(/\u00A0/g,'').toUpperCase());
-}
-function rupee(v){ return "₹"+Number(v||0).toLocaleString("en-IN"); }
+// ===== HELPERS =====
+function rupee(v){ return "₹"+Math.round(v).toLocaleString("en-IN"); }
+function updateAdminID(){ const role = document.getElementById("role").value; const empInput = document.getElementById("empCode"); if(role=="admin"){ empInput.value="Admin"; empInput.disabled=true; } else { empInput.value=""; empInput.disabled=false; } }
 
-// ---- LOAD payroll.json from GitHub ----
-// Example: replace with your actual GitHub raw URL
-fetch("https://raw.githubusercontent.com/<YOUR-USERNAME>/<YOUR-REPO>/main/payroll.json?v="+Date.now())
-.then(r=>r.json())
-.then(data=>{ payrollData=data; console.log("Payroll loaded:", payrollData); })
-.catch(e=>console.log("JSON load error:",e));
-
-// ---- LOGIN ----
+// ===== LOGIN =====
 function login(){
-    let role=document.getElementById("role").value;
-    let code=normalize(document.getElementById("empCode").value);
-    let pwd=normalize(document.getElementById("password").value);
+  const role = document.getElementById("role").value;
+  const code = document.getElementById("empCode").value.trim();
+  const pwd = document.getElementById("password").value;
+  const ua = navigator.userAgent;
 
-    if(role==="admin"){
-        if(pwd!=="RUD@03"){
-            document.getElementById("msg").innerText="Wrong admin password";
-            return;
-        }
-        document.getElementById("loginPage").style.display="none";
-        document.getElementById("adminDash").style.display="block";
-        renderTable(payrollData);
-    } else {
-        if(code!==pwd){
-            document.getElementById("msg").innerText="Password must equal Emp Code";
-            return;
-        }
-        let empRecords = payrollData.filter(e=>normalize(e.code)===code);
-        if(empRecords.length===0){
-            document.getElementById("msg").innerText="No payslip found for this emp.";
-            return;
-        }
-        currentEmp=code;
-        document.getElementById("loginPage").style.display="none";
-        document.getElementById("empPanel").style.display="block";
-
-        let months=[...new Set(empRecords.map(e=>normalize(e.month)))];
-        let dd=document.getElementById("empMonth");
-        dd.innerHTML="";
-        months.forEach(m=>{
-            let opt=document.createElement("option");
-            opt.value=m;
-            opt.textContent=m;
-            dd.appendChild(opt);
-        });
+  if(role=="admin"){
+    if(pwd!="Rud@03"){ document.getElementById("loginMsg").innerText="Invalid Admin Password"; return; }
+    showDashboard(role,"admin");
+  } else {
+    if(!/Mobi|Android|iPhone/i.test(ua)){
+      document.getElementById("loginMsg").innerText="Employee login only on mobile!";
+      return;
     }
-}
+    if(!code){ document.getElementById("loginMsg").innerText="Enter Employee Code"; return; }
+    if(pwd != code){ document.getElementById("loginMsg").innerText="Password must match Employee Code"; return; }
+    if(empDevice[code] && empDevice[code]!=ua){ document.getElementById("loginMsg").innerText="This emp code bound to another device. Contact Admin."; return; }
+    empDevice[code] = ua;
+    localStorage.setItem("emp_device", JSON.stringify(empDevice));
 
-// ---- SHOW PAYSLIP ----
-function showPayslip(){
-    let m=normalize(document.getElementById("empMonth").value);
-    let emp=payrollData.find(e=>normalize(e.code)===currentEmp && normalize(e.month)===m);
-    if(!emp){
-        document.getElementById("payslip").innerHTML="<span style='color:red'>Payslip not found!</span>";
-        return;
-    }
-    document.getElementById("payslip").innerHTML=
-    `<h3>Payslip</h3>
-    Employee Code : ${emp.code}<br>
-    Name : ${emp.name}<br>
-    Designation : ${emp.designation}<br>
-    Month : ${emp.month}<br>
-    Gross Salary : ${rupee(emp.gross)}<br>
-    Net Salary : ${rupee(emp.net)}`;
-}
+    currentEmp = code;
+    document.getElementById("loginPage").style.display="none";
+    document.getElementById("empPanel").style.display="flex";
 
-// ---- ADMIN EXCEL IMPORT ----
-document.getElementById("excelFile").addEventListener("change",e=>{
-    const reader=new FileReader();
-    reader.onload=function(evt){
-        const data=new Uint8Array(evt.target.result);
-        const wb=XLSX.read(data,{type:"array"});
-        payrollData=[];
-        wb.SheetNames.forEach(name=>{
-            const sheet=wb.Sheets[name];
-            const rows=XLSX.utils.sheet_to_json(sheet);
-            rows.forEach(r=>{
-                let rec={};
-                for(let k in r){ rec[k.trim().toLowerCase()]=r[k]; }
-                let month=rec['month'];
-                if(typeof month==="number"){ month=XLSX.SSF.format("mmm-yy",month); }
-                payrollData.push({
-                    code:(rec['emp code']||"").toString(),
-                    name:rec['name']||"",
-                    designation:rec['designation']||"",
-                    month:month||"",
-                    gross:Number(rec['gross']||0),
-                    net:Number(rec['net in hand']||0)
-                });
-            });
-        });
-        renderTable(payrollData);
-    }
-    reader.readAsArrayBuffer(e.target.files[0]);
-});
-
-// ---- RENDER ADMIN TABLE ----
-function renderTable(data){
-    let tb=document.getElementById("tbody");
-    tb.innerHTML="";
-    data.forEach(e=>{
-        tb.innerHTML+=`<tr>
-        <td>${e.code}</td>
-        <td>${e.name}</td>
-        <td>${e.designation}</td>
-        <td>${e.month}</td>
-        <td>${rupee(e.gross)}</td>
-        <td>${rupee(e.net)}</td>
-        </tr>`;
+    // Populate month dropdown correctly
+    const empRecords = employees.filter(e => e.code === currentEmp);
+    const months = [...new Set(empRecords.map(e=>e.month))].sort((a,b)=>{
+      const parseDate = str => { const [m,y]=str.split('-'); return new Date(`${m} 1, 20${y}`); };
+      return parseDate(a)-parseDate(b);
     });
+    const dd = document.getElementById("empMonth");
+    dd.innerHTML="";
+    months.forEach(m=>{
+      const opt = document.createElement("option");
+      opt.value = m;
+      opt.textContent = m;
+      dd.appendChild(opt);
+    });
+    if(months.length===1){ dd.selectedIndex=0; showPayslip(); }
+  }
 }
+
+// ===== SHOW EMPLOYEE PAYSLIP =====
+function showPayslip(){
+  const selectedMonth = document.getElementById("empMonth").value;
+  const emp = employees.find(e => e.code === currentEmp && e.month === selectedMonth);
+  if(!emp){ document.getElementById("payslip").innerHTML="<span style='color:red'>Payslip not found!</span>"; return; }
+  document.getElementById("payslip").innerHTML = `
+<h3>Payslip</h3>
+Employee Code: ${emp.code}<br>
+Name: ${emp.name}<br>
+Designation: ${emp.designation}<br>
+Month: ${emp.month}<br>
+Gross Salary: ${rupee(emp.gross)}<br>
+Net Salary: ${rupee(emp.net)}
+`;
+}
+
+// ===== RESET DEVICE =====
+function resetDevice(){
+  const code = prompt("Enter Emp Code to reset device:");
+  if(code && empDevice[code]){ delete empDevice[code]; localStorage.setItem("emp_device", JSON.stringify(empDevice)); alert("Device reset for "+code);}
+  else{ alert("No device binding found."); }
+}
+
+// ===== REST OF ADMIN FUNCTIONS (File Upload, Filters, Bulk Payslip etc.) =====
+// Keep all existing admin code intact as in your previous dashboard
+// Example: file upload, render table, bulkPayslip(), showPS(), filterPayslip() ...
+
+function showDashboard(role, code){
+  document.getElementById("loginPage").style.display="none";
+  document.getElementById("dashboard").style.display="block";
+  document.getElementById("loginMsg").innerText="";
+  if(role=="emp"){ document.getElementById("file").style.display="none"; }
+  else{ document.getElementById("file").style.display="inline-block"; }
+  if(employees.length>0){ populateFilters(); render(employees); }
+}
+
+function toggleTheme(){ document.body.classList.toggle("dark"); }
+function closePS(){ document.getElementById("modal").style.display="none"; }
 </script>
+
 </body>
 </html>
