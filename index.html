@@ -1,103 +1,44 @@
 <!DOCTYPE html>
-
 <html>
 <head>
 <meta charset="UTF-8">
 <title>Rudransh Payroll System</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-
 <style>
-body{
-font-family:Segoe UI;
-margin:0;
-background:#eef2f7;
-}
-
-header{
-background:#4e73df;
-color:white;
-padding:15px;
-text-align:center;
-font-size:20px;
-}
-
-.container{
-padding:20px;
-text-align:center;
-}
-
-input,select{
-padding:8px;
-margin:5px;
-width:220px;
-}
-
-button{
-padding:8px 14px;
-background:#4e73df;
-color:white;
-border:none;
-cursor:pointer;
-}
-
-table{
-width:100%;
-border-collapse:collapse;
-background:white;
-margin-top:20px;
-}
-
-th{
-background:#4e73df;
-color:white;
-padding:10px;
-}
-
-td{
-padding:10px;
-border-bottom:1px solid #eee;
-}
-
+body{ font-family:Segoe UI; margin:0; background:#eef2f7;}
+header{ background:#4e73df; color:white; padding:15px; text-align:center; font-size:20px;}
+.container{ padding:20px; text-align:center;}
+input,select{ padding:8px; margin:5px; width:220px;}
+button{ padding:8px 14px; background:#4e73df; color:white; border:none; cursor:pointer;}
+table{ width:100%; border-collapse:collapse; background:white; margin-top:20px;}
+th{ background:#4e73df; color:white; padding:10px;}
+td{ padding:10px; border-bottom:1px solid #eee;}
 #adminDash{display:none}
 #empPanel{display:none}
-
 </style>
-
 </head>
-
 <body>
 
 <header>Rudransh Enterprises Payroll System</header>
 
 <div class="container" id="loginPage">
-
 <h2>Login</h2>
-
 <select id="role">
 <option value="emp">Employee</option>
 <option value="admin">Admin</option>
 </select>
-
 <br>
-
-<input id="empCode" placeholder="Employee Code"><br> <input id="password" type="password" placeholder="Password"><br>
-
+<input id="empCode" placeholder="Employee Code" inputmode="numeric" autocomplete="off"><br>
+<input id="password" type="password" placeholder="Password" autocomplete="off"><br>
 <button onclick="login()">Login</button>
-
 <div id="msg" style="color:red"></div>
-
 </div>
 
 <div class="container" id="adminDash">
-
 <h2>Admin Dashboard</h2>
-
 <input type="file" id="excelFile">
-
 <table>
-
 <thead>
 <tr>
 <th>Emp Code</th>
@@ -108,304 +49,138 @@ border-bottom:1px solid #eee;
 <th>Net</th>
 </tr>
 </thead>
-
 <tbody id="tbody"></tbody>
-
 </table>
-
 </div>
 
 <div class="container" id="empPanel">
-
 <h2>Employee Payslip</h2>
-
 <select id="empMonth"></select>
-
 <br><br>
-
 <button onclick="showPayslip()">Generate Payslip</button>
-
 <div id="payslip" style="margin-top:20px"></div>
-
 </div>
 
 <script>
-
 let payrollData=[]
 let currentEmp=""
 
-/* LOAD PAYROLL DATABASE */
-
-fetch("payroll.json?v="+Date.now())
-.then(r=>r.json())
-.then(data=>{
-payrollData=data
-})
-
-
+// Strong normalize for mobile/desktop input
 function normalize(v){
-
-return String(v||"")
-.replace(/\s+/g,"")
-.toUpperCase()
-
+    return (v===undefined||v===null?"":v.toString().replace(/\s+/g,'').replace(/\u00A0/g,'').toUpperCase());
 }
+function rupee(v){ return "₹"+Number(v||0).toLocaleString("en-IN"); }
 
+// ---- LOAD payroll.json from GitHub ----
+// Example: replace with your actual GitHub raw URL
+fetch("https://raw.githubusercontent.com/<YOUR-USERNAME>/<YOUR-REPO>/main/payroll.json?v="+Date.now())
+.then(r=>r.json())
+.then(data=>{ payrollData=data; console.log("Payroll loaded:", payrollData); })
+.catch(e=>console.log("JSON load error:",e));
 
-function rupee(v){
-
-return "₹"+Number(v||0).toLocaleString("en-IN")
-
-}
-
-
-/* LOGIN FUNCTION */
-
+// ---- LOGIN ----
 function login(){
+    let role=document.getElementById("role").value;
+    let code=normalize(document.getElementById("empCode").value);
+    let pwd=normalize(document.getElementById("password").value);
 
-let role=document.getElementById("role").value
+    if(role==="admin"){
+        if(pwd!=="RUD@03"){
+            document.getElementById("msg").innerText="Wrong admin password";
+            return;
+        }
+        document.getElementById("loginPage").style.display="none";
+        document.getElementById("adminDash").style.display="block";
+        renderTable(payrollData);
+    } else {
+        if(code!==pwd){
+            document.getElementById("msg").innerText="Password must equal Emp Code";
+            return;
+        }
+        let empRecords = payrollData.filter(e=>normalize(e.code)===code);
+        if(empRecords.length===0){
+            document.getElementById("msg").innerText="No payslip found for this emp.";
+            return;
+        }
+        currentEmp=code;
+        document.getElementById("loginPage").style.display="none";
+        document.getElementById("empPanel").style.display="block";
 
-let code=normalize(document.getElementById("empCode").value)
-
-let pwd=normalize(document.getElementById("password").value)
-
-
-if(role==="admin"){
-
-if(pwd!=="RUD@03"){
-
-document.getElementById("msg").innerText="Wrong admin password"
-
-return
-
+        let months=[...new Set(empRecords.map(e=>normalize(e.month)))];
+        let dd=document.getElementById("empMonth");
+        dd.innerHTML="";
+        months.forEach(m=>{
+            let opt=document.createElement("option");
+            opt.value=m;
+            opt.textContent=m;
+            dd.appendChild(opt);
+        });
+    }
 }
 
-document.getElementById("loginPage").style.display="none"
-
-document.getElementById("adminDash").style.display="block"
-
-renderTable(payrollData)
-
-}
-
-
-else{
-
-if(code!==pwd){
-
-document.getElementById("msg").innerText="Password must equal Emp Code"
-
-return
-
-}
-
-
-let empRecords=payrollData.filter(e=>normalize(e.code)===code)
-
-if(empRecords.length===0){
-
-document.getElementById("msg").innerText="No payslip found for this emp."
-
-return
-
-}
-
-
-currentEmp=code
-
-document.getElementById("loginPage").style.display="none"
-
-document.getElementById("empPanel").style.display="block"
-
-
-let months=[...new Set(empRecords.map(e=>e.month))]
-
-
-let dd=document.getElementById("empMonth")
-
-dd.innerHTML=""
-
-
-months.forEach(m=>{
-
-let opt=document.createElement("option")
-
-opt.value=m
-
-opt.textContent=m
-
-dd.appendChild(opt)
-
-})
-
-}
-
-}
-
-
-
-/* SHOW PAYSLIP */
-
+// ---- SHOW PAYSLIP ----
 function showPayslip(){
-
-let m=document.getElementById("empMonth").value
-
-
-let emp=payrollData.find(e=>normalize(e.code)===currentEmp && e.month===m)
-
-if(!emp)return
-
-
-document.getElementById("payslip").innerHTML=
-
-`<h3>Payslip</h3>
-
-Employee Code : ${emp.code}<br>
-Name : ${emp.name}<br>
-Designation : ${emp.designation}<br>
-Month : ${emp.month}<br>
-Gross Salary : ${rupee(emp.gross)}<br>
-Net Salary : ${rupee(emp.net)}
-
-`
-
+    let m=normalize(document.getElementById("empMonth").value);
+    let emp=payrollData.find(e=>normalize(e.code)===currentEmp && normalize(e.month)===m);
+    if(!emp){
+        document.getElementById("payslip").innerHTML="<span style='color:red'>Payslip not found!</span>";
+        return;
+    }
+    document.getElementById("payslip").innerHTML=
+    `<h3>Payslip</h3>
+    Employee Code : ${emp.code}<br>
+    Name : ${emp.name}<br>
+    Designation : ${emp.designation}<br>
+    Month : ${emp.month}<br>
+    Gross Salary : ${rupee(emp.gross)}<br>
+    Net Salary : ${rupee(emp.net)}`;
 }
 
-
-
-/* ADMIN EXCEL IMPORT */
-
+// ---- ADMIN EXCEL IMPORT ----
 document.getElementById("excelFile").addEventListener("change",e=>{
+    const reader=new FileReader();
+    reader.onload=function(evt){
+        const data=new Uint8Array(evt.target.result);
+        const wb=XLSX.read(data,{type:"array"});
+        payrollData=[];
+        wb.SheetNames.forEach(name=>{
+            const sheet=wb.Sheets[name];
+            const rows=XLSX.utils.sheet_to_json(sheet);
+            rows.forEach(r=>{
+                let rec={};
+                for(let k in r){ rec[k.trim().toLowerCase()]=r[k]; }
+                let month=rec['month'];
+                if(typeof month==="number"){ month=XLSX.SSF.format("mmm-yy",month); }
+                payrollData.push({
+                    code:(rec['emp code']||"").toString(),
+                    name:rec['name']||"",
+                    designation:rec['designation']||"",
+                    month:month||"",
+                    gross:Number(rec['gross']||0),
+                    net:Number(rec['net in hand']||0)
+                });
+            });
+        });
+        renderTable(payrollData);
+    }
+    reader.readAsArrayBuffer(e.target.files[0]);
+});
 
-
-const reader=new FileReader()
-
-
-reader.onload=function(evt){
-
-
-const data=new Uint8Array(evt.target.result)
-
-
-const wb=XLSX.read(data,{type:"array"})
-
-
-payrollData=[]
-
-
-wb.SheetNames.forEach(name=>{
-
-
-const sheet=wb.Sheets[name]
-
-
-const rows=XLSX.utils.sheet_to_json(sheet)
-
-
-rows.forEach(r=>{
-
-
-let rec={}
-
-
-for(let k in r){
-
-rec[k.trim().toLowerCase()]=r[k]
-
-}
-
-
-let month=rec['month']
-
-
-if(typeof month==="number"){
-
-month=XLSX.SSF.format("mmm-yy",month)
-
-}
-
-
-payrollData.push({
-
-
-code:(rec['emp code']||"").toString(),
-
-name:rec['name']||"",
-
-designation:rec['designation']||"",
-
-month:month||"",
-
-gross:Number(rec['gross']||0),
-
-net:Number(rec['net in hand']||0)
-
-
-})
-
-
-})
-
-
-})
-
-
-renderTable(payrollData)
-
-
-}
-
-
-reader.readAsArrayBuffer(e.target.files[0])
-
-
-})
-
-
-
-/* RENDER ADMIN TABLE */
-
+// ---- RENDER ADMIN TABLE ----
 function renderTable(data){
-
-
-let tb=document.getElementById("tbody")
-
-
-tb.innerHTML=""
-
-
-data.forEach(e=>{
-
-
-tb.innerHTML+=`
-
-
-<tr>
-
-<td>${e.code}</td>
-
-<td>${e.name}</td>
-
-<td>${e.designation}</td>
-
-<td>${e.month}</td>
-
-<td>${rupee(e.gross)}</td>
-
-<td>${rupee(e.net)}</td>
-
-</tr>
-
-
-`
-
-
-})
-
-
+    let tb=document.getElementById("tbody");
+    tb.innerHTML="";
+    data.forEach(e=>{
+        tb.innerHTML+=`<tr>
+        <td>${e.code}</td>
+        <td>${e.name}</td>
+        <td>${e.designation}</td>
+        <td>${e.month}</td>
+        <td>${rupee(e.gross)}</td>
+        <td>${rupee(e.net)}</td>
+        </tr>`;
+    });
 }
-
 </script>
-
 </body>
 </html>
