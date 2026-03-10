@@ -2,194 +2,132 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Payroll Dashboard</title>
+<title>Employee Payslip</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 body{font-family:Segoe UI;margin:0;background:#eef2f7;}
-header{background:linear-gradient(90deg,#4e73df,#36b9cc);color:white;padding:18px;display:flex;justify-content:space-between;align-items:center;}
-.container{padding:20px;}
-.controls{display:flex;justify-content:space-between;margin-bottom:20px;gap:10px;flex-wrap:wrap;}
-input, select{padding:8px;margin-bottom:10px;}
-.cards{display:flex;gap:15px;margin-bottom:20px;flex-wrap:wrap;}
-.card{flex:1;background:white;padding:20px;border-radius:8px;text-align:center;box-shadow:0 2px 6px rgba(0,0,0,0.1);}
-.card h3{margin:0;color:#4e73df;}
-.card p{font-size:22px;font-weight:bold;margin-top:8px;}
-table{width:100%;border-collapse:collapse;background:white;box-shadow:0 2px 6px rgba(0,0,0,0.1);}
-th{background:#4e73df;color:white;padding:10px;cursor:pointer;}
-td{padding:10px;text-align:center;border-bottom:1px solid #eee;}
-tr:hover{background:#f1f3f9;}
-button{padding:6px 12px;border:none;border-radius:4px;cursor:pointer;color:white;background:#1cc88a;}
-.view{background:#36b9cc;}
-#modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);overflow-y:auto;}
-.payslip{background:white;width:700px;margin:40px auto;padding:25px;border-radius:8px;}
-.psHeader{text-align:center;border-bottom:3px solid #4e73df;margin-bottom:15px;padding-bottom:10px;}
-.company{font-size:20px;font-weight:bold;}
+#loginPage,#dashboard{display:flex;justify-content:center;align-items:center;height:100vh;}
+#loginBox,#dashboardBox{background:white;padding:30px;border-radius:8px;width:350px;box-shadow:0 2px 10px rgba(0,0,0,0.2);}
+#loginBox h2,#dashboardBox h2{text-align:center;margin-bottom:20px;color:#4e73df;}
+input,select,button{width:100%;padding:8px;margin-bottom:10px;border-radius:4px;border:1px solid #ccc;}
+button{background:#4e73df;color:white;border:none;cursor:pointer;}
+#monthSelect,#generateBtn{margin-top:5px;}
+#payslip{margin-top:20px;background:white;padding:15px;border-radius:8px;box-shadow:0 2px 6px rgba(0,0,0,0.1);}
 .row{display:flex;justify-content:space-between;margin:6px 0;}
 .section{font-weight:bold;border-bottom:2px solid #ddd;margin-top:10px;}
 .net{font-size:18px;font-weight:bold;color:#4e73df;}
-.footer{text-align:center;margin-top:15px;}
-.dark{background:#1f2933;color:white;}
-.dark table{background:#2c3e50;color:white;}
-.dark th{background:#111827;}
-.dark .card{background:#2c3e50;}
-#loginPage{position:fixed;top:0;left:0;width:100%;height:100%;background:#eef2f7;display:flex;justify-content:center;align-items:center;}
-#loginBox{background:white;padding:30px;border-radius:8px;width:300px;box-shadow:0 2px 10px rgba(0,0,0,0.2);}
-#loginBox h2{text-align:center;margin-bottom:20px;color:#4e73df;}
-#loginBox input,#loginBox select{margin-bottom:10px;padding:8px;width:100%;border:1px solid #ccc;border-radius:4px;}
-#loginBox button{width:100%;background:#4e73df;margin-top:10px;}
-#resetBtn{background:#e74a3b;margin-top:5px;}
-.checkbox-col{width:40px;}
 </style>
 </head>
 <body>
 
-<!-- LOGIN PAGE -->
 <div id="loginPage">
-<div id="loginBox">
-<h2>Login</h2>
-<select id="role" onchange="updateAdminID()">
-<option value="emp">Employee</option>
-<option value="admin">Admin</option>
-</select>
-<input type="text" id="empCode" placeholder="Employee Code">
-<input type="password" id="password" placeholder="Password">
-<button onclick="login()">Login</button>
-<button id="resetBtn" onclick="resetDevice()">Reset Device</button>
-<div id="loginMsg" style="color:red;margin-top:10px;"></div>
-</div>
+  <div id="loginBox">
+    <h2>Employee Login</h2>
+    <input type="text" id="empCode" placeholder="Employee Code">
+    <input type="password" id="password" placeholder="Password (same as Emp Code)">
+    <button onclick="login()">Login</button>
+    <div id="loginMsg" style="color:red;margin-top:10px;"></div>
+  </div>
 </div>
 
-<!-- PAYROLL DASHBOARD -->
 <div id="dashboard" style="display:none;">
-<header>
-<h2>Payroll Dashboard</h2>
-<button onclick="toggleTheme()">Theme</button>
-</header>
-<div class="container">
-<div class="controls">
-<input type="file" id="file">
-<input type="text" id="search" placeholder="Search employee">
-<select id="filterProject"><option value="all">All Projects</option></select>
-<select id="filterMonth"><option value="all">All Months</option></select>
-<button onclick="filterPayslip()">Filter Payslip</button>
-<button onclick="bulkPayslip()">Generate Bulk Payslips</button>
-<button onclick="selectAllEmployees()">Select All / Deselect All</button>
-</div>
-<div class="cards">
-<div class="card"><h3>Total Employees</h3><p id="cEmp">0</p></div>
-<div class="card"><h3>Total Gross</h3><p id="cGross">0</p></div>
-<div class="card"><h3>Total Net</h3><p id="cNet">0</p></div>
-</div>
-<table>
-<thead>
-<tr>
-<th class="checkbox-col"><input type="checkbox" id="selectAllChk" onclick="toggleSelectAll(this)"></th>
-<th>Emp Code</th>
-<th>Name</th>
-<th>Project</th>
-<th>Location</th>
-<th>Month</th>
-<th>Gross</th>
-<th>Net</th>
-<th>Payslip</th>
-</tr>
-</thead>
-<tbody id="tbody"></tbody>
-</table>
-</div>
-<div id="modal">
-<div class="payslip">
-<div class="psHeader">
-<div class="company">Rudransh Enterprises</div>
-Salary Payslip
-</div>
-<div id="psBody"></div>
-<div class="footer">
-<button onclick="window.print()">Print</button>
-<button onclick="window.print()">Download PDF</button>
-<button onclick="closePS()">Close</button>
-</div>
-</div>
-</div>
+  <div id="dashboardBox">
+    <h2>Payslip</h2>
+    <div>
+      <label for="monthSelect">Select Month:</label>
+      <select id="monthSelect">
+        <option value="">-- Select Month --</option>
+      </select>
+      <button id="generateBtn" onclick="generatePayslip()">Generate Payslip</button>
+    </div>
+    <div id="payslip"></div>
+    <button onclick="logout()" style="background:#e74a3b;margin-top:10px;">Logout</button>
+  </div>
 </div>
 
 <script>
+// Load payroll data from localStorage (uploaded by Admin dashboard)
 let employees = JSON.parse(localStorage.getItem("payroll_data") || "[]");
-let empDevice = JSON.parse(localStorage.getItem("emp_device") || "{}");
-let allSelected = false;
-let currentEmpCode = null;
+let currentEmp = null;
 
-function rupee(v){ return "₹" + Math.round(v).toLocaleString("en-IN"); }
+// Format currency
+function rupee(v){ return "₹"+Number(v).toLocaleString("en-IN"); }
 
-function updateAdminID(){
-  const role = document.getElementById("role").value;
-  const empInput = document.getElementById("empCode");
-  if(role=="admin"){ empInput.value="Admin"; empInput.disabled=true; }
-  else{ empInput.value=""; empInput.disabled=false; }
-}
-
+// Login function
 function login(){
-  const role = document.getElementById("role").value;
   const code = document.getElementById("empCode").value.trim();
   const pwd = document.getElementById("password").value;
   const ua = navigator.userAgent;
 
-  if(role=="emp"){
-    if(!/Mobi|Android/i.test(ua)){ document.getElementById("loginMsg").innerText="Employee login only on mobile!"; return; }
-    if(!code){ document.getElementById("loginMsg").innerText="Enter Employee Code"; return; }
-    if(pwd!=code){ document.getElementById("loginMsg").innerText="Password must be same as Emp Code"; return; }
-    if(empDevice[code] && empDevice[code]!=ua){ document.getElementById("loginMsg").innerText="This emp code bound to another device. Contact Admin."; return; }
-    empDevice[code] = ua;
-    localStorage.setItem("emp_device", JSON.stringify(empDevice));
-    currentEmpCode = code;
-    showDashboard(role, code);
-  }else{
-    if(pwd!="Rud@03"){ document.getElementById("loginMsg").innerText="Invalid Admin Password"; return; }
-    showDashboard(role, "admin");
+  if(!/Mobi|Android/i.test(ua)){
+    document.getElementById("loginMsg").innerText="Employee login only on mobile!";
+    return;
   }
-}
+  if(!code){ document.getElementById("loginMsg").innerText="Enter Employee Code"; return;}
+  if(pwd!==code){ document.getElementById("loginMsg").innerText="Password must match Employee Code"; return;}
 
-function showDashboard(role, code){
+  // Filter for this employee
+  const empRecords = employees.filter(e => e.code===code);
+  if(empRecords.length===0){
+    document.getElementById("loginMsg").innerText="No records found for this Employee Code!";
+    return;
+  }
+
+  currentEmp = empRecords;
   document.getElementById("loginPage").style.display="none";
-  document.getElementById("dashboard").style.display="block";
-  document.getElementById("loginMsg").innerText="";
-
-  if(role=="emp"){
-    document.getElementById("file").style.display="none";
-    document.getElementById("search").style.display="none";
-    document.getElementById("filterProject").style.display="none";
-    document.getElementById("selectAllChk").style.display="none";
-    document.querySelector('button[onclick="bulkPayslip()"]').style.display="none";
-    populateEmployeeMonths(code);
-  }else{
-    document.getElementById("file").style.display="inline-block";
-    populateFilters();
-    render(employees);
-  }
+  document.getElementById("dashboard").style.display="flex";
+  populateMonths(empRecords);
 }
 
-function resetDevice(){
-  const code = prompt("Enter Emp Code to reset device:");
-  if(code && empDevice[code]){ delete empDevice[code]; localStorage.setItem("emp_device", JSON.stringify(empDevice)); alert("Device reset for "+code);} else{ alert("No device binding found."); }
+// Populate month dropdown for this employee
+function populateMonths(empRecords){
+  const monthSelect = document.getElementById("monthSelect");
+  monthSelect.innerHTML='<option value="">-- Select Month --</option>';
+  const months = [...new Set(empRecords.map(e => e.month))];
+  months.forEach(m=>monthSelect.innerHTML+=`<option value="${m}">${m}</option>`);
 }
 
-// FILE UPLOAD
-... (same as your original file upload code)
+// Generate payslip for selected month
+function generatePayslip(){
+  const selectedMonth = document.getElementById("monthSelect").value;
+  if(!selectedMonth){ alert("Select a month!"); return;}
+  const record = currentEmp.find(e => e.month===selectedMonth);
+  if(!record){ alert("No payslip found for selected month!"); return;}
 
-// EMPLOYEE MONTHS POPULATION
-function populateEmployeeMonths(code){
-  const monthSelect = document.getElementById("filterMonth");
-  monthSelect.innerHTML='<option value="all">Select Month</option>';
-  const empMonths = employees.filter(e=>e.code===code).map(e=>e.month);
-  [...new Set(empMonths)].forEach(m=>{ monthSelect.innerHTML+='<option value="'+m+'">'+m+'</option>'; });
-  monthSelect.addEventListener('change',()=>{
-    const selectedMonth = monthSelect.value;
-    const empData = employees.find(e=>e.code===code && e.month===selectedMonth);
-    if(empData){ render([empData]); }
-  });
+  document.getElementById("payslip").innerHTML=`
+    <div class="row"><b>Emp Code</b><span>${record.code}</span></div>
+    <div class="row"><b>Name</b><span>${record.name}</span></div>
+    <div class="row"><b>Designation</b><span>${record.designation||"N/A"}</span></div>
+    <div class="row"><b>Project</b><span>${record.project||"N/A"}</span></div>
+    <div class="row"><b>Location</b><span>${record.location||"N/A"}</span></div>
+    <div class="row"><b>Month</b><span>${record.month}</span></div>
+    <div class="section">Earnings</div>
+    <div class="row"><span>Basic</span><span>${rupee(record.basic)}</span></div>
+    <div class="row"><span>HRA</span><span>${rupee(record.hra)}</span></div>
+    <div class="row"><span>Allowance</span><span>${rupee(record.allow)}</span></div>
+    <div class="row"><span>Bonus</span><span>${rupee(record.bonus)}</span></div>
+    <div class="row"><b>Gross</b><b>${rupee(record.gross)}</b></div>
+    <div class="section">Deductions</div>
+    <div class="row"><span>PF</span><span>${rupee(record.pf)}</span></div>
+    <div class="row"><span>ESI</span><span>${rupee(record.esi)}</span></div>
+    <div class="row"><span>LWF</span><span>${rupee(record.lwf)}</span></div>
+    <div class="row"><span>Advance</span><span>${rupee(record.advance)}</span></div>
+    <div class="section"></div>
+    <div class="row net"><span>Net Pay</span><span>${rupee(record.net)}</span></div>
+  `;
 }
 
-// REST RENDER, SHOWPS, CLOSEPS, TOGGLETHEME functions remain unchanged
+// Logout
+function logout(){
+  currentEmp=null;
+  document.getElementById("loginPage").style.display="flex";
+  document.getElementById("dashboard").style.display="none";
+  document.getElementById("empCode").value="";
+  document.getElementById("password").value="";
+  document.getElementById("payslip").innerHTML="";
+  document.getElementById("monthSelect").innerHTML='<option value="">-- Select Month --</option>';
+}
 </script>
+
 </body>
 </html>
