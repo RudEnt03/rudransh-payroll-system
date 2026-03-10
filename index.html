@@ -7,172 +7,45 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
 <style>
-body{
-font-family:Segoe UI;
-margin:0;
-background:#eef2f7;
-}
-
-header{
-background:linear-gradient(90deg,#4e73df,#36b9cc);
-color:white;
-padding:18px;
-display:flex;
-justify-content:space-between;
-align-items:center;
-}
-
+body{font-family:Segoe UI;margin:0;background:#eef2f7;}
+header{background:linear-gradient(90deg,#4e73df,#36b9cc);color:white;padding:18px;display:flex;justify-content:space-between;align-items:center;}
 .container{padding:20px;}
-
-.controls{
-display:flex;
-justify-content:space-between;
-margin-bottom:20px;
-gap:10px;
-flex-wrap:wrap;
-}
-
-input, select{padding:8px;margin-bottom:10px;}
-
-.cards{
-display:flex;
-gap:15px;
-margin-bottom:20px;
-flex-wrap:wrap;
-}
-
-.card{
-flex:1;
-background:white;
-padding:20px;
-border-radius:8px;
-text-align:center;
-box-shadow:0 2px 6px rgba(0,0,0,0.1);
-}
-
+.controls{display:flex;justify-content:space-between;margin-bottom:20px;gap:10px;flex-wrap:wrap;}
+input,select{padding:8px;margin-bottom:10px;}
+.cards{display:flex;gap:15px;margin-bottom:20px;flex-wrap:wrap;}
+.card{flex:1;background:white;padding:20px;border-radius:8px;text-align:center;box-shadow:0 2px 6px rgba(0,0,0,0.1);}
 .card h3{margin:0;color:#4e73df;}
 .card p{font-size:22px;font-weight:bold;margin-top:8px;}
-
-table{
-width:100%;
-border-collapse:collapse;
-background:white;
-box-shadow:0 2px 6px rgba(0,0,0,0.1);
-}
-
-th{
-background:#4e73df;
-color:white;
-padding:10px;
-cursor:pointer;
-}
-
-td{
-padding:10px;
-text-align:center;
-border-bottom:1px solid #eee;
-}
-
+table{width:100%;border-collapse:collapse;background:white;box-shadow:0 2px 6px rgba(0,0,0,0.1);}
+th{background:#4e73df;color:white;padding:10px;cursor:pointer;}
+td{padding:10px;text-align:center;border-bottom:1px solid #eee;}
 tr:hover{background:#f1f3f9;}
-
-button{
-padding:6px 12px;
-border:none;
-border-radius:4px;
-cursor:pointer;
-color:white;
-background:#1cc88a;
-}
-
+button{padding:6px 12px;border:none;border-radius:4px;cursor:pointer;color:white;background:#1cc88a;}
 .view{background:#36b9cc;}
+#modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);overflow-y:auto;}
+.payslip{background:white;width:700px;margin:40px auto;padding:25px;border-radius:8px;}
+.row{display:flex;justify-content:space-between;margin:6px 0;}
+.section{font-weight:bold;border-bottom:2px solid #ddd;margin-top:10px;}
+.net{font-size:18px;font-weight:bold;color:#4e73df;}
+.dark{background:#1f2933;color:white;}
+.dark table{background:#2c3e50;color:white;}
+.dark th{background:#111827;}
+.dark .card{background:#2c3e50;}
 
-#modal{
-display:none;
-position:fixed;
-top:0;
-left:0;
-width:100%;
-height:100%;
-background:rgba(0,0,0,0.5);
-overflow-y:auto;
-}
-
-.payslip{
-background:white;
-width:700px;
-margin:40px auto;
-padding:25px;
-border-radius:8px;
-}
-
-.row{
-display:flex;
-justify-content:space-between;
-margin:6px 0;
-}
-
-.section{
-font-weight:bold;
-border-bottom:2px solid #ddd;
-margin-top:10px;
-}
-
-.net{
-font-size:18px;
-font-weight:bold;
-color:#4e73df;
-}
-
-/* EMP PANEL */
-#empPanel{
-display:none;
-margin-bottom:20px;
-background:white;
-padding:15px;
-border-radius:8px;
-box-shadow:0 2px 6px rgba(0,0,0,0.1);
-}
-
-/* LOGIN PAGE */
-#loginPage{
-position:fixed;
-top:0; left:0;
-width:100%; height:100%;
-background:#eef2f7;
-display:flex;
-justify-content:center;
-align-items:center;
-}
-
-#loginBox{
-background:white;
-padding:30px;
-border-radius:8px;
-width:300px;
-box-shadow:0 2px 10px rgba(0,0,0,0.2);
-}
-
+#loginPage{position:fixed;top:0;left:0;width:100%;height:100%;background:#eef2f7;display:flex;justify-content:center;align-items:center;}
+#loginBox{background:white;padding:30px;border-radius:8px;width:300px;box-shadow:0 2px 10px rgba(0,0,0,0.2);}
 #loginBox h2{text-align:center;margin-bottom:20px;color:#4e73df;}
-
-#loginBox input,#loginBox select{
-margin-bottom:10px;
-padding:8px;
-width:100%;
-border:1px solid #ccc;
-border-radius:4px;
-}
-
+#loginBox input,#loginBox select{margin-bottom:10px;padding:8px;width:100%;border:1px solid #ccc;border-radius:4px;}
 #loginBox button{width:100%;background:#4e73df;margin-top:10px;}
-
 #resetBtn{background:#e74a3b;margin-top:5px;}
 
 .checkbox-col{width:40px;}
+#empPanel{display:none;background:white;padding:15px;margin-bottom:20px;border-radius:6px;}
 </style>
 </head>
 
 <body>
 
-<!-- LOGIN PAGE -->
 <div id="loginPage">
 <div id="loginBox">
 <h2>Login</h2>
@@ -192,7 +65,6 @@ border-radius:4px;
 </div>
 </div>
 
-<!-- PAYROLL DASHBOARD -->
 <div id="dashboard" style="display:none;">
 
 <header>
@@ -202,14 +74,9 @@ border-radius:4px;
 
 <div class="container">
 
-<!-- EMPLOYEE PANEL -->
 <div id="empPanel">
 <h3>Generate Payslip</h3>
-
-<select id="empMonth">
-<option value="">Select Month</option>
-</select>
-
+<select id="empMonth"><option value="">Select Month</option></select>
 <button onclick="generateEmpPayslip()">Generate Payslip</button>
 </div>
 
@@ -261,16 +128,16 @@ border-radius:4px;
 
 let employees = JSON.parse(localStorage.getItem("payroll_data") || "[]");
 let empDevice = JSON.parse(localStorage.getItem("emp_device") || "{}");
-let currentEmp=""; // <-- added
+let allSelected = false;
+let currentEmp="";
 
 function rupee(v){ return "₹"+Math.round(v).toLocaleString("en-IN"); }
 
 function updateAdminID(){
 const role=document.getElementById("role").value;
 const empInput=document.getElementById("empCode");
-
-if(role=="admin"){ empInput.value="Admin"; empInput.disabled=true;}
-else{ empInput.value=""; empInput.disabled=false;}
+if(role=="admin"){ empInput.value="Admin"; empInput.disabled=true; }
+else{ empInput.value=""; empInput.disabled=false; }
 }
 
 function login(){
@@ -292,17 +159,9 @@ document.getElementById("loginMsg").innerText="Password must be same as Emp Code
 return;
 }
 
-if(empDevice[code] && empDevice[code]!=ua){
-document.getElementById("loginMsg").innerText="This emp code bound to another device.";
-return;
-}
+currentEmp=code;
 
-empDevice[code]=ua;
-localStorage.setItem("emp_device",JSON.stringify(empDevice));
-
-currentEmp=code; // store employee
-
-showDashboard(role);
+showDashboard(role, code);
 
 }else{
 
@@ -311,9 +170,8 @@ document.getElementById("loginMsg").innerText="Invalid Admin Password";
 return;
 }
 
-showDashboard(role);
+showDashboard(role,"admin");
 }
-
 }
 
 function showDashboard(role){
@@ -340,12 +198,13 @@ render(employees);
 }
 
 }
-
 }
 
 function loadEmpMonths(){
 
-const empData=employees.filter(e=>e.code==currentEmp);
+employees = JSON.parse(localStorage.getItem("payroll_data") || "[]");
+
+const empData=employees.filter(e=>String(e.code).trim()==String(currentEmp).trim());
 
 const monthSelect=document.getElementById("empMonth");
 monthSelect.innerHTML='<option value="">Select Month</option>';
@@ -357,37 +216,30 @@ if(m){
 monthSelect.innerHTML+=`<option value="${m}">${m}</option>`;
 }
 });
-
 }
 
 function generateEmpPayslip(){
 
 const m=document.getElementById("empMonth").value;
+if(!m){alert("Select Month");return;}
 
-if(!m){alert("Select month");return;}
-
-const emp=employees.find(e=>e.code==currentEmp && e.month==m);
+const emp=employees.find(e=>String(e.code).trim()==String(currentEmp).trim() && e.month==m);
 
 if(emp){showPS(emp);}
 else{alert("Payslip not found");}
-
 }
 
 function showPS(e){
-
 document.getElementById("modal").style.display="block";
-
 document.getElementById("psBody").innerHTML=`
 <div class="row"><b>Emp Code</b><span>${e.code}</span></div>
 <div class="row"><b>Name</b><span>${e.name}</span></div>
 <div class="row"><b>Month</b><span>${e.month}</span></div>
 <div class="row"><b>Net Pay</b><span>${rupee(e.net)}</span></div>
 `;
-
 }
 
 function closePS(){document.getElementById("modal").style.display="none";}
-
 function toggleTheme(){document.body.classList.toggle("dark");}
 
 </script>
