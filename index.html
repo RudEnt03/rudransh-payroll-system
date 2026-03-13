@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html>
 <head>
 
@@ -95,46 +94,30 @@ overflow:auto;
 
 .payslip{
 background:white;
-width:700px;
+width:900px;
 margin:40px auto;
 padding:25px;
+position:relative;
 }
 
-.psHeader{
-text-align:center;
-border-bottom:3px solid #4e73df;
-padding-bottom:10px;
-margin-bottom:15px;
+.psWatermark{
+position:absolute;
+top:40%;
+left:50%;
+transform:translate(-50%,-50%);
+opacity:0.05;
+z-index:0;
 }
 
-.company{
-font-size:22px;
-font-weight:bold;
-}
-
-.row{
-display:flex;
-justify-content:space-between;
-margin:6px 0;
-}
-
-.section{
-margin-top:10px;
-border-bottom:2px solid #ddd;
-font-weight:bold;
-}
-
-.net{
-font-size:18px;
-font-weight:bold;
-color:#4e73df;
+.psContent{
+position:relative;
+z-index:1;
 }
 
 .footer{
 text-align:center;
 margin-top:15px;
 font-size:12px;
-color:#666;
 }
 
 #loginPage{
@@ -178,7 +161,6 @@ padding:8px;
 </select>
 
 <input id="empCode" placeholder="Employee Code">
-
 <input id="password" type="password" placeholder="Password">
 
 <button onclick="login()">Login</button>
@@ -235,7 +217,6 @@ Total Net
 <thead>
 
 <tr>
-
 <th>Emp Code</th>
 <th>Name</th>
 <th>Project & Location</th>
@@ -243,7 +224,6 @@ Total Net
 <th>Gross</th>
 <th>Net</th>
 <th>Payslip</th>
-
 </tr>
 
 </thead>
@@ -260,18 +240,53 @@ Total Net
 
 <div class="payslip">
 
-<div class="psHeader">
-<div class="company">Rudransh Enterprises</div>
-Salary Payslip
+<div class="psWatermark">
+<img src="logo.png" width="350">
 </div>
+
+<div class="psContent">
+
+<table border="1">
+
+<tr>
+
+<td style="width:180px;text-align:center">
+<img src="logo.png" height="70">
+</td>
+
+<td style="text-align:center">
+
+<h2 style="margin:0;font-weight:bold;">Rudransh Enterprises</h2>
+
+<div style="font-size:13px">
+Office Address: Shop No- 4,5,6,7, Idgha Road, Bholanath Nagar Market, Delhi-110032
+</div>
+
+</td>
+
+</tr>
+
+<tr>
+<td colspan="2" style="text-align:center;font-size:18px">
+<span id="salaryMonth"></span>
+</td>
+</tr>
+
+</table>
 
 <div id="psBody"></div>
 
 <div class="footer">
-This is a computer generated payslip and does not require signature.
+
+Note: This is a Computer Generated Slip and does not require signature
+
 <br><br>
+
 <button onclick="window.print()">Print</button>
 <button onclick="closePS()">Close</button>
+
+</div>
+
 </div>
 
 </div>
@@ -322,7 +337,7 @@ rec[k.trim().toLowerCase()]=r[k];
 let m=rec["month"];
 
 if(typeof m==="number"){
-m=XLSX.SSF.format("mmm-yy",m);
+m=XLSX.SSF.format("mmmm-yyyy",m);
 }
 
 months.add(m);
@@ -432,32 +447,89 @@ function showPS(e){
 
 document.getElementById("modal").style.display="block";
 
+document.getElementById("salaryMonth").innerText="Salary Slip for "+e.month;
+
 document.getElementById("psBody").innerHTML=`
 
-<div class="row"><b>Emp Code</b><span>${e.code}</span></div>
-<div class="row"><b>Name</b><span>${e.name}</span></div>
-<div class="row"><b>Designation</b><span>${e.designation}</span></div>
-<div class="row"><b>UAN No</b><span>${e.uan}</span></div>
-<div class="row"><b>ESI No</b><span>${e.esi_no}</span></div>
-<div class="row"><b>Project & Location</b><span>${e.projectLocation}</span></div>
-<div class="row"><b>Month</b><span>${e.month}</span></div>
+<table border="1">
 
-<div class="section">Earnings</div>
+<tr>
+<td>Employee Name</td>
+<td>${e.name}</td>
+<td>Employee Code</td>
+<td>${e.code}</td>
+</tr>
 
-<div class="row"><span>Basic</span><span>${rupee(e.basic)}</span></div>
-<div class="row"><span>HRA</span><span>${rupee(e.hra)}</span></div>
-<div class="row"><span>Allowance</span><span>${rupee(e.allow)}</span></div>
-<div class="row"><span>Bonus</span><span>${rupee(e.bonus)}</span></div>
-<div class="row"><b>Gross</b><b>${rupee(e.gross)}</b></div>
+<tr>
+<td>Designation</td>
+<td>${e.designation}</td>
+<td>Project & Location</td>
+<td>${e.projectLocation}</td>
+</tr>
 
-<div class="section">Deductions</div>
+<tr>
+<td>UAN No</td>
+<td>${e.uan}</td>
+<td>ESI No</td>
+<td>${e.esi_no}</td>
+</tr>
 
-<div class="row"><span>PF</span><span>${rupee(e.pf)}</span></div>
-<div class="row"><span>ESI</span><span>${rupee(e.esi)}</span></div>
-<div class="row"><span>LWF</span><span>${rupee(e.lwf)}</span></div>
-<div class="row"><span>Advance</span><span>${rupee(e.advance)}</span></div>
+</table>
 
-<div class="row net"><span>Net Pay</span><span>${rupee(e.net)}</span></div>
+<br>
+
+<table border="1">
+
+<tr>
+<th>Earnings</th>
+<th>Amount</th>
+<th>Deductions</th>
+<th>Amount</th>
+</tr>
+
+<tr>
+<td>Basic</td>
+<td>${rupee(e.basic)}</td>
+<td>PF</td>
+<td>${rupee(e.pf)}</td>
+</tr>
+
+<tr>
+<td>HRA</td>
+<td>${rupee(e.hra)}</td>
+<td>ESI</td>
+<td>${rupee(e.esi)}</td>
+</tr>
+
+<tr>
+<td>Allowance</td>
+<td>${rupee(e.allow)}</td>
+<td>LWF</td>
+<td>${rupee(e.lwf)}</td>
+</tr>
+
+<tr>
+<td>Bonus</td>
+<td>${rupee(e.bonus)}</td>
+<td>Advance</td>
+<td>${rupee(e.advance)}</td>
+</tr>
+
+<tr>
+<td><b>Gross</b></td>
+<td><b>${rupee(e.gross)}</b></td>
+<td></td>
+<td></td>
+</tr>
+
+<tr>
+<td><b>Net Pay</b></td>
+<td><b>${rupee(e.net)}</b></td>
+<td></td>
+<td></td>
+</tr>
+
+</table>
 
 `;
 
