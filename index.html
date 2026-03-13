@@ -65,7 +65,7 @@ padding:10px;
 }
 
 td{
-padding:8px;
+padding:10px;
 border-bottom:1px solid #eee;
 text-align:center;
 }
@@ -100,39 +100,28 @@ padding:25px;
 position:relative;
 }
 
-.psWatermark{
-position:absolute;
-top:40%;
-left:50%;
-transform:translate(-50%,-50%);
-opacity:0.05;
+.psHeader{
+border:2px solid #000;
 }
 
-.psContent{
-position:relative;
+.psTable{
+width:100%;
+border-collapse:collapse;
 }
 
-.psTable td{
+.psTable td,.psTable th{
 border:2px solid #000;
 padding:8px;
 }
 
-.left{
-text-align:left;
-}
+.left{text-align:left;}
+.right{text-align:right;}
+.center{text-align:center;}
 
-.right{
-text-align:right;
-}
-
-.center{
-text-align:center;
-}
-
-.netpay{
-text-align:center;
+.net{
 font-size:20px;
 font-weight:bold;
+text-align:center;
 margin-top:10px;
 }
 
@@ -183,7 +172,6 @@ padding:8px;
 </select>
 
 <input id="empCode" placeholder="Employee Code">
-
 <input id="password" type="password" placeholder="Password">
 
 <button onclick="login()">Login</button>
@@ -240,7 +228,6 @@ Total Net
 <thead>
 
 <tr>
-
 <th>Emp Code</th>
 <th>Name</th>
 <th>Project & Location</th>
@@ -248,7 +235,6 @@ Total Net
 <th>Gross</th>
 <th>Net</th>
 <th>Payslip</th>
-
 </tr>
 
 </thead>
@@ -265,51 +251,13 @@ Total Net
 
 <div class="payslip">
 
-<div class="psWatermark">
-<img src="logo.png" width="350">
-</div>
-
-<div class="psContent">
-
-<table class="psTable">
-
-<tr>
-
-<td style="width:180px" class="center">
-<img src="logo.png" height="70">
-</td>
-
-<td class="center">
-
-<h2 style="margin:0;font-weight:bold;">Rudransh Enterprises</h2>
-
-<div style="font-size:13px">
-Office Address: Shop No- 4,5,6,7, Idgha Road, Bholanath Nagar Market, Delhi-110032
-</div>
-
-</td>
-
-</tr>
-
-<tr>
-<td colspan="2" class="center" id="salaryMonth"></td>
-</tr>
-
-</table>
-
 <div id="psBody"></div>
 
 <div class="footer">
-
 Note: This is a Computer Generated Slip and does not require signature
-
 <br><br>
-
 <button onclick="window.print()">Print</button>
 <button onclick="closePS()">Close</button>
-
-</div>
-
 </div>
 
 </div>
@@ -331,8 +279,9 @@ return "₹"+Math.round(Number(v||0)).toLocaleString("en-IN");
 
 async function loadExcel(){
 
-const api=`https://api.github.com/repos/${USER}/${REPO}/contents`;
+employees=[];
 
+const api=`https://api.github.com/repos/${USER}/${REPO}/contents`;
 const res=await fetch(api);
 const files=await res.json();
 
@@ -360,7 +309,7 @@ rec[k.trim().toLowerCase()]=r[k];
 let m=rec["month"];
 
 if(typeof m==="number"){
-m=XLSX.SSF.format("mmmm-yyyy",m);
+m=XLSX.SSF.format("mmm-yy",m);
 }
 
 months.add(m);
@@ -401,13 +350,105 @@ render(employees);
 
 }
 
+function populateFilters(){
+
+const mSel=document.getElementById("monthFilter");
+const pSel=document.getElementById("projectFilter");
+
+months.forEach(m=>{
+mSel.innerHTML+=`<option value="${m}">${m}</option>`;
+});
+
+projects.forEach(p=>{
+pSel.innerHTML+=`<option value="${p}">${p}</option>`;
+});
+
+}
+
+function applyFilter(){
+
+const m=document.getElementById("monthFilter").value;
+const p=document.getElementById("projectFilter").value;
+
+let data=employees.filter(e=>
+(m=="all"||e.month==m) &&
+(p=="all"||e.projectLocation==p)
+);
+
+render(data);
+
+}
+
+function render(data){
+
+let tb=document.getElementById("tbody");
+tb.innerHTML="";
+
+let g=0,n=0;
+
+data.forEach(e=>{
+
+g+=Number(e.gross);
+n+=Number(e.net);
+
+tb.innerHTML+=`
+
+<tr>
+
+<td>${e.code}</td>
+<td>${e.name}</td>
+<td>${e.projectLocation}</td>
+<td>${e.month}</td>
+<td>${rupee(e.gross)}</td>
+<td>${rupee(e.net)}</td>
+<td><button class="view" onclick='showPS(${JSON.stringify(e)})'>View</button></td>
+
+</tr>
+
+`;
+
+});
+
+document.getElementById("cEmp").innerText=data.length;
+document.getElementById("cGross").innerText=rupee(g);
+document.getElementById("cNet").innerText=rupee(n);
+
+}
+
 function showPS(e){
 
 document.getElementById("modal").style.display="block";
 
-document.getElementById("salaryMonth").innerText="Salary Slip for "+e.month;
-
 document.getElementById("psBody").innerHTML=`
+
+<table class="psTable">
+
+<tr>
+
+<td class="center" style="width:150px">
+<img src="logo.png" height="70">
+</td>
+
+<td class="center">
+
+<b style="font-size:20px">Rudransh Enterprises</b><br>
+
+Office Address: Shop No- 4,5,6,7, Idgha Road,
+Bholanath Nagar Market, Delhi-110032
+
+</td>
+
+</tr>
+
+<tr>
+<td colspan="2" class="center">
+<b>Salary Slip for ${e.month}</b>
+</td>
+</tr>
+
+</table>
+
+<br>
 
 <table class="psTable">
 
@@ -489,7 +530,7 @@ document.getElementById("psBody").innerHTML=`
 
 </table>
 
-<div class="netpay">NET PAY ${rupee(e.net)}</div>
+<div class="net">NET PAY ${rupee(e.net)}</div>
 
 `;
 
@@ -497,6 +538,77 @@ document.getElementById("psBody").innerHTML=`
 
 function closePS(){
 document.getElementById("modal").style.display="none";
+}
+
+async function login(){
+
+const role=document.getElementById("role").value;
+const code=document.getElementById("empCode").value.trim();
+const pwd=document.getElementById("password").value;
+
+await loadExcel();
+
+if(role==="admin"){
+
+if(pwd!=="Rud@03"){
+document.getElementById("msg").innerText="Invalid admin password";
+return;
+}
+
+document.getElementById("loginPage").style.display="none";
+document.getElementById("dashboard").style.display="block";
+
+}
+
+else{
+
+const ua=navigator.userAgent;
+
+if(!/Android|iPhone|Mobile/i.test(ua)){
+document.getElementById("msg").innerText="Employee login mobile only";
+return;
+}
+
+if(code!==pwd){
+document.getElementById("msg").innerText="Password must equal Emp Code";
+return;
+}
+
+const empMonths=[...new Set(
+employees.filter(e=>e.code===code).map(e=>e.month)
+)];
+
+let html="<h3>Select Month</h3><select id='empMonth'>";
+
+empMonths.forEach(m=>{
+html+=`<option value="${m}">${m}</option>`;
+});
+
+html+="</select><br><br><button onclick='showEmpPayslip(\""+code+"\")'>View Payslip</button>";
+
+document.getElementById("psBody").innerHTML=html;
+
+document.getElementById("modal").style.display="block";
+
+document.getElementById("loginPage").style.display="none";
+
+}
+
+}
+
+function showEmpPayslip(code){
+
+const m=document.getElementById("empMonth").value;
+
+const emp=employees.find(e=>e.code===code && e.month===m);
+
+if(!emp){
+alert("Payslip not found");
+return;
+}
+
+showPS(emp);
+
 }
 
 </script>
