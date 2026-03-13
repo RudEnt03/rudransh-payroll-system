@@ -3,10 +3,6 @@
 <head>
 
 <meta charset="UTF-8">
-
-<!-- FIX 1 : Mobile viewport -->
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <title>Rudransh Payroll System</title>
 
 <script src="xlsx.full.min.js"></script>
@@ -582,13 +578,13 @@ const empMonths=[...new Set(
 employees.filter(e=>e.code===code).map(e=>e.month)
 )];
 
-let html="<h3>Select Month</h3><select id='empMonth' style='width:100%;padding:10px;'>";  <!-- FIX 2 -->
+let html="<h3>Select Month</h3><select id='empMonth'>";
 
 empMonths.forEach(m=>{
 html+=`<option value="${m}">${m}</option>`;
 });
 
-html+="</select><br><br><button style='width:100%;padding:10px;' onclick='showEmpPayslip(\""+code+"\")'>View Payslip</button>";  <!-- FIX 2 -->
+html+="</select><br><br><button onclick='showEmpPayslip(\""+code+"\")'>View Payslip</button>";
 
 document.getElementById("psBody").innerHTML=html;
 
