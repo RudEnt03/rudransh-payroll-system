@@ -44,7 +44,6 @@ font-size:16px;
 display:flex;
 gap:15px;
 margin-bottom:20px;
-flex-wrap:wrap;
 }
 
 .card{
@@ -75,13 +74,12 @@ text-align:center;
 }
 
 button{
-padding:10px 14px;
+padding:8px 12px;
 border:none;
 border-radius:4px;
 cursor:pointer;
 color:white;
 background:#36b9cc;
-font-size:15px;
 }
 
 .view{background:#1cc88a;}
@@ -99,15 +97,10 @@ overflow:auto;
 
 .payslip{
 background:white;
-width:95%;
-max-width:900px;
-margin:30px auto;
-padding:20px;
+width:900px;
+margin:40px auto;
+padding:25px;
 position:relative;
-}
-
-.psHeader{
-border:2px solid #000;
 }
 
 .psTable{
@@ -451,118 +444,21 @@ document.getElementById("psBody").innerHTML=`
 
 document.getElementById("psBody").innerHTML=`
 
-<table class="psTable">
+<h3 style="text-align:center">Salary Slip for ${e.month}</h3>
 
-<tr>
-
-<td class="center" style="width:150px">
-<img src="logo.png" height="70">
-</td>
-
-<td class="center">
-
-<b style="font-size:20px">Rudransh Enterprises</b><br>
-
-Office Address: Shop No- 4,5,6,7, Idgha Road,
-Bholanath Nagar Market, Delhi-110032
-
-</td>
-
-</tr>
-
-<tr>
-<td colspan="2" class="center">
-<b>Salary Slip for ${e.month}</b>
-</td>
-</tr>
-
-</table>
-
-<br>
-
-<table class="psTable">
-
-<tr>
-<td class="left">Employee Name</td>
-<td class="left">${e.name}</td>
-<td class="left">Employee Code</td>
-<td class="left">${e.code}</td>
-</tr>
-
-<tr>
-<td class="left">Designation</td>
-<td class="left">${e.designation}</td>
-<td class="left">Project & Location</td>
-<td class="left">${e.projectLocation}</td>
-</tr>
-
-<tr>
-<td class="left">UAN No</td>
-<td class="left">${e.uan}</td>
-<td class="left">ESI No</td>
-<td class="left">${e.esi_no}</td>
-</tr>
-
-</table>
-
-<br>
-
-<table class="psTable">
-
-<tr>
-<th class="left">Earnings</th>
-<th class="right">Amount</th>
-<th class="left">Deductions</th>
-<th class="right">Amount</th>
-</tr>
-
-<tr>
-<td class="left">Basic</td>
-<td class="right">${rupee(e.basic)}</td>
-<td class="left">PF</td>
-<td class="right">${rupee(e.pf)}</td>
-</tr>
-
-<tr>
-<td class="left">HRA</td>
-<td class="right">${rupee(e.hra)}</td>
-<td class="left">ESI</td>
-<td class="right">${rupee(e.esi)}</td>
-</tr>
-
-<tr>
-<td class="left">Allowance</td>
-<td class="right">${rupee(e.allow)}</td>
-<td class="left">LWF</td>
-<td class="right">${rupee(e.lwf)}</td>
-</tr>
-
-<tr>
-<td class="left">Bonus</td>
-<td class="right">${rupee(e.bonus)}</td>
-<td class="left">Advance</td>
-<td class="right">${rupee(e.advance)}</td>
-</tr>
-
-<tr>
-<td class="left">Attendance Incentive</td>
-<td class="right">${rupee(e.attendance)}</td>
-<td></td>
-<td></td>
-</tr>
-
-<tr>
-<td class="left"><b>Gross</b></td>
-<td class="right"><b>${rupee(e.gross)}</b></td>
-<td></td>
-<td></td>
-</tr>
-
-</table>
-
-<div class="net">NET PAY ${rupee(e.net)}</div>
+<button onclick="showPayslip('${e.code}','${e.month}')">Open Payslip</button>
 
 `;
+
+}
+
+function showPayslip(code,month){
+
+const emp=employees.find(e=>e.code===code && e.month===month);
+
+document.getElementById("psBody").innerHTML="Generating Payslip...";
+
+setTimeout(()=>{showPS(emp)},100);
 
 }
 
