@@ -65,7 +65,7 @@ padding:10px;
 }
 
 td{
-padding:10px;
+padding:8px;
 border-bottom:1px solid #eee;
 text-align:center;
 }
@@ -106,12 +106,34 @@ top:40%;
 left:50%;
 transform:translate(-50%,-50%);
 opacity:0.05;
-z-index:0;
 }
 
 .psContent{
 position:relative;
-z-index:1;
+}
+
+.psTable td{
+border:2px solid #000;
+padding:8px;
+}
+
+.left{
+text-align:left;
+}
+
+.right{
+text-align:right;
+}
+
+.center{
+text-align:center;
+}
+
+.netpay{
+text-align:center;
+font-size:20px;
+font-weight:bold;
+margin-top:10px;
 }
 
 .footer{
@@ -161,6 +183,7 @@ padding:8px;
 </select>
 
 <input id="empCode" placeholder="Employee Code">
+
 <input id="password" type="password" placeholder="Password">
 
 <button onclick="login()">Login</button>
@@ -217,6 +240,7 @@ Total Net
 <thead>
 
 <tr>
+
 <th>Emp Code</th>
 <th>Name</th>
 <th>Project & Location</th>
@@ -224,6 +248,7 @@ Total Net
 <th>Gross</th>
 <th>Net</th>
 <th>Payslip</th>
+
 </tr>
 
 </thead>
@@ -246,15 +271,15 @@ Total Net
 
 <div class="psContent">
 
-<table border="1">
+<table class="psTable">
 
 <tr>
 
-<td style="width:180px;text-align:center">
+<td style="width:180px" class="center">
 <img src="logo.png" height="70">
 </td>
 
-<td style="text-align:center">
+<td class="center">
 
 <h2 style="margin:0;font-weight:bold;">Rudransh Enterprises</h2>
 
@@ -267,9 +292,7 @@ Office Address: Shop No- 4,5,6,7, Idgha Road, Bholanath Nagar Market, Delhi-1100
 </tr>
 
 <tr>
-<td colspan="2" style="text-align:center;font-size:18px">
-<span id="salaryMonth"></span>
-</td>
+<td colspan="2" class="center" id="salaryMonth"></td>
 </tr>
 
 </table>
@@ -357,6 +380,7 @@ basic:rec["basic"],
 hra:rec["hra"],
 allow:rec["allowance"],
 bonus:rec["bonus"],
+attendance:rec["attendance incentive"],
 gross:rec["gross"],
 pf:rec["pf@12%"],
 esi:rec["esi@.75%"],
@@ -377,72 +401,6 @@ render(employees);
 
 }
 
-function populateFilters(){
-
-const mSel=document.getElementById("monthFilter");
-const pSel=document.getElementById("projectFilter");
-
-months.forEach(m=>{
-mSel.innerHTML+=`<option value="${m}">${m}</option>`;
-});
-
-projects.forEach(p=>{
-pSel.innerHTML+=`<option value="${p}">${p}</option>`;
-});
-
-}
-
-function applyFilter(){
-
-const m=document.getElementById("monthFilter").value;
-const p=document.getElementById("projectFilter").value;
-
-let data=employees.filter(e=>
-(m=="all"||e.month==m) &&
-(p=="all"||e.projectLocation==p)
-);
-
-render(data);
-
-}
-
-function render(data){
-
-let tb=document.getElementById("tbody");
-
-tb.innerHTML="";
-
-let g=0,n=0;
-
-data.forEach(e=>{
-
-g+=Number(e.gross);
-n+=Number(e.net);
-
-tb.innerHTML+=`
-
-<tr>
-
-<td>${e.code}</td>
-<td>${e.name}</td>
-<td>${e.projectLocation}</td>
-<td>${e.month}</td>
-<td>${rupee(e.gross)}</td>
-<td>${rupee(e.net)}</td>
-<td><button class="view" onclick='showPS(${JSON.stringify(e)})'>View</button></td>
-
-</tr>
-
-`;
-
-});
-
-document.getElementById("cEmp").innerText=data.length;
-document.getElementById("cGross").innerText=rupee(g);
-document.getElementById("cNet").innerText=rupee(n);
-
-}
-
 function showPS(e){
 
 document.getElementById("modal").style.display="block";
@@ -451,85 +409,87 @@ document.getElementById("salaryMonth").innerText="Salary Slip for "+e.month;
 
 document.getElementById("psBody").innerHTML=`
 
-<table border="1">
+<table class="psTable">
 
 <tr>
-<td>Employee Name</td>
-<td>${e.name}</td>
-<td>Employee Code</td>
-<td>${e.code}</td>
+<td class="left">Employee Name</td>
+<td class="left">${e.name}</td>
+<td class="left">Employee Code</td>
+<td class="left">${e.code}</td>
 </tr>
 
 <tr>
-<td>Designation</td>
-<td>${e.designation}</td>
-<td>Project & Location</td>
-<td>${e.projectLocation}</td>
+<td class="left">Designation</td>
+<td class="left">${e.designation}</td>
+<td class="left">Project & Location</td>
+<td class="left">${e.projectLocation}</td>
 </tr>
 
 <tr>
-<td>UAN No</td>
-<td>${e.uan}</td>
-<td>ESI No</td>
-<td>${e.esi_no}</td>
+<td class="left">UAN No</td>
+<td class="left">${e.uan}</td>
+<td class="left">ESI No</td>
+<td class="left">${e.esi_no}</td>
 </tr>
 
 </table>
 
 <br>
 
-<table border="1">
+<table class="psTable">
 
 <tr>
-<th>Earnings</th>
-<th>Amount</th>
-<th>Deductions</th>
-<th>Amount</th>
+<th class="left">Earnings</th>
+<th class="right">Amount</th>
+<th class="left">Deductions</th>
+<th class="right">Amount</th>
 </tr>
 
 <tr>
-<td>Basic</td>
-<td>${rupee(e.basic)}</td>
-<td>PF</td>
-<td>${rupee(e.pf)}</td>
+<td class="left">Basic</td>
+<td class="right">${rupee(e.basic)}</td>
+<td class="left">PF</td>
+<td class="right">${rupee(e.pf)}</td>
 </tr>
 
 <tr>
-<td>HRA</td>
-<td>${rupee(e.hra)}</td>
-<td>ESI</td>
-<td>${rupee(e.esi)}</td>
+<td class="left">HRA</td>
+<td class="right">${rupee(e.hra)}</td>
+<td class="left">ESI</td>
+<td class="right">${rupee(e.esi)}</td>
 </tr>
 
 <tr>
-<td>Allowance</td>
-<td>${rupee(e.allow)}</td>
-<td>LWF</td>
-<td>${rupee(e.lwf)}</td>
+<td class="left">Allowance</td>
+<td class="right">${rupee(e.allow)}</td>
+<td class="left">LWF</td>
+<td class="right">${rupee(e.lwf)}</td>
 </tr>
 
 <tr>
-<td>Bonus</td>
-<td>${rupee(e.bonus)}</td>
-<td>Advance</td>
-<td>${rupee(e.advance)}</td>
+<td class="left">Bonus</td>
+<td class="right">${rupee(e.bonus)}</td>
+<td class="left">Advance</td>
+<td class="right">${rupee(e.advance)}</td>
 </tr>
 
 <tr>
-<td><b>Gross</b></td>
-<td><b>${rupee(e.gross)}</b></td>
+<td class="left">Attendance Incentive</td>
+<td class="right">${rupee(e.attendance)}</td>
 <td></td>
 <td></td>
 </tr>
 
 <tr>
-<td><b>Net Pay</b></td>
-<td><b>${rupee(e.net)}</b></td>
+<td class="left"><b>Gross</b></td>
+<td class="right"><b>${rupee(e.gross)}</b></td>
 <td></td>
 <td></td>
 </tr>
 
 </table>
+
+<div class="netpay">NET PAY ${rupee(e.net)}</div>
 
 `;
 
@@ -537,77 +497,6 @@ document.getElementById("psBody").innerHTML=`
 
 function closePS(){
 document.getElementById("modal").style.display="none";
-}
-
-async function login(){
-
-const role=document.getElementById("role").value;
-const code=document.getElementById("empCode").value.trim();
-const pwd=document.getElementById("password").value;
-
-await loadExcel();
-
-if(role==="admin"){
-
-if(pwd!=="Rud@03"){
-document.getElementById("msg").innerText="Invalid admin password";
-return;
-}
-
-document.getElementById("loginPage").style.display="none";
-document.getElementById("dashboard").style.display="block";
-
-}
-
-else{
-
-const ua=navigator.userAgent;
-
-if(!/Android|iPhone|Mobile/i.test(ua)){
-document.getElementById("msg").innerText="Employee login mobile only";
-return;
-}
-
-if(code!==pwd){
-document.getElementById("msg").innerText="Password must equal Emp Code";
-return;
-}
-
-const empMonths=[...new Set(
-employees.filter(e=>e.code===code).map(e=>e.month)
-)];
-
-let html="<h3>Select Month</h3><select id='empMonth'>";
-
-empMonths.forEach(m=>{
-html+=`<option value="${m}">${m}</option>`;
-});
-
-html+="</select><br><br><button onclick='showEmpPayslip(\""+code+"\")'>View Payslip</button>";
-
-document.getElementById("psBody").innerHTML=html;
-
-document.getElementById("modal").style.display="block";
-
-document.getElementById("loginPage").style.display="none";
-
-}
-
-}
-
-function showEmpPayslip(code){
-
-const m=document.getElementById("empMonth").value;
-
-const emp=employees.find(e=>e.code===code && e.month===m);
-
-if(!emp){
-alert("Payslip not found");
-return;
-}
-
-showPS(emp);
-
 }
 
 </script>
