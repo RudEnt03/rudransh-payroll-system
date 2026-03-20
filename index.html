@@ -3,6 +3,8 @@
 <head>
 
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <title>Rudransh Payroll System</title>
 
 <script src="xlsx.full.min.js"></script>
@@ -140,7 +142,7 @@ margin-top:15px;
 font-size:12px;
 }
 
-/* LOGIN PAGE */
+/* LOGIN FIXED */
 #loginPage{
 position:fixed;
 width:100%;
@@ -149,23 +151,24 @@ background:#eef2f7;
 display:flex;
 justify-content:center;
 align-items:center;
-flex-direction:column;
+padding:15px;
+box-sizing:border-box;
 }
 
 #loginBox{
 background:white;
 padding:20px;
-width:92%;
+width:100%;
 max-width:420px;
-box-shadow:0 3px 10px rgba(0,0,0,0.2);
-border-radius:10px;
+border-radius:12px;
+box-shadow:0 3px 12px rgba(0,0,0,0.2);
 }
 
 #loginBox input,
 #loginBox select,
 #loginBox button{
 width:100%;
-padding:12px;
+padding:14px;
 font-size:16px;
 margin-bottom:12px;
 box-sizing:border-box;
@@ -280,7 +283,7 @@ Total Net
 <!-- MODAL -->
 <div id="modal">
 
-<div class="payslip">
+<div class="payslip" id="payslipBox">
 
 <div id="psBody"></div>
 
@@ -458,6 +461,9 @@ document.getElementById("cNet").innerText=rupee(n);
 // PAYSLIP
 function showPS(e){
 
+// restore normal width
+document.getElementById("payslipBox").style.maxWidth="95%";
+
 document.getElementById("modal").style.display="block";
 
 document.getElementById("psBody").innerHTML=`
@@ -618,29 +624,17 @@ document.getElementById("msg").innerText="Password must equal Emp Code";
 return;
 }
 
+// MOBILE WIDTH FIX
+document.getElementById("payslipBox").style.maxWidth="420px";
+
 const empMonths=[...new Set(
 employees.filter(e=>e.code===code).map(e=>e.month)
 )];
 
 let html = `
-<div style="
-width:92%;
-max-width:420px;
-margin:auto;
-background:white;
-padding:20px;
-border-radius:10px;
-box-shadow:0 3px 10px rgba(0,0,0,0.2);
-">
+<h3 style="text-align:center;">Select Month</h3>
 
-<h3 style="text-align:center;margin-bottom:15px;">Select Month</h3>
-
-<select id="empMonth" style="
-width:100%;
-padding:12px;
-font-size:16px;
-margin-bottom:15px;
-">
+<select id="empMonth" style="width:100%;padding:14px;margin-bottom:15px;">
 `;
 
 empMonths.forEach(m=>{
@@ -651,20 +645,16 @@ html += `</select>
 
 <button onclick='showEmpPayslip("${code}")' style="
 width:100%;
-padding:12px;
-font-size:16px;
+padding:14px;
 background:#1cc88a;
 ">
 View Payslip
 </button>
-
-</div>
 `;
 
 document.getElementById("psBody").innerHTML=html;
 
 document.getElementById("modal").style.display="block";
-
 document.getElementById("loginPage").style.display="none";
 
 }
