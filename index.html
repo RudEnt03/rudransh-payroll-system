@@ -13,7 +13,91 @@ body{
   background:#eef2f7;
 }
 
-/* Dashboard, tables, header remain unchanged */
+/* ===== Login Page for EMP ===== */
+#loginPage{
+  position:fixed;
+  width:100%;
+  height:100%;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  padding:10px;
+  box-sizing:border-box;
+  background:#eef2f7;
+}
+
+#loginBox{
+  background:white;
+  padding:30px;
+  width:90%;
+  max-width:400px;
+  box-shadow:0 3px 10px rgba(0,0,0,0.2);
+  border-radius:12px;
+}
+
+#loginBox h3{
+  text-align:center;
+  margin-bottom:20px;
+}
+
+#loginBox input,#loginBox select, #loginBox button{
+  width:100%;
+  margin-bottom:15px;
+  padding:12px;
+  font-size:16px;
+  box-sizing:border-box;
+}
+
+#loginBox button{
+  background:#36b9cc;
+  color:white;
+  border:none;
+  cursor:pointer;
+  border-radius:6px;
+}
+
+#copyright{
+  text-align:center;
+  font-size:12px;
+  color:#555;
+  margin-top:5px;
+}
+
+/* ===== Modal / Employee Month Selection ===== */
+#modal{
+  display:none;
+  position:fixed;
+  top:0;
+  left:0;
+  width:100%;
+  height:100%;
+  background:rgba(0,0,0,0.6);
+  overflow:auto;
+}
+
+.payslip{
+  background:white;
+  width:95%;
+  max-width:500px;  /* mobile-friendly */
+  margin:40px auto;
+  padding:20px;
+  border-radius:12px;
+  box-sizing:border-box;
+}
+
+#psBody select, #psBody button{
+  width:100%;
+  padding:12px;
+  margin-bottom:12px;
+  font-size:16px;
+}
+
+#psBody h3{
+  text-align:center;
+  margin-bottom:15px;
+}
+
+/* Dashboard, tables, header unchanged */
 header{
   background:linear-gradient(90deg,#4e73df,#36b9cc);
   color:white;
@@ -33,9 +117,6 @@ th{background:#4e73df;color:white;padding:10px;}
 td{padding:10px;border-bottom:1px solid #eee;text-align:center;}
 button{padding:6px 12px;border:none;border-radius:4px;cursor:pointer;color:white;background:#36b9cc;}
 .view{background:#1cc88a;}
-#modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);overflow:auto;}
-.payslip{background:white;width:900px;margin:40px auto;padding:25px;position:relative;}
-.psHeader{border:2px solid #000;}
 .psTable{width:100%;border-collapse:collapse;}
 .psTable td,.psTable th{border:2px solid #000;padding:8px;}
 .left{text-align:left;}
@@ -43,62 +124,12 @@ button{padding:6px 12px;border:none;border-radius:4px;cursor:pointer;color:white
 .center{text-align:center;}
 .net{font-size:20px;font-weight:bold;text-align:center;margin-top:10px;}
 .footer{text-align:center;margin-top:15px;font-size:12px;}
-
-/* ==== EMPLOYEE LOGIN PAGE ==== */
-#loginPage{
-  position:fixed;
-  width:100%;
-  height:100%;
-  background:#eef2f7;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  padding:10px;
-  box-sizing:border-box;
-}
-
-#loginBox{
-  background:white;
-  padding:40px;
-  width:90%;
-  max-width:400px;
-  box-shadow:0 3px 10px rgba(0,0,0,0.2);
-  border-radius:12px;
-}
-
-#loginBox input,#loginBox select{
-  width:100%;
-  margin-bottom:15px;
-  padding:12px;
-  font-size:16px;
-}
-
-#copyright{
-  text-align:center;
-  font-size:11px;
-  color:#555;
-  margin-top:5px;
-}
-
-/* ==== EMPLOYEE MONTH SELECTION PAGE ==== */
-#psBody select, #psBody button{
-  width:100%;
-  padding:10px;
-  margin-bottom:10px;
-  font-size:16px;
-  box-sizing:border-box;
-}
-
-/* Mobile-specific adjustments */
-@media(max-width:480px){
-  #loginBox{width:95%;padding:30px;}
-  #psBody select,#psBody button{font-size:14px;padding:10px;}
-}
 </style>
 </head>
+
 <body>
 
-<!-- LOGIN PAGE -->
+<!-- EMP LOGIN PAGE -->
 <div id="loginPage">
   <div id="loginBox">
     <h3>Login</h3>
@@ -110,7 +141,7 @@ button{padding:6px 12px;border:none;border-radius:4px;cursor:pointer;color:white
     <input id="password" type="password" placeholder="Password">
     <button onclick="login()">Login</button>
     <div id="msg" style="color:red"></div>
-    <div id="copyright">© 2026 Rudransh Enterprises. All rights reserved.</div>
+    <div id="copyright">© 2026 Rudransh Enterprises</div>
   </div>
 </div>
 
@@ -130,10 +161,7 @@ button{padding:6px 12px;border:none;border-radius:4px;cursor:pointer;color:white
     </div>
     <table>
       <thead>
-        <tr>
-          <th>Emp Code</th><th>Name</th><th>Project & Location</th>
-          <th>Month</th><th>Gross</th><th>Net</th><th>Payslip</th>
-        </tr>
+        <tr><th>Emp Code</th><th>Name</th><th>Project & Location</th><th>Month</th><th>Gross</th><th>Net</th><th>Payslip</th></tr>
       </thead>
       <tbody id="tbody"></tbody>
     </table>
@@ -156,7 +184,7 @@ button{padding:6px 12px;border:none;border-radius:4px;cursor:pointer;color:white
 <script>
 const USER="RudEnt03";
 const REPO="rudransh-payroll-system";
-let employees=[]; let months=new Set(); let projects=new Set();
+let employees=[], months=new Set(), projects=new Set();
 function rupee(v){ return "₹"+Math.round(Number(v||0)).toLocaleString("en-IN"); }
 
 async function loadExcel(){
@@ -275,11 +303,11 @@ async function login(){
     if(!/Android|iPhone|Mobile/i.test(ua)){ document.getElementById("msg").innerText="Employee login mobile only"; return; }
     if(code!==pwd){ document.getElementById("msg").innerText="Password must equal Emp Code"; return; }
 
-    // Employee month selection page
+    // Employee month selection page (modal)
     const empMonths=[...new Set(employees.filter(e=>e.code===code).map(e=>e.month))];
     let html="<h3>Select Month</h3><select id='empMonth'>";
-    empMonths.forEach(m=>{ html+=`<option value="${m}">${m}</option>`; });
-    html+="</select><br><br><button onclick='showEmpPayslip(\""+code+"\")'>View Payslip</button>";
+    empMonths.forEach(m=>{ html+=`<option value='${m}'>${m}</option>`; });
+    html+="</select><button onclick='showEmpPayslip(\""+code+"\")'>View Payslip</button>";
 
     document.getElementById("psBody").innerHTML=html;
     document.getElementById("modal").style.display="block";
@@ -294,5 +322,6 @@ function showEmpPayslip(code){
   showPS(emp);
 }
 </script>
+
 </body>
 </html>
