@@ -139,19 +139,24 @@ background:#eef2f7;
 display:flex;
 justify-content:center;
 align-items:center;
+padding:10px;
+box-sizing:border-box;
 }
 
 #loginBox{
 background:white;
 padding:30px;
-width:300px;
+width:350px;
+max-width:100%;
 box-shadow:0 3px 10px rgba(0,0,0,0.2);
+border-radius:10px;
 }
 
 #loginBox input,#loginBox select{
 width:100%;
 margin-bottom:10px;
-padding:8px;
+padding:10px;
+font-size:16px;
 }
 
 #copyright{
@@ -161,10 +166,23 @@ color:#555;
 margin-top:5px;
 }
 
+/* Employee Month Selection Page Styling */
+#psBody select, #psBody button{
+width:100%;
+padding:12px;
+margin-bottom:10px;
+font-size:16px;
+}
+
 @media(max-width:480px){
-#loginBox{width:90%;padding:20px;}
-#psBody select{width:100%;padding:10px;margin-bottom:15px;}
-#psBody button{width:100%;padding:10px;}
+#loginBox{
+width:95%;
+padding:25px;
+}
+#psBody select,#psBody button{
+font-size:16px;
+padding:12px;
+}
 }
 
 </style>
@@ -290,39 +308,26 @@ let projects=new Set();
 function rupee(v){ return "₹"+Math.round(Number(v||0)).toLocaleString("en-IN"); }
 
 async function loadExcel(){
-
 employees=[];
-
 const api=`https://api.github.com/repos/${USER}/${REPO}/contents`;
 const res=await fetch(api);
 const files=await res.json();
-
 const excels=files.filter(f=>f.name.endsWith(".xlsx"));
 
 for(const f of excels){
-
 const r=await fetch(f.download_url);
 const data=await r.arrayBuffer();
-
 const wb=XLSX.read(data,{type:"array"});
 
 wb.SheetNames.forEach(sheetName=>{
-
 const rows=XLSX.utils.sheet_to_json(wb.Sheets[sheetName]);
-
 rows.forEach(r=>{
-
 let rec={};
-
 for(let k in r){ rec[k.trim().toLowerCase()]=r[k]; }
-
 let m=rec["month"];
-
 if(typeof m==="number"){ m=XLSX.SSF.format("mmm-yy",m); }
-
 months.add(m);
 projects.add(sheetName);
-
 employees.push({
 code:rec["emp code"]||"",
 name:rec["name"]||"",
@@ -333,7 +338,6 @@ mdays:rec["m days"]||"",
 pdays:rec["p days"]||"",
 month:m||"",
 projectLocation:sheetName,
-
 basic:rec["basic"],
 hra:rec["hra"],
 allow:rec["allowance"],
@@ -346,51 +350,34 @@ lwf:rec["lwf"],
 advance:rec["advance paid"],
 net:rec["net in hand"]
 });
-
 });
-
 });
-
 }
-
 populateFilters();
 render(employees);
-
 }
 
 function populateFilters(){
-
 const mSel=document.getElementById("monthFilter");
 const pSel=document.getElementById("projectFilter");
-
 months.forEach(m=>{ mSel.innerHTML+=`<option value="${m}">${m}</option>`; });
 projects.forEach(p=>{ pSel.innerHTML+=`<option value="${p}">${p}</option>`; });
-
 }
 
 function applyFilter(){
-
 const m=document.getElementById("monthFilter").value;
 const p=document.getElementById("projectFilter").value;
-
 let data=employees.filter(e=> (m=="all"||e.month==m) && (p=="all"||e.projectLocation==p));
-
 render(data);
-
 }
 
 function render(data){
-
 let tb=document.getElementById("tbody");
 tb.innerHTML="";
-
 let g=0,n=0;
-
 data.forEach(e=>{
-
 g+=Number(e.gross);
 n+=Number(e.net);
-
 tb.innerHTML+=`
 <tr>
 <td>${e.code}</td>
@@ -402,19 +389,14 @@ tb.innerHTML+=`
 <td><button class="view" onclick='showPS(${JSON.stringify(e)})'>View</button></td>
 </tr>
 `;
-
 });
-
 document.getElementById("cEmp").innerText=data.length;
 document.getElementById("cGross").innerText=rupee(g);
 document.getElementById("cNet").innerText=rupee(n);
-
 }
 
 function showPS(e){
-
 document.getElementById("modal").style.display="block";
-
 document.getElementById("psBody").innerHTML=`
 <table class="psTable">
 <tr>
@@ -466,7 +448,6 @@ Office Address: Shop No- 4,5,6,7, Idgha Road, Bholanath Nagar Market, Delhi-1100
 </table>
 <div class="net">NET PAY ${rupee(e.net)}</div>
 `;
-
 }
 
 function closePS(){ document.getElementById("modal").style.display="none"; }
@@ -479,7 +460,6 @@ else{ code.value=""; code.disabled=false; code.placeholder="Employee Code"; }
 }
 
 async function login(){
-
 const role=document.getElementById("role").value;
 const code=document.getElementById("empCode").value.trim();
 const pwd=document.getElementById("password").value;
@@ -487,48 +467,26 @@ const pwd=document.getElementById("password").value;
 await loadExcel();
 
 if(role==="admin"){
-
-if(pwd!=="Rud@03"){
-document.getElementById("msg").innerText="Invalid admin password";
-return;
-}
-
+if(pwd!=="Rud@03"){ document.getElementById("msg").innerText="Invalid admin password"; return; }
 document.getElementById("loginPage").style.display="none";
 document.getElementById("dashboard").style.display="block";
-
 }
 else{
-
 const ua=navigator.userAgent;
-
 if(!/Android|iPhone|Mobile/i.test(ua)){
-document.getElementById("msg").innerText="Employee login mobile only";
-return;
+document.getElementById("msg").innerText="Employee login mobile only"; return;
 }
+if(code!==pwd){ document.getElementById("msg").innerText="Password must equal Emp Code"; return; }
 
-if(code!==pwd){
-document.getElementById("msg").innerText="Password must equal Emp Code";
-return;
-}
-
-const empMonths=[...new Set(
-employees.filter(e=>e.code===code).map(e=>e.month)
-)];
-
+const empMonths=[...new Set(employees.filter(e=>e.code===code).map(e=>e.month))];
 let html="<h3>Select Month</h3><select id='empMonth'>";
-
-empMonths.forEach(m=>{
-html+=`<option value="${m}">${m}</option>`;
-});
-
+empMonths.forEach(m=>{ html+=`<option value="${m}">${m}</option>`; });
 html+="</select><br><br><button onclick='showEmpPayslip(\""+code+"\")'>View Payslip</button>";
 
 document.getElementById("psBody").innerHTML=html;
 document.getElementById("modal").style.display="block";
 document.getElementById("loginPage").style.display="none";
-
 }
-
 }
 
 function showEmpPayslip(code){
