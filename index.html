@@ -225,6 +225,7 @@ function showEmpPayslip(code){
 const m=document.getElementById("empMonth").value;
 const emp=employees.find(e=>e.code===code && e.month===m);
 if(!emp){ alert("Payslip not found"); return; }
+// **Use admin payslip layout for employee**
 showPS(emp);
 }
 </script>
