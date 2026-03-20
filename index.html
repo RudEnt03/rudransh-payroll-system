@@ -106,6 +106,7 @@ background:rgba(0,0,0,0.6);
 overflow:auto;
 }
 
+/* PAYSLIP (UNCHANGED) */
 .payslip{
 background:white;
 width:900px;
@@ -142,7 +143,7 @@ margin-top:15px;
 font-size:12px;
 }
 
-/* LOGIN FIXED */
+/* LOGIN */
 #loginPage{
 position:fixed;
 width:100%;
@@ -181,6 +182,15 @@ text-align:center;
 color:#666;
 }
 
+/* MONTH BOX (NEW - SEPARATE) */
+.empMonthBox{
+max-width:420px;
+margin:40px auto;
+background:white;
+padding:20px;
+border-radius:10px;
+}
+
 </style>
 
 </head>
@@ -189,7 +199,6 @@ color:#666;
 
 <!-- LOGIN -->
 <div id="loginPage">
-
 <div id="loginBox">
 
 <h3 style="text-align:center;">Login</h3>
@@ -211,78 +220,49 @@ color:#666;
 </div>
 
 </div>
-
 </div>
 
 <!-- DASHBOARD -->
 <div id="dashboard" style="display:none">
 
-<header>
-<h2>Payroll Dashboard</h2>
-</header>
+<header><h2>Payroll Dashboard</h2></header>
 
 <div class="container">
 
 <div class="controls">
-
-<select id="monthFilter">
-<option value="all">All Months</option>
-</select>
-
-<select id="projectFilter">
-<option value="all">All Projects</option>
-</select>
-
+<select id="monthFilter"><option value="all">All Months</option></select>
+<select id="projectFilter"><option value="all">All Projects</option></select>
 <button onclick="applyFilter()">Filter</button>
-
 </div>
 
 <div class="cards">
-
-<div class="card">
-Total Employees
-<p id="cEmp">0</p>
-</div>
-
-<div class="card">
-Total Gross
-<p id="cGross">0</p>
-</div>
-
-<div class="card">
-Total Net
-<p id="cNet">0</p>
-</div>
-
+<div class="card">Total Employees<p id="cEmp">0</p></div>
+<div class="card">Total Gross<p id="cGross">0</p></div>
+<div class="card">Total Net<p id="cNet">0</p></div>
 </div>
 
 <div class="tableWrap">
 <table>
-
 <thead>
 <tr>
 <th>Emp Code</th>
 <th>Name</th>
-<th>Project & Location</th>
+<th>Project</th>
 <th>Month</th>
 <th>Gross</th>
 <th>Net</th>
 <th>Payslip</th>
 </tr>
 </thead>
-
 <tbody id="tbody"></tbody>
-
 </table>
 </div>
 
 </div>
-
 </div>
 
 <!-- MODAL -->
 <div id="modal">
-
 <div class="payslip" id="payslipBox">
 
 <div id="psBody"></div>
@@ -295,25 +275,22 @@ Note: This is a Computer Generated Slip and does not require signature
 </div>
 
 </div>
-
 </div>
 
 <script>
 
-// YEAR
 document.getElementById("year").innerText=new Date().getFullYear();
 
-// ROLE AUTO FILL
 function handleRole(){
-const role=document.getElementById("role").value;
-const code=document.getElementById("empCode");
+let r=document.getElementById("role").value;
+let c=document.getElementById("empCode");
 
-if(role==="admin"){
-code.value="Admin";
-code.readOnly=true;
+if(r==="admin"){
+c.value="Admin";
+c.readOnly=true;
 }else{
-code.value="";
-code.readOnly=false;
+c.value="";
+c.readOnly=false;
 }
 }
 
@@ -328,44 +305,30 @@ function rupee(v){
 return "₹"+Math.round(Number(v||0)).toLocaleString("en-IN");
 }
 
-// LOAD DATA
 async function loadExcel(){
 
 employees=[];
 
-const api=`https://api.github.com/repos/${USER}/${REPO}/contents`;
-const res=await fetch(api);
+const res=await fetch(`https://api.github.com/repos/${USER}/${REPO}/contents`);
 const files=await res.json();
 
-const excels=files.filter(f=>f.name.endsWith(".xlsx"));
-
-for(const f of excels){
+for(const f of files.filter(x=>x.name.endsWith(".xlsx"))){
 
 const r=await fetch(f.download_url);
 const data=await r.arrayBuffer();
-
 const wb=XLSX.read(data,{type:"array"});
 
-wb.SheetNames.forEach(sheetName=>{
-
-const rows=XLSX.utils.sheet_to_json(wb.Sheets[sheetName]);
-
-rows.forEach(r=>{
+wb.SheetNames.forEach(s=>{
+XLSX.utils.sheet_to_json(wb.Sheets[s]).forEach(row=>{
 
 let rec={};
-
-for(let k in r){
-rec[k.trim().toLowerCase()]=r[k];
-}
+for(let k in row){rec[k.trim().toLowerCase()]=row[k];}
 
 let m=rec["month"];
-
-if(typeof m==="number"){
-m=XLSX.SSF.format("mmm-yy",m);
-}
+if(typeof m==="number"){m=XLSX.SSF.format("mmm-yy",m);}
 
 months.add(m);
-projects.add(sheetName);
+projects.add(s);
 
 employees.push({
 code:rec["emp code"]||"",
@@ -376,7 +339,7 @@ esi_no:rec["esi no"]||"",
 mdays:rec["m days"]||"",
 pdays:rec["p days"]||"",
 month:m||"",
-projectLocation:sheetName,
+projectLocation:s,
 basic:rec["basic"],
 hra:rec["hra"],
 allow:rec["allowance"],
@@ -391,56 +354,36 @@ net:rec["net in hand"]
 });
 
 });
-
 });
 
 }
 
 populateFilters();
 render(employees);
-
 }
 
-// FILTERS
 function populateFilters(){
-const mSel=document.getElementById("monthFilter");
-const pSel=document.getElementById("projectFilter");
-
-months.forEach(m=>{
-mSel.innerHTML+=`<option value="${m}">${m}</option>`;
-});
-
-projects.forEach(p=>{
-pSel.innerHTML+=`<option value="${p}">${p}</option>`;
-});
+months.forEach(m=>monthFilter.innerHTML+=`<option>${m}</option>`);
+projects.forEach(p=>projectFilter.innerHTML+=`<option>${p}</option>`);
 }
 
-// APPLY FILTER
 function applyFilter(){
-const m=document.getElementById("monthFilter").value;
-const p=document.getElementById("projectFilter").value;
-
-let data=employees.filter(e=>
-(m=="all"||e.month==m) &&
-(p=="all"||e.projectLocation==p)
-);
-
-render(data);
+let m=monthFilter.value,p=projectFilter.value;
+render(employees.filter(e=>
+(m==="all"||e.month===m)&&(p==="all"||e.projectLocation===p)
+));
 }
 
-// RENDER TABLE
 function render(data){
 
-let tb=document.getElementById("tbody");
-tb.innerHTML="";
-
+tbody.innerHTML="";
 let g=0,n=0;
 
 data.forEach(e=>{
-g+=Number(e.gross);
-n+=Number(e.net);
+g+=+e.gross;
+n+=+e.net;
 
-tb.innerHTML+=`
+tbody.innerHTML+=`
 <tr>
 <td>${e.code}</td>
 <td>${e.name}</td>
@@ -449,24 +392,19 @@ tb.innerHTML+=`
 <td>${rupee(e.gross)}</td>
 <td>${rupee(e.net)}</td>
 <td><button class="view" onclick='showPS(${JSON.stringify(e)})'>View</button></td>
-</tr>
-`;
+</tr>`;
 });
 
-document.getElementById("cEmp").innerText=data.length;
-document.getElementById("cGross").innerText=rupee(g);
-document.getElementById("cNet").innerText=rupee(n);
+cEmp.innerText=data.length;
+cGross.innerText=rupee(g);
+cNet.innerText=rupee(n);
 }
 
-// PAYSLIP
 function showPS(e){
 
-// restore normal width
-document.getElementById("payslipBox").style.maxWidth="95%";
+modal.style.display="block";
 
-document.getElementById("modal").style.display="block";
-
-document.getElementById("psBody").innerHTML=`
+psBody.innerHTML=`
 
 <table class="psTable">
 
@@ -477,8 +415,7 @@ document.getElementById("psBody").innerHTML=`
 
 <td class="center">
 <b style="font-size:20px">Rudransh Enterprises</b><br>
-Office Address: Shop No- 4,5,6,7, Idgha Road,
-Bholanath Nagar Market, Delhi-110032
+Office Address: Delhi
 </td>
 </tr>
 
@@ -496,30 +433,30 @@ Bholanath Nagar Market, Delhi-110032
 
 <tr>
 <td class="left">Employee Name</td>
-<td class="left">${e.name}</td>
-<td class="left">Employee Code</td>
-<td class="left">${e.code}</td>
+<td>${e.name}</td>
+<td>Code</td>
+<td>${e.code}</td>
 </tr>
 
 <tr>
-<td class="left">Designation</td>
-<td class="left">${e.designation}</td>
-<td class="left">Project & Location</td>
-<td class="left">${e.projectLocation}</td>
+<td>Designation</td>
+<td>${e.designation}</td>
+<td>Project</td>
+<td>${e.projectLocation}</td>
 </tr>
 
 <tr>
-<td class="left">UAN No</td>
-<td class="left">${e.uan}</td>
-<td class="left">ESI No</td>
-<td class="left">${e.esi_no}</td>
+<td>UAN</td>
+<td>${e.uan}</td>
+<td>ESI</td>
+<td>${e.esi_no}</td>
 </tr>
 
 <tr>
-<td class="left">M Days</td>
-<td class="left">${e.mdays}</td>
-<td class="left">P Days</td>
-<td class="left">${e.pdays}</td>
+<td>M Days</td>
+<td>${e.mdays}</td>
+<td>P Days</td>
+<td>${e.pdays}</td>
 </tr>
 
 </table>
@@ -529,53 +466,17 @@ Bholanath Nagar Market, Delhi-110032
 <table class="psTable">
 
 <tr>
-<th class="left">Earnings</th>
-<th class="right">Amount</th>
-<th class="left">Deductions</th>
-<th class="right">Amount</th>
+<th>Earnings</th><th>Amt</th>
+<th>Deductions</th><th>Amt</th>
 </tr>
 
-<tr>
-<td class="left">Basic</td>
-<td class="right">${rupee(e.basic)}</td>
-<td class="left">PF</td>
-<td class="right">${rupee(e.pf)}</td>
-</tr>
+<tr><td>Basic</td><td>${rupee(e.basic)}</td><td>PF</td><td>${rupee(e.pf)}</td></tr>
+<tr><td>HRA</td><td>${rupee(e.hra)}</td><td>ESI</td><td>${rupee(e.esi)}</td></tr>
+<tr><td>Allowance</td><td>${rupee(e.allow)}</td><td>LWF</td><td>${rupee(e.lwf)}</td></tr>
+<tr><td>Bonus</td><td>${rupee(e.bonus)}</td><td>Advance</td><td>${rupee(e.advance)}</td></tr>
+<tr><td>Attendance</td><td>${rupee(e.attendance)}</td><td></td><td></td></tr>
 
-<tr>
-<td class="left">HRA</td>
-<td class="right">${rupee(e.hra)}</td>
-<td class="left">ESI</td>
-<td class="right">${rupee(e.esi)}</td>
-</tr>
-
-<tr>
-<td class="left">Allowance</td>
-<td class="right">${rupee(e.allow)}</td>
-<td class="left">LWF</td>
-<td class="right">${rupee(e.lwf)}</td>
-</tr>
-
-<tr>
-<td class="left">Bonus</td>
-<td class="right">${rupee(e.bonus)}</td>
-<td class="left">Advance</td>
-<td class="right">${rupee(e.advance)}</td>
-</tr>
-
-<tr>
-<td class="left">Attendance Incentive</td>
-<td class="right">${rupee(e.attendance)}</td>
-<td></td>
-<td></td>
-</tr>
-
-<tr>
-<td class="left"><b>Gross</b></td>
-<td class="right"><b>${rupee(e.gross)}</b></td>
-<td></td>
-<td></td>
-</tr>
+<tr><td><b>Gross</b></td><td><b>${rupee(e.gross)}</b></td><td></td><td></td></tr>
 
 </table>
 
@@ -585,77 +486,54 @@ Bholanath Nagar Market, Delhi-110032
 
 }
 
-function closePS(){
-document.getElementById("modal").style.display="none";
-}
+function closePS(){modal.style.display="none";}
 
-// LOGIN
 async function login(){
 
-const role=document.getElementById("role").value;
-const code=document.getElementById("empCode").value.trim();
-const pwd=document.getElementById("password").value;
+let role=roleEl.value,code=empCode.value.trim(),pwd=password.value;
 
 await loadExcel();
 
 if(role==="admin"){
 
-if(pwd!=="Rud@03"){
-document.getElementById("msg").innerText="Invalid admin password";
-return;
-}
+if(pwd!=="Rud@03"){msg.innerText="Wrong password";return;}
 
-document.getElementById("loginPage").style.display="none";
-document.getElementById("dashboard").style.display="block";
+loginPage.style.display="none";
+dashboard.style.display="block";
 
-}
+}else{
 
-else{
-
-const ua=navigator.userAgent;
-
-if(!/Android|iPhone|Mobile/i.test(ua)){
-document.getElementById("msg").innerText="Employee login mobile only";
+if(!/Mobile|Android|iPhone/i.test(navigator.userAgent)){
+msg.innerText="Mobile only";
 return;
 }
 
 if(code!==pwd){
-document.getElementById("msg").innerText="Password must equal Emp Code";
+msg.innerText="Password = Emp Code";
 return;
 }
 
-// MOBILE WIDTH FIX
-document.getElementById("payslipBox").style.maxWidth="420px";
+// ONLY month box small (NOT payslip)
+let empMonths=[...new Set(employees.filter(e=>e.code===code).map(e=>e.month))];
 
-const empMonths=[...new Set(
-employees.filter(e=>e.code===code).map(e=>e.month)
-)];
+psBody.innerHTML=`
+<div class="empMonthBox">
 
-let html = `
 <h3 style="text-align:center;">Select Month</h3>
 
 <select id="empMonth" style="width:100%;padding:14px;margin-bottom:15px;">
-`;
+${empMonths.map(m=>`<option>${m}</option>`).join("")}
+</select>
 
-empMonths.forEach(m=>{
-html+=`<option value="${m}">${m}</option>`;
-});
-
-html += `</select>
-
-<button onclick='showEmpPayslip("${code}")' style="
-width:100%;
-padding:14px;
-background:#1cc88a;
-">
+<button onclick="showEmpPayslip('${code}')" style="width:100%;padding:14px;background:#1cc88a;">
 View Payslip
 </button>
+
+</div>
 `;
 
-document.getElementById("psBody").innerHTML=html;
-
-document.getElementById("modal").style.display="block";
-document.getElementById("loginPage").style.display="none";
+modal.style.display="block";
+loginPage.style.display="none";
 
 }
 
@@ -663,14 +541,11 @@ document.getElementById("loginPage").style.display="none";
 
 function showEmpPayslip(code){
 
-const m=document.getElementById("empMonth").value;
+let m=empMonth.value;
 
-const emp=employees.find(e=>e.code===code && e.month===m);
+let emp=employees.find(e=>e.code===code && e.month===m);
 
-if(!emp){
-alert("Payslip not found");
-return;
-}
+if(!emp){alert("Not found");return;}
 
 showPS(emp);
 
