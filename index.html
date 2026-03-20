@@ -126,7 +126,6 @@ width:100%;
 margin-bottom:10px;
 padding:8px;
 }
-/* COPYRIGHT BELOW LOGIN BOX */
 #loginBox .copyright{
 text-align:center;
 font-size:12px;
@@ -135,7 +134,6 @@ margin-top:10px;
 }
 </style>
 </head>
-
 <body>
 
 <!-- LOGIN PAGE -->
@@ -143,15 +141,13 @@ margin-top:10px;
 <div id="loginBox">
 <h3>Login</h3>
 <select id="role">
+<option value="admin" selected>Admin</option>
 <option value="emp">Employee</option>
-<option value="admin">Admin</option>
 </select>
 <input id="empCode" placeholder="Employee Code">
 <input id="password" type="password" placeholder="Password">
 <button onclick="login()">Login</button>
 <div id="msg" style="color:red"></div>
-
-<!-- COPYRIGHT -->
 <div class="copyright">&copy; 2026 Rudransh Enterprises. All Rights Reserved.</div>
 </div>
 </div>
@@ -198,6 +194,7 @@ Note: This is a Computer Generated Slip and does not require signature
 const USER="RudEnt03";
 const REPO="rudransh-payroll-system";
 let employees=[], months=new Set(), projects=new Set();
+
 function rupee(v){return "₹"+Math.round(Number(v||0)).toLocaleString("en-IN");}
 
 async function loadExcel(){
@@ -253,6 +250,7 @@ document.getElementById("cGross").innerText=rupee(g);
 document.getElementById("cNet").innerText=rupee(n);
 }
 
+// SHOW PAYSLIP - ADMIN / EMP SAME LAYOUT
 function showPS(e){
 document.getElementById("modal").style.display="block";
 document.getElementById("psBody").innerHTML=`
@@ -295,19 +293,23 @@ document.getElementById("psBody").innerHTML=`
 
 function closePS(){document.getElementById("modal").style.display="none";}
 
+// LOGIN
 async function login(){
 const role=document.getElementById("role").value;
 const code=document.getElementById("empCode").value.trim();
 const pwd=document.getElementById("password").value;
 await loadExcel();
+
 if(role==="admin"){
 if(pwd!=="Rud@03"){document.getElementById("msg").innerText="Invalid admin password"; return;}
 document.getElementById("loginPage").style.display="none";
 document.getElementById("dashboard").style.display="block";
-}else{
+} else {
 const ua=navigator.userAgent;
 if(!/Android|iPhone|Mobile/i.test(ua)){document.getElementById("msg").innerText="Employee login mobile only"; return;}
 if(code!==pwd){document.getElementById("msg").innerText="Password must equal Emp Code"; return;}
+
+// MOBILE FIX PRESERVED: SELECT MONTH, VIEW BUTTON
 const empMonths=[...new Set(employees.filter(e=>e.code===code).map(e=>e.month))];
 let html="<h3>Select Month</h3><select id='empMonth'>";
 empMonths.forEach(m=>{html+=`<option value="${m}">${m}</option>`;});
@@ -318,11 +320,12 @@ document.getElementById("loginPage").style.display="none";
 }
 }
 
+// EMPLOYEE SHOW PAYSLIP
 function showEmpPayslip(code){
 const m=document.getElementById("empMonth").value;
 const emp=employees.find(e=>e.code===code && e.month===m);
 if(!emp){alert("Payslip not found"); return;}
-// EMPLOYEE USES SAME PAYSLIP LAYOUT AS ADMIN
+// ADMIN PAYSLIP LAYOUT USED
 showPS(emp);
 }
 </script>
