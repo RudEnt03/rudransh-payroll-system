@@ -162,6 +162,8 @@ padding:8px;
 
 <div id="loginPage">
 
+<div>
+
 <div id="loginBox">
 
 <h3>Login</h3>
@@ -180,9 +182,11 @@ padding:8px;
 
 </div>
 
-<!-- ✅ ADDED COPYRIGHT (NO CHANGE ABOVE) -->
+<!-- ✅ COPYRIGHT (ADDED ONLY) -->
 <div style="text-align:center;font-size:12px;margin-top:10px;">
 © 2026 Rudransh Enterprises. All rights reserved.
+</div>
+
 </div>
 
 </div>
@@ -271,7 +275,7 @@ Note: This is a Computer Generated Slip and does not require signature
 
 <script>
 
-/* ✅ ADDED ONLY */
+/* ✅ ADMIN AUTO-FILL (ADDED ONLY) */
 document.addEventListener("DOMContentLoaded",function(){
 var role=document.getElementById("role");
 var emp=document.getElementById("empCode");
@@ -298,4 +302,350 @@ function rupee(v){
 return "₹"+Math.round(Number(v||0)).toLocaleString("en-IN");
 }
 
-/* 🔴 KEEP YOUR REMAINING ORIGINAL CODE EXACTLY SAME BELOW */
+async function loadExcel(){
+
+employees=[];
+
+const api=`https://api.github.com/repos/${USER}/${REPO}/contents`;
+const res=await fetch(api);
+const files=await res.json();
+
+const excels=files.filter(f=>f.name.endsWith(".xlsx"));
+
+for(const f of excels){
+
+const r=await fetch(f.download_url);
+const data=await r.arrayBuffer();
+
+const wb=XLSX.read(data,{type:"array"});
+
+wb.SheetNames.forEach(sheetName=>{
+
+const rows=XLSX.utils.sheet_to_json(wb.Sheets[sheetName]);
+
+rows.forEach(r=>{
+
+let rec={};
+
+for(let k in r){
+rec[k.trim().toLowerCase()]=r[k];
+}
+
+let m=rec["month"];
+
+if(typeof m==="number"){
+m=XLSX.SSF.format("mmm-yy",m);
+}
+
+months.add(m);
+projects.add(sheetName);
+
+employees.push({
+
+code:rec["emp code"]||"",
+name:rec["name"]||"",
+designation:rec["designation"]||"",
+uan:rec["uan no"]||"",
+esi_no:rec["esi no"]||"",
+mdays:rec["m days"]||"",
+pdays:rec["p days"]||"",
+month:m||"",
+projectLocation:sheetName,
+
+basic:rec["basic"],
+hra:rec["hra"],
+allow:rec["allowance"],
+bonus:rec["bonus"],
+attendance:rec["attendance incentive"],
+gross:rec["gross"],
+pf:rec["pf@12%"],
+esi:rec["esi@.75%"],
+lwf:rec["lwf"],
+advance:rec["advance paid"],
+net:rec["net in hand"]
+
+});
+
+});
+
+});
+
+}
+
+populateFilters();
+render(employees);
+
+}
+
+function populateFilters(){
+
+const mSel=document.getElementById("monthFilter");
+const pSel=document.getElementById("projectFilter");
+
+months.forEach(m=>{
+mSel.innerHTML+=`<option value="${m}">${m}</option>`;
+});
+
+projects.forEach(p=>{
+pSel.innerHTML+=`<option value="${p}">${p}</option>`;
+});
+
+}
+
+function applyFilter(){
+
+const m=document.getElementById("monthFilter").value;
+const p=document.getElementById("projectFilter").value;
+
+let data=employees.filter(e=>
+(m=="all"||e.month==m) &&
+(p=="all"||e.projectLocation==p)
+);
+
+render(data);
+
+}
+
+function render(data){
+
+let tb=document.getElementById("tbody");
+tb.innerHTML="";
+
+let g=0,n=0;
+
+data.forEach(e=>{
+
+g+=Number(e.gross);
+n+=Number(e.net);
+
+tb.innerHTML+=`
+
+<tr>
+
+<td>${e.code}</td>
+<td>${e.name}</td>
+<td>${e.projectLocation}</td>
+<td>${e.month}</td>
+<td>${rupee(e.gross)}</td>
+<td>${rupee(e.net)}</td>
+<td><button class="view" onclick='showPS(${JSON.stringify(e)})'>View</button></td>
+
+</tr>
+
+`;
+
+});
+
+document.getElementById("cEmp").innerText=data.length;
+document.getElementById("cGross").innerText=rupee(g);
+document.getElementById("cNet").innerText=rupee(n);
+
+}
+
+function showPS(e){
+
+document.getElementById("modal").style.display="block";
+
+document.getElementById("psBody").innerHTML=`
+
+<table class="psTable">
+
+<tr>
+
+<td class="center" style="width:150px">
+<img src="logo.png" height="70">
+</td>
+
+<td class="center">
+
+<b style="font-size:20px">Rudransh Enterprises</b><br>
+
+Office Address: Shop No- 4,5,6,7, Idgha Road,
+Bholanath Nagar Market, Delhi-110032
+
+</td>
+
+</tr>
+
+<tr>
+<td colspan="2" class="center">
+<b>Salary Slip for ${e.month}</b>
+</td>
+</tr>
+
+</table>
+
+<br>
+
+<table class="psTable">
+
+<tr>
+<td class="left">Employee Name</td>
+<td class="left">${e.name}</td>
+<td class="left">Employee Code</td>
+<td class="left">${e.code}</td>
+</tr>
+
+<tr>
+<td class="left">Designation</td>
+<td class="left">${e.designation}</td>
+<td class="left">Project & Location</td>
+<td class="left">${e.projectLocation}</td>
+</tr>
+
+<tr>
+<td class="left">UAN No</td>
+<td class="left">${e.uan}</td>
+<td class="left">ESI No</td>
+<td class="left">${e.esi_no}</td>
+</tr>
+
+<tr>
+<td class="left">M Days</td>
+<td class="left">${e.mdays}</td>
+<td class="left">P Days</td>
+<td class="left">${e.pdays}</td>
+</tr>
+
+</table>
+
+<br>
+
+<table class="psTable">
+
+<tr>
+<th class="left">Earnings</th>
+<th class="right">Amount</th>
+<th class="left">Deductions</th>
+<th class="right">Amount</th>
+</tr>
+
+<tr>
+<td class="left">Basic</td>
+<td class="right">${rupee(e.basic)}</td>
+<td class="left">PF</td>
+<td class="right">${rupee(e.pf)}</td>
+</tr>
+
+<tr>
+<td class="left">HRA</td>
+<td class="right">${rupee(e.hra)}</td>
+<td class="left">ESI</td>
+<td class="right">${rupee(e.esi)}</td>
+</tr>
+
+<tr>
+<td class="left">Allowance</td>
+<td class="right">${rupee(e.allow)}</td>
+<td class="left">LWF</td>
+<td class="right">${rupee(e.lwf)}</td>
+</tr>
+
+<tr>
+<td class="left">Bonus</td>
+<td class="right">${rupee(e.bonus)}</td>
+<td class="left">Advance</td>
+<td class="right">${rupee(e.advance)}</td>
+</tr>
+
+<tr>
+<td class="left">Attendance Incentive</td>
+<td class="right">${rupee(e.attendance)}</td>
+<td></td>
+<td></td>
+</tr>
+
+<tr>
+<td class="left"><b>Gross</b></td>
+<td class="right"><b>${rupee(e.gross)}</b></td>
+<td></td>
+<td></td>
+</tr>
+
+</table>
+
+<div class="net">NET PAY ${rupee(e.net)}</div>
+
+`;
+
+}
+
+function closePS(){
+document.getElementById("modal").style.display="none";
+}
+
+async function login(){
+
+const role=document.getElementById("role").value;
+const code=document.getElementById("empCode").value.trim();
+const pwd=document.getElementById("password").value;
+
+await loadExcel();
+
+if(role==="admin"){
+
+if(pwd!=="Rud@03"){
+document.getElementById("msg").innerText="Invalid admin password";
+return;
+}
+
+document.getElementById("loginPage").style.display="none";
+document.getElementById("dashboard").style.display="block";
+
+}
+
+else{
+
+const ua=navigator.userAgent;
+
+if(!/Android|iPhone|Mobile/i.test(ua)){
+document.getElementById("msg").innerText="Employee login mobile only";
+return;
+}
+
+if(code!==pwd){
+document.getElementById("msg").innerText="Password must equal Emp Code";
+return;
+}
+
+const empMonths=[...new Set(
+employees.filter(e=>e.code===code).map(e=>e.month)
+)];
+
+let html="<h3>Select Month</h3><select id='empMonth'>";
+
+empMonths.forEach(m=>{
+html+=`<option value="${m}">${m}</option>`;
+});
+
+html+="</select><br><br><button onclick='showEmpPayslip(\""+code+"\")'>View Payslip</button>";
+
+document.getElementById("psBody").innerHTML=html;
+
+document.getElementById("modal").style.display="block";
+
+document.getElementById("loginPage").style.display="none";
+
+}
+
+}
+
+function showEmpPayslip(code){
+
+const m=document.getElementById("empMonth").value;
+
+const emp=employees.find(e=>e.code===code && e.month===m);
+
+if(!emp){
+alert("Payslip not found");
+return;
+}
+
+showPS(emp);
+
+}
+
+</script>
+
+</body>
+</html>
