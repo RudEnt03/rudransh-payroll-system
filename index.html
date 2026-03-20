@@ -162,8 +162,6 @@ padding:8px;
 
 <div id="loginPage">
 
-<div>
-
 <div id="loginBox">
 
 <h3>Login</h3>
@@ -179,13 +177,6 @@ padding:8px;
 <button onclick="login()">Login</button>
 
 <div id="msg" style="color:red"></div>
-
-</div>
-
-<!-- ✅ COPYRIGHT (ADDED ONLY) -->
-<div style="text-align:center;font-size:12px;margin-top:10px;">
-© 2026 Rudransh Enterprises. All rights reserved.
-</div>
 
 </div>
 
@@ -274,22 +265,6 @@ Note: This is a Computer Generated Slip and does not require signature
 </div>
 
 <script>
-
-/* ✅ ADMIN AUTO-FILL (ADDED ONLY) */
-document.addEventListener("DOMContentLoaded",function(){
-var role=document.getElementById("role");
-var emp=document.getElementById("empCode");
-
-role.addEventListener("change",function(){
-if(role.value==="admin"){
-emp.value="Admin";
-emp.readOnly=true;
-}else{
-emp.value="";
-emp.readOnly=false;
-}
-});
-});
 
 const USER="RudEnt03";
 const REPO="rudransh-payroll-system";
