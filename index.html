@@ -54,6 +54,10 @@ text-align:center;
 box-shadow:0 2px 6px rgba(0,0,0,0.1);
 }
 
+.tableWrap{
+overflow-x:auto;
+}
+
 table{
 width:100%;
 border-collapse:collapse;
@@ -103,10 +107,6 @@ padding:25px;
 position:relative;
 }
 
-.psHeader{
-border:2px solid #000;
-}
-
 .psTable{
 width:100%;
 border-collapse:collapse;
@@ -133,6 +133,8 @@ text-align:center;
 margin-top:15px;
 font-size:12px;
 }
+
+/* LOGIN */
 
 #loginPage{
 position:fixed;
@@ -166,16 +168,13 @@ text-align:center;
 color:#666;
 }
 
-.tableWrap{
-overflow-x:auto;
-}
-
 </style>
 
 </head>
 
 <body>
 
+<!-- LOGIN PAGE -->
 <div id="loginPage">
 
 <div id="loginBox">
@@ -202,6 +201,7 @@ overflow-x:auto;
 
 </div>
 
+<!-- DASHBOARD -->
 <div id="dashboard" style="display:none">
 
 <header>
@@ -247,7 +247,6 @@ Total Net
 <table>
 
 <thead>
-
 <tr>
 <th>Emp Code</th>
 <th>Name</th>
@@ -257,7 +256,6 @@ Total Net
 <th>Net</th>
 <th>Payslip</th>
 </tr>
-
 </thead>
 
 <tbody id="tbody"></tbody>
@@ -269,6 +267,7 @@ Total Net
 
 </div>
 
+<!-- MODAL -->
 <div id="modal">
 
 <div class="payslip">
@@ -288,18 +287,20 @@ Note: This is a Computer Generated Slip and does not require signature
 
 <script>
 
+// YEAR
 document.getElementById("year").innerText=new Date().getFullYear();
 
+// ROLE HANDLER
 function handleRole(){
 const role=document.getElementById("role").value;
-const codeField=document.getElementById("empCode");
+const code=document.getElementById("empCode");
 
 if(role==="admin"){
-codeField.value="Admin";
-codeField.readOnly=true;
+code.value="Admin";
+code.readOnly=true;
 }else{
-codeField.value="";
-codeField.readOnly=false;
+code.value="";
+code.readOnly=false;
 }
 }
 
@@ -314,6 +315,7 @@ function rupee(v){
 return "₹"+Math.round(Number(v||0)).toLocaleString("en-IN");
 }
 
+// LOAD EXCEL
 async function loadExcel(){
 
 employees=[];
@@ -389,6 +391,7 @@ render(employees);
 
 }
 
+// FILTERS
 function populateFilters(){
 
 const mSel=document.getElementById("monthFilter");
@@ -404,6 +407,7 @@ pSel.innerHTML+=`<option value="${p}">${p}</option>`;
 
 }
 
+// APPLY FILTER
 function applyFilter(){
 
 const m=document.getElementById("monthFilter").value;
@@ -418,6 +422,7 @@ render(data);
 
 }
 
+// RENDER
 function render(data){
 
 let tb=document.getElementById("tbody");
@@ -431,9 +436,7 @@ g+=Number(e.gross);
 n+=Number(e.net);
 
 tb.innerHTML+=`
-
 <tr>
-
 <td>${e.code}</td>
 <td>${e.name}</td>
 <td>${e.projectLocation}</td>
@@ -441,9 +444,7 @@ tb.innerHTML+=`
 <td>${rupee(e.gross)}</td>
 <td>${rupee(e.net)}</td>
 <td><button class="view" onclick='showPS(${JSON.stringify(e)})'>View</button></td>
-
 </tr>
-
 `;
 
 });
@@ -454,11 +455,127 @@ document.getElementById("cNet").innerText=rupee(n);
 
 }
 
+// PAYSLIP (FIXED)
 function showPS(e){
 
 document.getElementById("modal").style.display="block";
 
-document.getElementById("psBody").innerHTML=`... SAME AS YOUR ORIGINAL (UNCHANGED) ...`;
+document.getElementById("psBody").innerHTML=`
+
+<table class="psTable">
+
+<tr>
+<td class="center" style="width:150px">
+<img src="logo.png" height="70">
+</td>
+
+<td class="center">
+<b style="font-size:20px">Rudransh Enterprises</b><br>
+Office Address: Shop No- 4,5,6,7, Idgha Road,
+Bholanath Nagar Market, Delhi-110032
+</td>
+</tr>
+
+<tr>
+<td colspan="2" class="center">
+<b>Salary Slip for ${e.month}</b>
+</td>
+</tr>
+
+</table>
+
+<br>
+
+<table class="psTable">
+
+<tr>
+<td class="left">Employee Name</td>
+<td class="left">${e.name}</td>
+<td class="left">Employee Code</td>
+<td class="left">${e.code}</td>
+</tr>
+
+<tr>
+<td class="left">Designation</td>
+<td class="left">${e.designation}</td>
+<td class="left">Project & Location</td>
+<td class="left">${e.projectLocation}</td>
+</tr>
+
+<tr>
+<td class="left">UAN No</td>
+<td class="left">${e.uan}</td>
+<td class="left">ESI No</td>
+<td class="left">${e.esi_no}</td>
+</tr>
+
+<tr>
+<td class="left">M Days</td>
+<td class="left">${e.mdays}</td>
+<td class="left">P Days</td>
+<td class="left">${e.pdays}</td>
+</tr>
+
+</table>
+
+<br>
+
+<table class="psTable">
+
+<tr>
+<th class="left">Earnings</th>
+<th class="right">Amount</th>
+<th class="left">Deductions</th>
+<th class="right">Amount</th>
+</tr>
+
+<tr>
+<td class="left">Basic</td>
+<td class="right">${rupee(e.basic)}</td>
+<td class="left">PF</td>
+<td class="right">${rupee(e.pf)}</td>
+</tr>
+
+<tr>
+<td class="left">HRA</td>
+<td class="right">${rupee(e.hra)}</td>
+<td class="left">ESI</td>
+<td class="right">${rupee(e.esi)}</td>
+</tr>
+
+<tr>
+<td class="left">Allowance</td>
+<td class="right">${rupee(e.allow)}</td>
+<td class="left">LWF</td>
+<td class="right">${rupee(e.lwf)}</td>
+</tr>
+
+<tr>
+<td class="left">Bonus</td>
+<td class="right">${rupee(e.bonus)}</td>
+<td class="left">Advance</td>
+<td class="right">${rupee(e.advance)}</td>
+</tr>
+
+<tr>
+<td class="left">Attendance Incentive</td>
+<td class="right">${rupee(e.attendance)}</td>
+<td></td>
+<td></td>
+</tr>
+
+<tr>
+<td class="left"><b>Gross</b></td>
+<td class="right"><b>${rupee(e.gross)}</b></td>
+<td></td>
+<td></td>
+</tr>
+
+</table>
+
+<div class="net">NET PAY ${rupee(e.net)}</div>
+
+`;
 
 }
 
@@ -466,6 +583,7 @@ function closePS(){
 document.getElementById("modal").style.display="none";
 }
 
+// LOGIN
 async function login(){
 
 const role=document.getElementById("role").value;
