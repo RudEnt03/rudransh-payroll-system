@@ -25,7 +25,7 @@ padding:20px !important;
 #empPage{
 padding:20px !important;
 }
-#empPage select{
+#empMonth{
 width:100%;
 padding:12px;
 }
@@ -36,7 +36,7 @@ overflow-x:auto;
 }
 
 /* FOOTER */
-.footerCopy{
+.copy{
 position:fixed;
 bottom:0;
 width:100%;
@@ -60,7 +60,7 @@ align-items:center;
 #loginBox{
 background:white;
 padding:30px;
-width:320px;
+width:300px;
 box-shadow:0 3px 10px rgba(0,0,0,0.2);
 }
 
@@ -74,7 +74,6 @@ padding:10px;
 #empPage{
 display:none;
 height:100vh;
-background:#eef2f7;
 text-align:center;
 padding-top:80px;
 }
@@ -107,7 +106,7 @@ text-align:center;
 }
 
 button{
-padding:8px 14px;
+padding:6px 12px;
 border:none;
 border-radius:4px;
 cursor:pointer;
@@ -120,6 +119,8 @@ background:#36b9cc;
 #modal{
 display:none;
 position:fixed;
+top:0;
+left:0;
 width:100%;
 height:100%;
 background:rgba(0,0,0,0.6);
@@ -133,7 +134,7 @@ margin:40px auto;
 padding:25px;
 }
 
-/* PAYSLIP TABLE */
+/* PAYSLIP */
 .psTable{
 width:100%;
 border-collapse:collapse;
@@ -153,6 +154,12 @@ font-size:20px;
 font-weight:bold;
 text-align:center;
 margin-top:10px;
+}
+
+.footer{
+text-align:center;
+margin-top:15px;
+font-size:12px;
 }
 
 </style>
@@ -182,13 +189,13 @@ margin-top:10px;
 
 </div>
 
-<div class="footerCopy">
+<div class="copy">
 © <span id="yr"></span> Rudransh Enterprises. All rights reserved.
 </div>
 
 </div>
 
-<!-- EMPLOYEE MONTH PAGE -->
+<!-- EMP MONTH PAGE -->
 <div id="empPage">
 
 <h3>Select Month</h3>
@@ -199,7 +206,7 @@ margin-top:10px;
 
 <button onclick="showEmpPayslip()">View Payslip</button>
 
-<div class="footerCopy">
+<div class="copy">
 © <span id="yr2"></span> Rudransh Enterprises. All rights reserved.
 </div>
 
@@ -208,9 +215,44 @@ margin-top:10px;
 <!-- DASHBOARD -->
 <div id="dashboard" style="display:none">
 
-<header><h2>Payroll Dashboard</h2></header>
+<header>
+<h2>Payroll Dashboard</h2>
+</header>
 
 <div class="container">
+
+<div class="controls">
+
+<select id="monthFilter">
+<option value="all">All Months</option>
+</select>
+
+<select id="projectFilter">
+<option value="all">All Projects</option>
+</select>
+
+<button onclick="applyFilter()">Filter</button>
+
+</div>
+
+<div class="cards">
+
+<div class="card">
+Total Employees
+<p id="cEmp">0</p>
+</div>
+
+<div class="card">
+Total Gross
+<p id="cGross">0</p>
+</div>
+
+<div class="card">
+Total Net
+<p id="cNet">0</p>
+</div>
+
+</div>
 
 <table>
 
@@ -218,11 +260,11 @@ margin-top:10px;
 <tr>
 <th>Emp Code</th>
 <th>Name</th>
-<th>Project</th>
+<th>Project & Location</th>
 <th>Month</th>
 <th>Gross</th>
 <th>Net</th>
-<th>View</th>
+<th>Payslip</th>
 </tr>
 </thead>
 
@@ -236,12 +278,20 @@ margin-top:10px;
 
 <!-- MODAL -->
 <div id="modal">
+
 <div class="payslip">
+
 <div id="psBody"></div>
-<br>
+
+<div class="footer">
+Note: This is a Computer Generated Slip and does not require signature
+<br><br>
 <button onclick="window.print()">Print</button>
 <button onclick="closePS()">Close</button>
 </div>
+
+</div>
+
 </div>
 
 <script>
@@ -259,95 +309,312 @@ empCode.readOnly=false;
 }
 }
 
+const USER="RudEnt03";
+const REPO="rudransh-payroll-system";
+
 let employees=[];
+let months=new Set();
+let projects=new Set();
+
+function rupee(v){
+return "₹"+Math.round(Number(v||0)).toLocaleString("en-IN");
+}
 
 async function loadExcel(){
 
 employees=[];
 
-const res=await fetch("data.xlsx");
-const data=await res.arrayBuffer();
+const api=`https://api.github.com/repos/${USER}/${REPO}/contents`;
+const res=await fetch(api);
+const files=await res.json();
+
+const excels=files.filter(f=>f.name.endsWith(".xlsx"));
+
+for(const f of excels){
+
+const r=await fetch(f.download_url);
+const data=await r.arrayBuffer();
 
 const wb=XLSX.read(data,{type:"array"});
 
-wb.SheetNames.forEach(s=>{
+wb.SheetNames.forEach(sheetName=>{
 
-const rows=XLSX.utils.sheet_to_json(wb.Sheets[s]);
+const rows=XLSX.utils.sheet_to_json(wb.Sheets[sheetName]);
 
 rows.forEach(r=>{
 
+let rec={};
+
+for(let k in r){
+rec[k.trim().toLowerCase()]=r[k];
+}
+
+let m=rec["month"];
+
+if(typeof m==="number"){
+m=XLSX.SSF.format("mmm-yy",m);
+}
+
+months.add(m);
+projects.add(sheetName);
+
 employees.push({
-code:r["Emp Code"],
-name:r["Name"],
-month:r["Month"],
-gross:r["Gross"],
-net:r["Net in Hand"],
-project:s,
-raw:r
-});
+
+code:rec["emp code"]||"",
+name:rec["name"]||"",
+designation:rec["designation"]||"",
+uan:rec["uan no"]||"",
+esi_no:rec["esi no"]||"",
+mdays:rec["m days"]||"",
+pdays:rec["p days"]||"",
+month:m||"",
+projectLocation:sheetName,
+
+basic:rec["basic"],
+hra:rec["hra"],
+allow:rec["allowance"],
+bonus:rec["bonus"],
+attendance:rec["attendance incentive"],
+gross:rec["gross"],
+pf:rec["pf@12%"],
+esi:rec["esi@.75%"],
+lwf:rec["lwf"],
+advance:rec["advance paid"],
+net:rec["net in hand"]
 
 });
 
 });
 
-render();
+});
 
 }
 
-function render(){
+populateFilters();
+render(employees);
 
-let tb=document.getElementById("tbody");
-tb.innerHTML="";
+}
 
-employees.forEach(e=>{
+function populateFilters(){
 
-tb.innerHTML+=`
+monthFilter.innerHTML='<option value="all">All Months</option>';
+projectFilter.innerHTML='<option value="all">All Projects</option>';
+
+months.forEach(m=>{
+monthFilter.innerHTML+=`<option value="${m}">${m}</option>`;
+});
+
+projects.forEach(p=>{
+projectFilter.innerHTML+=`<option value="${p}">${p}</option>`;
+});
+
+}
+
+function applyFilter(){
+
+const m=monthFilter.value;
+const p=projectFilter.value;
+
+let data=employees.filter(e=>
+(m=="all"||e.month==m) &&
+(p=="all"||e.projectLocation==p)
+);
+
+render(data);
+
+}
+
+function render(data){
+
+tbody.innerHTML="";
+
+let g=0,n=0;
+
+data.forEach(e=>{
+
+g+=Number(e.gross);
+n+=Number(e.net);
+
+tbody.innerHTML+=`
 <tr>
 <td>${e.code}</td>
 <td>${e.name}</td>
-<td>${e.project}</td>
+<td>${e.projectLocation}</td>
 <td>${e.month}</td>
-<td>${e.gross}</td>
-<td>${e.net}</td>
-<td><button class="view" onclick='showPS(${JSON.stringify(e.raw)})'>View</button></td>
+<td>${rupee(e.gross)}</td>
+<td>${rupee(e.net)}</td>
+<td><button class="view" onclick='showPS(${JSON.stringify(e)})'>View</button></td>
 </tr>
 `;
 
 });
 
+cEmp.innerText=data.length;
+cGross.innerText=rupee(g);
+cNet.innerText=rupee(n);
+
+}
+
+function showPS(e){
+
+modal.style.display="block";
+
+psBody.innerHTML=`${document.querySelector("#psBody").innerHTML}`;
+
+psBody.innerHTML=`
+
+<!-- ORIGINAL PAYSLIP (UNCHANGED) -->
+
+${psBody.innerHTML}
+
+`;
+
+psBody.innerHTML = `
+<table class="psTable">
+<tr>
+<td class="center" style="width:150px">
+<img src="logo.png" height="70">
+</td>
+<td class="center">
+<b style="font-size:20px">Rudransh Enterprises</b><br>
+Office Address: Shop No- 4,5,6,7, Idgha Road,
+Bholanath Nagar Market, Delhi-110032
+</td>
+</tr>
+<tr>
+<td colspan="2" class="center">
+<b>Salary Slip for ${e.month}</b>
+</td>
+</tr>
+</table>
+
+<br>
+
+<table class="psTable">
+<tr>
+<td class="left">Employee Name</td>
+<td class="left">${e.name}</td>
+<td class="left">Employee Code</td>
+<td class="left">${e.code}</td>
+</tr>
+
+<tr>
+<td class="left">Designation</td>
+<td class="left">${e.designation}</td>
+<td class="left">Project & Location</td>
+<td class="left">${e.projectLocation}</td>
+</tr>
+
+<tr>
+<td class="left">UAN No</td>
+<td class="left">${e.uan}</td>
+<td class="left">ESI No</td>
+<td class="left">${e.esi_no}</td>
+</tr>
+
+<tr>
+<td class="left">M Days</td>
+<td class="left">${e.mdays}</td>
+<td class="left">P Days</td>
+<td class="left">${e.pdays}</td>
+</tr>
+</table>
+
+<br>
+
+<table class="psTable">
+<tr>
+<th class="left">Earnings</th>
+<th class="right">Amount</th>
+<th class="left">Deductions</th>
+<th class="right">Amount</th>
+</tr>
+
+<tr>
+<td class="left">Basic</td>
+<td class="right">${rupee(e.basic)}</td>
+<td class="left">PF</td>
+<td class="right">${rupee(e.pf)}</td>
+</tr>
+
+<tr>
+<td class="left">HRA</td>
+<td class="right">${rupee(e.hra)}</td>
+<td class="left">ESI</td>
+<td class="right">${rupee(e.esi)}</td>
+</tr>
+
+<tr>
+<td class="left">Allowance</td>
+<td class="right">${rupee(e.allow)}</td>
+<td class="left">LWF</td>
+<td class="right">${rupee(e.lwf)}</td>
+</tr>
+
+<tr>
+<td class="left">Bonus</td>
+<td class="right">${rupee(e.bonus)}</td>
+<td class="left">Advance</td>
+<td class="right">${rupee(e.advance)}</td>
+</tr>
+
+<tr>
+<td class="left">Attendance Incentive</td>
+<td class="right">${rupee(e.attendance)}</td>
+<td></td>
+<td></td>
+</tr>
+
+<tr>
+<td class="left"><b>Gross</b></td>
+<td class="right"><b>${rupee(e.gross)}</b></td>
+<td></td>
+<td></td>
+</tr>
+</table>
+
+<div class="net">NET PAY ${rupee(e.net)}</div>
+`;
+
+}
+
+function closePS(){
+modal.style.display="none";
 }
 
 function login(){
 
-let role=document.getElementById("role").value;
-let code=empCode.value;
-let pwd=password.value;
+const role=document.getElementById("role").value;
+const code=document.getElementById("empCode").value.trim();
+const pwd=document.getElementById("password").value;
 
 if(role==="admin"){
 
 if(pwd!=="Rud@03"){
-msg.innerText="Wrong password";
+msg.innerText="Invalid admin password";
 return;
 }
 
 loginPage.style.display="none";
 dashboard.style.display="block";
 
-}else{
+}
+
+else{
 
 if(code!==pwd){
-msg.innerText="Password must match Emp Code";
+msg.innerText="Password must equal Emp Code";
 return;
 }
 
-let months=[...new Set(
-employees.filter(e=>e.code==code).map(e=>e.month)
+const empMonths=[...new Set(
+employees.filter(e=>e.code===code).map(e=>e.month)
 )];
 
 empMonth.innerHTML="";
 
-months.forEach(m=>{
-empMonth.innerHTML+=`<option>${m}</option>`;
+empMonths.forEach(m=>{
+empMonth.innerHTML+=`<option value="${m}">${m}</option>`;
 });
 
 loginPage.style.display="none";
@@ -359,30 +626,18 @@ empPage.style.display="block";
 
 function showEmpPayslip(){
 
-let code=empCode.value;
-let m=empMonth.value;
+const code=empCode.value;
+const m=empMonth.value;
 
-let emp=employees.find(e=>e.code==code && e.month==m);
+const emp=employees.find(e=>e.code===code && e.month===m);
 
 if(!emp){
-alert("No payslip found");
+alert("Payslip not found");
 return;
 }
 
-showPS(emp.raw);
+showPS(emp);
 
-}
-
-function showPS(r){
-
-modal.style.display="block";
-
-psBody.innerHTML="... SAME AS YOUR ORIGINAL (UNCHANGED) ...";
-
-}
-
-function closePS(){
-modal.style.display="none";
 }
 
 window.onload=loadExcel;
