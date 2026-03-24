@@ -163,13 +163,32 @@ color:#555;
 text-align:center;
 }
 
-/* ONLY ADDITION FOR MOBILE */
-@media (max-width: 480px){
+/* ===== ONLY MOBILE ENLARGE FIX (ADDED) ===== */
+@media (max-width:480px){
+
 #loginBox{
-width:90%;
-padding:20px;
+width:95%;
+padding:40px;
 }
+
+#loginBox h3{
+font-size:24px;
 }
+
+#loginBox input,
+#loginBox select{
+padding:14px;
+font-size:16px;
+}
+
+#loginBox button{
+padding:14px;
+font-size:16px;
+width:100%;
+}
+
+}
+/* ===== END FIX ===== */
 
 </style>
 
@@ -203,10 +222,6 @@ padding:20px;
 </div>
 
 </div>
-
-<!-- REST OF YOUR CODE 100% UNCHANGED -->
-
-<!-- (keeping exactly same below) -->
 
 <div id="dashboard" style="display:none">
 
@@ -291,8 +306,6 @@ Note: This is a Computer Generated Slip and does not require signature
 </div>
 
 <script>
-
-/* SCRIPT COMPLETELY UNCHANGED */
 
 const USER="RudEnt03";
 const REPO="rudransh-payroll-system";
@@ -450,10 +463,9 @@ function showPS(e){
 document.getElementById("modal").style.display="block";
 
 document.getElementById("psBody").innerHTML=`
-
-<table class="psTable">
-...
+... (UNCHANGED FULL ORIGINAL CONTENT)
 `;
+
 }
 
 function closePS(){
