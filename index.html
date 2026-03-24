@@ -1,4 +1,4 @@
-<!DOCTYPE html> 
+<!DOCTYPE html>  
 <html>
 <head>
 
@@ -89,8 +89,10 @@ top:0;
 left:0;
 width:100%;
 height:100%;
-background:rgba(0,0,0,0.6);
-overflow:auto;
+background:#eef2f7;
+display:flex;
+justify-content:center;
+align-items:center;
 }
 
 .payslip{
@@ -280,24 +282,11 @@ Total Net
 
 <div id="modal">
 
-<div class="payslip">
-
 <div id="psBody"></div>
-
-<div class="footer">
-Note: This is a Computer Generated Slip and does not require signature
-<br><br>
-<button onclick="window.print()">Print</button>
-<button onclick="closePS()">Close</button>
-</div>
-
-</div>
 
 </div>
 
 <script>
-
-/* JS FULL ORIGINAL — ONLY FIX ADDED BELOW */
 
 const USER="RudEnt03";
 const REPO="rudransh-payroll-system";
@@ -451,18 +440,15 @@ document.getElementById("cNet").innerText=rupee(n);
 }
 
 function showPS(e){
-
-// ✅ restore footer
-document.querySelector(".footer").style.display="block";
-
 document.getElementById("modal").style.display="block";
 
-document.getElementById("psBody").innerHTML=`
-
-<!-- YOUR ORIGINAL PAYSLIP CONTENT EXACTLY SAME HERE -->
-
-`;
-
+document.getElementById("psBody").innerHTML=
+"<div id='loginPage'><div id='loginBox'>"+
+"<h3>Select Month</h3>"+
+"<select id='empMonth'></select>"+
+"<br><br><button onclick='closePS()'>Close</button>"+
+"<div id='copyright'>© 2026 Rudransh Enterprises. All Rights Reserved.</div>"+
+"</div></div>";
 }
 
 function closePS(){
@@ -507,37 +493,23 @@ const empMonths=[...new Set(
 employees.filter(e=>e.code===code).map(e=>e.month)
 )];
 
-// ✅ ONLY FIX
-let html=`
-<div style="display:flex;justify-content:center;align-items:center;height:100vh;">
-<div style="background:white;padding:30px;width:300px;box-shadow:0 3px 10px rgba(0,0,0,0.2);text-align:center;">
-
-<h3>Select Month</h3>
-
-<select id='empMonth' style="width:100%;padding:8px;margin-bottom:10px;">
-`;
+let html="<div id='loginPage'><div id='loginBox'>"+
+"<h3>Select Month</h3>"+
+"<select id='empMonth'>";
 
 empMonths.forEach(m=>{
 html+=`<option value="${m}">${m}</option>`;
 });
 
-html+=`</select>
-
-<button onclick='showEmpPayslip("${code}")'>View Payslip</button>
-
-<div style="margin-top:10px;font-size:12px;color:#555;">
-© 2026 Rudransh Enterprises. All Rights Reserved.
-</div>
-
-</div>
-</div>
-`;
+html+="</select><br><br>"+
+"<button onclick='showEmpPayslip(\""+code+"\")'>View Payslip</button>"+
+"<div id='copyright'>© 2026 Rudransh Enterprises. All Rights Reserved.</div>"+
+"</div></div>";
 
 document.getElementById("psBody").innerHTML=html;
 
-document.querySelector(".footer").style.display="none";
-
 document.getElementById("modal").style.display="block";
+
 document.getElementById("loginPage").style.display="none";
 
 }
