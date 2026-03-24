@@ -1,4 +1,4 @@
-<!DOCTYPE html> 
+<!DOCTYPE html>
 <html>
 <head>
 
@@ -173,7 +173,7 @@ padding:0;
 
 #loginBox{
 width:100%;
-height:100%;
+height:auto;
 border-radius:0;
 box-shadow:none;
 box-sizing:border-box;
@@ -189,7 +189,7 @@ box-sizing:border-box;
 
 <div id="loginPage">
 
-<div id="loginBox">
+<div id="loginBox" style="display:block;">
 
 <h3>Login</h3>
 
@@ -615,23 +615,22 @@ return;
 }
 
 const empMonths=[...new Set(
-employees.filter(e=>e.code===code).map(e=>e.month)
+employees.filter(e=>String(e.code).trim()===code).map(e=>e.month)
 )];
 
-/* ✅ CROPPED MONTH SELECTION LIKE LOGIN PAGE & REMOVE BUTTONS */
-let html="<div id='loginBox'><h3>Select Month</h3><select id='empMonth'>";
+/* ✅ FIX: CROPPED MONTH SELECTION BOX LIKE LOGIN PAGE */
+let loginBox=document.getElementById("loginBox");
+loginBox.innerHTML="<h3>Select Month</h3><select id='empMonth'></select><br><br><button onclick='showEmpPayslip(\""+code+"\")'>View Payslip</button><div id='copyright'>© 2026 Rudransh Enterprises. All Rights Reserved.</div>";
 
+let selectBox=document.getElementById("empMonth");
 empMonths.forEach(m=>{
-html+=`<option value="${m}">${m}</option>`;
+let opt=document.createElement("option");
+opt.value=m;
+opt.innerText=m;
+selectBox.appendChild(opt);
 });
 
-html+="</select><br><br><button onclick='showEmpPayslip(\""+code+"\")'>View Payslip</button>"+
-"<div id='copyright'>© 2026 Rudransh Enterprises. All Rights Reserved.</div></div>";
-
-document.getElementById("psBody").innerHTML=html;
-document.getElementById("modal").style.display="block";
-document.getElementById("loginPage").style.display="none";
-
+loginBox.style.display="block";
 }
 
 }
