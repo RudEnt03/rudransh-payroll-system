@@ -203,7 +203,6 @@ box-sizing:border-box;
 
 <button onclick="login()">Login</button>
 
-<!-- ✅ FIX APPLIED HERE -->
 <div id="copyright">
 © 2026 Rudransh Enterprises. All Rights Reserved.
 </div>
@@ -298,7 +297,7 @@ Note: This is a Computer Generated Slip and does not require signature
 
 <script>
 
-/* JS FULL ORIGINAL — UNTOUCHED */
+/* JS FULL ORIGINAL — ONLY SMALL ADDITIONS */
 
 const USER="RudEnt03";
 const REPO="rudransh-payroll-system";
@@ -453,124 +452,107 @@ document.getElementById("cNet").innerText=rupee(n);
 
 function showPS(e){
 
+// ✅ restore footer for payslip
+document.querySelector(".footer").style.display="block";
+
 document.getElementById("modal").style.display="block";
 
 document.getElementById("psBody").innerHTML=`
 
+<!-- ORIGINAL PAYSLIP UNCHANGED -->
+
 <table class="psTable">
-
 <tr>
-
 <td class="center" style="width:150px">
 <img src="logo.png" height="70">
 </td>
-
 <td class="center">
-
 <b style="font-size:20px">Rudransh Enterprises</b><br>
-
 Office Address: Shop No- 4,5,6,7, Idgha Road,
 Bholanath Nagar Market, Delhi-110032
-
 </td>
-
 </tr>
-
 <tr>
 <td colspan="2" class="center">
 <b>Salary Slip for ${e.month}</b>
 </td>
 </tr>
-
 </table>
 
 <br>
 
 <table class="psTable">
-
 <tr>
 <td class="left">Employee Name</td>
 <td class="left">${e.name}</td>
 <td class="left">Employee Code</td>
 <td class="left">${e.code}</td>
 </tr>
-
 <tr>
 <td class="left">Designation</td>
 <td class="left">${e.designation}</td>
 <td class="left">Project & Location</td>
 <td class="left">${e.projectLocation}</td>
 </tr>
-
 <tr>
 <td class="left">UAN No</td>
 <td class="left">${e.uan}</td>
 <td class="left">ESI No</td>
 <td class="left">${e.esi_no}</td>
 </tr>
-
 <tr>
 <td class="left">M Days</td>
 <td class="left">${e.mdays}</td>
 <td class="left">P Days</td>
 <td class="left">${e.pdays}</td>
 </tr>
-
 </table>
 
 <br>
 
 <table class="psTable">
-
 <tr>
 <th class="left">Earnings</th>
 <th class="right">Amount</th>
 <th class="left">Deductions</th>
 <th class="right">Amount</th>
 </tr>
-
 <tr>
 <td class="left">Basic</td>
 <td class="right">${rupee(e.basic)}</td>
 <td class="left">PF</td>
 <td class="right">${rupee(e.pf)}</td>
 </tr>
-
 <tr>
 <td class="left">HRA</td>
 <td class="right">${rupee(e.hra)}</td>
 <td class="left">ESI</td>
 <td class="right">${rupee(e.esi)}</td>
 </tr>
-
 <tr>
 <td class="left">Allowance</td>
 <td class="right">${rupee(e.allow)}</td>
 <td class="left">LWF</td>
 <td class="right">${rupee(e.lwf)}</td>
 </tr>
-
 <tr>
 <td class="left">Bonus</td>
 <td class="right">${rupee(e.bonus)}</td>
 <td class="left">Advance</td>
 <td class="right">${rupee(e.advance)}</td>
 </tr>
-
 <tr>
 <td class="left">Attendance Incentive</td>
 <td class="right">${rupee(e.attendance)}</td>
 <td></td>
 <td></td>
 </tr>
-
 <tr>
 <td class="left"><b>Gross</b></td>
 <td class="right"><b>${rupee(e.gross)}</b></td>
 <td></td>
 <td></td>
 </tr>
-
 </table>
 
 <div class="net">NET PAY ${rupee(e.net)}</div>
@@ -621,18 +603,28 @@ const empMonths=[...new Set(
 employees.filter(e=>e.code===code).map(e=>e.month)
 )];
 
-let html="<h3>Select Month</h3><select id='empMonth'>";
+// ✅ ONLY FIX: centered + clean UI
+let html=`
+<div style="display:flex;flex-direction:column;justify-content:center;align-items:center;height:100vh;text-align:center;">
+<h3>Select Month</h3>
+<select id='empMonth'>
+`;
 
 empMonths.forEach(m=>{
 html+=`<option value="${m}">${m}</option>`;
 });
 
-html+="</select><br><br><button onclick='showEmpPayslip(\""+code+"\")'>View Payslip</button>";
+html+=`</select><br><br>
+<button onclick='showEmpPayslip("${code}")'>View Payslip</button>
+</div>
+`;
 
 document.getElementById("psBody").innerHTML=html;
 
-document.getElementById("modal").style.display="block";
+// ✅ hide footer ONLY here
+document.querySelector(".footer").style.display="none";
 
+document.getElementById("modal").style.display="block";
 document.getElementById("loginPage").style.display="none";
 
 }
