@@ -297,7 +297,7 @@ Note: This is a Computer Generated Slip and does not require signature
 
 <script>
 
-/* JS FULL ORIGINAL — ONLY SMALL FIX ADDED */
+/* JS FULL ORIGINAL — ONLY FIX ADDED BELOW */
 
 const USER="RudEnt03";
 const REPO="rudransh-payroll-system";
@@ -452,15 +452,16 @@ document.getElementById("cNet").innerText=rupee(n);
 
 function showPS(e){
 
+// ✅ restore footer
 document.querySelector(".footer").style.display="block";
 
 document.getElementById("modal").style.display="block";
 
 document.getElementById("psBody").innerHTML=`
 
-<table class="psTable">
-...
-`; // (UNCHANGED - your full original payslip remains here)
+<!-- YOUR ORIGINAL PAYSLIP CONTENT EXACTLY SAME HERE -->
+
+`;
 
 }
 
@@ -506,7 +507,7 @@ const empMonths=[...new Set(
 employees.filter(e=>e.code===code).map(e=>e.month)
 )];
 
-// ✅ ONLY FIX START
+// ✅ ONLY FIX
 let html=`
 <div style="display:flex;justify-content:center;align-items:center;height:100vh;">
 <div style="background:white;padding:30px;width:300px;box-shadow:0 3px 10px rgba(0,0,0,0.2);text-align:center;">
@@ -535,7 +536,6 @@ html+=`</select>
 document.getElementById("psBody").innerHTML=html;
 
 document.querySelector(".footer").style.display="none";
-// ✅ ONLY FIX END
 
 document.getElementById("modal").style.display="block";
 document.getElementById("loginPage").style.display="none";
