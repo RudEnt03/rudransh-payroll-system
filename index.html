@@ -28,8 +28,8 @@ button{padding:6px 12px;border:none;border-radius:4px;cursor:pointer;color:white
 .center{text-align:center;}
 .net{font-size:20px;font-weight:bold;text-align:center;margin-top:10px;}
 .footer{text-align:center;margin-top:15px;font-size:12px;}
-#loginPage{position:fixed;width:100%;height:100%;background:#eef2f7;display:flex;justify-content:center;align-items:center;flex-direction:column;transition:all 0.5s ease;}
-#loginBox{background:white;padding:30px;width:300px;box-shadow:0 3px 10px rgba(0,0,0,0.2);transition:all 0.5s ease;}
+#loginPage{position:fixed;width:100%;height:100%;background:#eef2f7;display:flex;justify-content:center;align-items:center;flex-direction:column;transition:all 0.3s ease;}
+#loginBox{background:white;padding:30px;width:300px;box-shadow:0 3px 10px rgba(0,0,0,0.2);transition:all 0.3s ease;}
 #loginBox input,#loginBox select{width:100%;margin-bottom:10px;padding:8px;}
 #copyright{margin-top:10px;font-size:12px;color:#555;text-align:center;}
 @media (max-width:480px){
@@ -84,12 +84,17 @@ html,body{height:100%;margin:0;padding:0;}
 <div id="modal">
   <div class="payslip">
     <div id="psBody"></div>
+    <div class="footer">
+      Note: This is a Computer Generated Slip and does not require signature
+      <br><br>
+      <button onclick="window.print()">Print</button>
+      <button onclick="closePS()">Close</button>
+    </div>
   </div>
 </div>
 
 <script>
-const USER="RudEnt03";
-const REPO="rudransh-payroll-system";
+const USER="RudEnt03"; const REPO="rudransh-payroll-system";
 let employees=[], months=new Set(), projects=new Set();
 
 function rupee(v){return "₹"+Math.round(Number(v||0)).toLocaleString("en-IN");}
@@ -195,9 +200,7 @@ async function login(){
   const role=document.getElementById("role").value;
   const code=String(document.getElementById("empCode").value).trim();
   const pwd=document.getElementById("password").value;
-
   await loadExcel();
-
   if(role==="admin"){
     if(pwd!=="Rud@03"){document.getElementById("msg").innerText="Invalid admin password"; return;}
     document.getElementById("loginPage").style.display="none";
@@ -206,18 +209,15 @@ async function login(){
     const ua=navigator.userAgent;
     if(!/Android|iPhone|Mobile/i.test(ua)){document.getElementById("msg").innerText="Employee login mobile only";return;}
     if(code!==pwd){document.getElementById("msg").innerText="Password must equal Emp Code";return;}
-
     const empMonths=[...new Set(employees.filter(e=>String(e.code).trim()===code).map(e=>e.month))];
-
     const loginBox=document.getElementById("loginBox");
-    loginBox.classList.add("hidden"); // fade out login
-
+    loginBox.classList.add("hidden");
     setTimeout(()=>{
-      loginBox.innerHTML="<h3>Select Month</h3><select id='empMonth'></select><br><br><button onclick='showEmpPayslip(`"+code+"`)'>View Payslip</button><div id='copyright'>© 2026 Rudransh Enterprises. All Rights Reserved.</div>";
+      loginBox.innerHTML="<h3>Select Month</h3><select id='empMonth'></select><br><br><div id='copyright'>© 2026 Rudransh Enterprises. All Rights Reserved.</div><button onclick='showEmpPayslip(`"+code+"`)'>View Payslip</button>";
       const selectBox=document.getElementById("empMonth");
       empMonths.forEach(m=>{let opt=document.createElement("option"); opt.value=m; opt.innerText=m; selectBox.appendChild(opt);});
-      loginBox.classList.remove("hidden"); // fade in month select
-    }, 500);
+      loginBox.classList.remove("hidden");
+    },300);
   }
 }
 
