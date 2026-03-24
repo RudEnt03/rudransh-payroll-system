@@ -1,4 +1,4 @@
-<!DOCTYPE html>  
+<!DOCTYPE html> 
 <html>
 <head>
 
@@ -99,6 +99,10 @@ width:900px;
 margin:40px auto;
 padding:25px;
 position:relative;
+}
+
+.psHeader{
+border:2px solid #000;
 }
 
 .psTable{
@@ -293,8 +297,6 @@ Note: This is a Computer Generated Slip and does not require signature
 
 <script>
 
-/* FULL ORIGINAL JS — ONLY ONE SAFE FIX */
-
 const USER="RudEnt03";
 const REPO="rudransh-payroll-system";
 
@@ -346,7 +348,7 @@ projects.add(sheetName);
 
 employees.push({
 
-code:rec["emp code"]||"",
+code:String(rec["emp code"]||"").trim(), // ✅ FIX ONLY
 name:rec["name"]||"",
 designation:rec["designation"]||"",
 uan:rec["uan no"]||"",
@@ -382,6 +384,7 @@ render(employees);
 }
 
 function populateFilters(){
+
 const mSel=document.getElementById("monthFilter");
 const pSel=document.getElementById("projectFilter");
 
@@ -392,9 +395,11 @@ mSel.innerHTML+=`<option value="${m}">${m}</option>`;
 projects.forEach(p=>{
 pSel.innerHTML+=`<option value="${p}">${p}</option>`;
 });
+
 }
 
 function applyFilter(){
+
 const m=document.getElementById("monthFilter").value;
 const p=document.getElementById("projectFilter").value;
 
@@ -404,6 +409,7 @@ let data=employees.filter(e=>
 );
 
 render(data);
+
 }
 
 function render(data){
@@ -419,7 +425,9 @@ g+=Number(e.gross);
 n+=Number(e.net);
 
 tb.innerHTML+=`
+
 <tr>
+
 <td>${e.code}</td>
 <td>${e.name}</td>
 <td>${e.projectLocation}</td>
@@ -427,7 +435,9 @@ tb.innerHTML+=`
 <td>${rupee(e.gross)}</td>
 <td>${rupee(e.net)}</td>
 <td><button class="view" onclick='showPS(${JSON.stringify(e)})'>View</button></td>
+
 </tr>
+
 `;
 
 });
@@ -435,11 +445,135 @@ tb.innerHTML+=`
 document.getElementById("cEmp").innerText=data.length;
 document.getElementById("cGross").innerText=rupee(g);
 document.getElementById("cNet").innerText=rupee(n);
+
 }
 
 function showPS(e){
+
 document.getElementById("modal").style.display="block";
-document.getElementById("psBody").innerHTML=""; // untouched
+
+document.getElementById("psBody").innerHTML=`
+
+<table class="psTable">
+
+<tr>
+
+<td class="center" style="width:150px">
+<img src="logo.png" height="70">
+</td>
+
+<td class="center">
+
+<b style="font-size:20px">Rudransh Enterprises</b><br>
+
+Office Address: Shop No- 4,5,6,7, Idgha Road,
+Bholanath Nagar Market, Delhi-110032
+
+</td>
+
+</tr>
+
+<tr>
+<td colspan="2" class="center">
+<b>Salary Slip for ${e.month}</b>
+</td>
+</tr>
+
+</table>
+
+<br>
+
+<table class="psTable">
+
+<tr>
+<td class="left">Employee Name</td>
+<td class="left">${e.name}</td>
+<td class="left">Employee Code</td>
+<td class="left">${e.code}</td>
+</tr>
+
+<tr>
+<td class="left">Designation</td>
+<td class="left">${e.designation}</td>
+<td class="left">Project & Location</td>
+<td class="left">${e.projectLocation}</td>
+</tr>
+
+<tr>
+<td class="left">UAN No</td>
+<td class="left">${e.uan}</td>
+<td class="left">ESI No</td>
+<td class="left">${e.esi_no}</td>
+</tr>
+
+<tr>
+<td class="left">M Days</td>
+<td class="left">${e.mdays}</td>
+<td class="left">P Days</td>
+<td class="left">${e.pdays}</td>
+</tr>
+
+</table>
+
+<br>
+
+<table class="psTable">
+
+<tr>
+<th class="left">Earnings</th>
+<th class="right">Amount</th>
+<th class="left">Deductions</th>
+<th class="right">Amount</th>
+</tr>
+
+<tr>
+<td class="left">Basic</td>
+<td class="right">${rupee(e.basic)}</td>
+<td class="left">PF</td>
+<td class="right">${rupee(e.pf)}</td>
+</tr>
+
+<tr>
+<td class="left">HRA</td>
+<td class="right">${rupee(e.hra)}</td>
+<td class="left">ESI</td>
+<td class="right">${rupee(e.esi)}</td>
+</tr>
+
+<tr>
+<td class="left">Allowance</td>
+<td class="right">${rupee(e.allow)}</td>
+<td class="left">LWF</td>
+<td class="right">${rupee(e.lwf)}</td>
+</tr>
+
+<tr>
+<td class="left">Bonus</td>
+<td class="right">${rupee(e.bonus)}</td>
+<td class="left">Advance</td>
+<td class="right">${rupee(e.advance)}</td>
+</tr>
+
+<tr>
+<td class="left">Attendance Incentive</td>
+<td class="right">${rupee(e.attendance)}</td>
+<td></td>
+<td></td>
+</tr>
+
+<tr>
+<td class="left"><b>Gross</b></td>
+<td class="right"><b>${rupee(e.gross)}</b></td>
+<td></td>
+<td></td>
+</tr>
+
+</table>
+
+<div class="net">NET PAY ${rupee(e.net)}</div>
+
+`;
+
 }
 
 function closePS(){
@@ -449,7 +583,7 @@ document.getElementById("modal").style.display="none";
 async function login(){
 
 const role=document.getElementById("role").value;
-const code=document.getElementById("empCode").value.trim();
+const code=String(document.getElementById("empCode").value).trim(); // ✅ FIX
 const pwd=document.getElementById("password").value;
 
 await loadExcel();
@@ -484,19 +618,20 @@ const empMonths=[...new Set(
 employees.filter(e=>e.code===code).map(e=>e.month)
 )];
 
-/* ✅ ONLY FIX */
-let html="<div id='loginPage'><div id='loginBox'><h3>Select Month</h3><select id='empMonth'>";
+/* ✅ CROPPED MONTH SELECTION LIKE LOGIN PAGE */
+let html="<div id='loginBox' style='margin:50px auto; max-width:300px; background:white; padding:20px; box-shadow:0 3px 10px rgba(0,0,0,0.2)'><h3>Select Month</h3><select id='empMonth'>";
 
 empMonths.forEach(m=>{
 html+=`<option value="${m}">${m}</option>`;
 });
 
 html+="</select><br><br><button onclick='showEmpPayslip(\""+code+"\")'>View Payslip</button>"+
-"<div id='copyright'>© 2026 Rudransh Enterprises. All Rights Reserved.</div></div></div>";
+"<div id='copyright'>© 2026 Rudransh Enterprises. All Rights Reserved.</div></div>";
 
 document.getElementById("psBody").innerHTML=html;
 
 document.getElementById("modal").style.display="block";
+
 document.getElementById("loginPage").style.display="none";
 
 }
@@ -507,7 +642,7 @@ function showEmpPayslip(code){
 
 const m=document.getElementById("empMonth").value;
 
-const emp=employees.find(e=>e.code===code && e.month===m);
+const emp=employees.find(e=>String(e.code).trim()===String(code).trim() && e.month===m); // ✅ FIX
 
 if(!emp){
 alert("Payslip not found");
