@@ -348,7 +348,7 @@ projects.add(sheetName);
 
 employees.push({
 
-code:String(rec["emp code"]||"").trim(), // ✅ FIX ONLY
+code:String(rec["emp code"]||"").trim(),
 name:rec["name"]||"",
 designation:rec["designation"]||"",
 uan:rec["uan no"]||"",
@@ -583,7 +583,7 @@ document.getElementById("modal").style.display="none";
 async function login(){
 
 const role=document.getElementById("role").value;
-const code=String(document.getElementById("empCode").value).trim(); // ✅ FIX
+const code=String(document.getElementById("empCode").value).trim();
 const pwd=document.getElementById("password").value;
 
 await loadExcel();
@@ -618,8 +618,8 @@ const empMonths=[...new Set(
 employees.filter(e=>e.code===code).map(e=>e.month)
 )];
 
-/* ✅ CROPPED MONTH SELECTION LIKE LOGIN PAGE */
-let html="<div id='loginBox' style='margin:50px auto; max-width:300px; background:white; padding:20px; box-shadow:0 3px 10px rgba(0,0,0,0.2)'><h3>Select Month</h3><select id='empMonth'>";
+/* ✅ CROPPED MONTH SELECTION LIKE LOGIN PAGE & REMOVE BUTTONS */
+let html="<div id='loginBox'><h3>Select Month</h3><select id='empMonth'>";
 
 empMonths.forEach(m=>{
 html+=`<option value="${m}">${m}</option>`;
@@ -629,9 +629,7 @@ html+="</select><br><br><button onclick='showEmpPayslip(\""+code+"\")'>View Pays
 "<div id='copyright'>© 2026 Rudransh Enterprises. All Rights Reserved.</div></div>";
 
 document.getElementById("psBody").innerHTML=html;
-
 document.getElementById("modal").style.display="block";
-
 document.getElementById("loginPage").style.display="none";
 
 }
@@ -642,7 +640,7 @@ function showEmpPayslip(code){
 
 const m=document.getElementById("empMonth").value;
 
-const emp=employees.find(e=>String(e.code).trim()===String(code).trim() && e.month===m); // ✅ FIX
+const emp=employees.find(e=>String(e.code).trim()===String(code).trim() && e.month===m);
 
 if(!emp){
 alert("Payslip not found");
