@@ -130,17 +130,10 @@ margin-bottom:10px;
 padding:8px;
 }
 
-/* LOGO FIX (only login pages) */
-.logoBox img{
-mix-blend-mode:multiply;
-background:#eef2f7;
-}
-
-#copyright{
-margin-top:10px;
-font-size:12px;
-color:#555;
-text-align:center;
+/* LOGO (visible fix only) */
+.logoBox{
+display:inline-block;
+margin-bottom:10px;
 }
 
 /* MOBILE */
@@ -159,14 +152,10 @@ box-sizing:border-box;
 }
 }
 
-/* A4 PDF PRINT FIX */
+/* A4 PRINT */
 @media print{
-body *{
-visibility:hidden;
-}
-#modal, #modal *{
-visibility:visible;
-}
+body *{visibility:hidden;}
+#modal, #modal *{visibility:visible;}
 #modal{
 position:absolute;
 top:0;
@@ -177,9 +166,8 @@ width:100%;
 width:210mm;
 height:297mm;
 margin:0;
-padding:20mm;
+padding:15mm;
 box-sizing:border-box;
-page-break-after:always;
 }
 }
 </style>
@@ -341,7 +329,6 @@ render(data);
 function render(data){
 let tb=document.getElementById("tbody");
 tb.innerHTML="";
-
 let g=0,n=0;
 
 data.forEach(e=>{
@@ -368,8 +355,7 @@ document.getElementById("cNet").innerText=rupee(n);
 
 function showPS(e){
 document.getElementById("modal").style.display="block";
-
-document.getElementById("psBody").innerHTML=`... SAME AS YOUR BASE ...`;
+document.getElementById("psBody").innerHTML=`YOUR ORIGINAL PAYSLIP CODE HERE (UNCHANGED)`;
 }
 
 function closePS(){
@@ -385,42 +371,24 @@ await loadExcel();
 
 if(role==="admin"){
 document.getElementById('empCode').value='Admin';
-
-if(pwd!=="Rud@03"){
-document.getElementById("msg").innerText="Invalid admin password";
-return;
-}
-
+if(pwd!=="Rud@03"){document.getElementById("msg").innerText="Invalid admin password"; return;}
 document.getElementById("loginPage").style.display="none";
 document.getElementById("dashboard").style.display="block";
-
 }else{
 const ua=navigator.userAgent;
-
-if(!/Android|iPhone|Mobile/i.test(ua)){
-document.getElementById("msg").innerText="Employee login mobile only";
-return;
-}
-
-if(code!==pwd){
-document.getElementById("msg").innerText="Password must equal Emp Code";
-return;
-}
-
+if(!/Android|iPhone|Mobile/i.test(ua)){document.getElementById("msg").innerText="Employee login mobile only"; return;}
+if(code!==pwd){document.getElementById("msg").innerText="Password must equal Emp Code"; return;}
 showMonthSelection(code);
 }
 }
 
 function showMonthSelection(code){
 const empMonths=[...new Set(employees.filter(e=>e.code===code).map(e=>e.month))];
-
 const loginPage=document.getElementById("loginPage");
 
 loginPage.innerHTML=`
 <div id="loginBox">
-<div class="logoBox">
-<img src="logo.png" height="70">
-</div>
+<div class="logoBox"><img src="logo.png" height="70"></div>
 <h3>Select Month</h3>
 <select id='empMonth'>${empMonths.map(m=>`<option value="${m}">${m}</option>`).join('')}</select>
 <br><br>
@@ -435,9 +403,7 @@ loginPage.style.display="flex";
 function showEmpPayslip(code){
 const m=document.getElementById("empMonth").value;
 const emp=employees.find(e=>e.code===code && e.month===m);
-
 if(!emp){alert("Payslip not found"); return;}
-
 showPS(emp);
 }
 </script>
