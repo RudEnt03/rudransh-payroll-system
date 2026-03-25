@@ -123,6 +123,7 @@ background:white;
 padding:30px;
 width:300px;
 box-shadow:0 3px 10px rgba(0,0,0,0.2);
+text-align:center;
 }
 #loginBox input,#loginBox select{
 width:100%;
@@ -155,6 +156,7 @@ box-sizing:border-box;
 
 <div id="loginPage">
   <div id="loginBox">
+    <img src="logo.png" height="70"><br><br>
     <h3>Login</h3>
     <select id="role" onchange="if(this.value==='admin'){document.getElementById('empCode').value='Admin';}else{document.getElementById('empCode').value='';}">
       <option value="emp">Employee</option>
@@ -436,6 +438,7 @@ const empMonths=[...new Set(employees.filter(e=>e.code===code).map(e=>e.month))]
 const loginPage=document.getElementById("loginPage");
 loginPage.innerHTML=`
 <div id="loginBox">
+<img src="logo.png" height="70"><br><br>
 <h3>Select Month</h3>
 <select id='empMonth'>${empMonths.map(m=>`<option value="${m}">${m}</option>`).join('')}</select>
 <br><br>
