@@ -299,10 +299,11 @@ cGross.innerText=rupee(g);
 cNet.innerText=rupee(n);
 }
 
+/* 🔴 ORIGINAL PAYSLIP LAYOUT (UNCHANGED) */
 function showPS(e){
-modal.style.display="block";
+document.getElementById("modal").style.display="block";
 
-psBody.innerHTML=`
+document.getElementById("psBody").innerHTML=`
 <table class="psTable">
 <tr>
 <td class="center" style="width:150px">
