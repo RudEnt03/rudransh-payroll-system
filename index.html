@@ -7,10 +7,10 @@
 <title>Rudransh Payroll System</title>
 
 <script src="xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
 <style>
 /* ====== STYLES SAME AS BEFORE ====== */
-
 body{font-family:Segoe UI;margin:0;background:#eef2f7;}
 header{background:linear-gradient(90deg,#4e73df,#36b9cc);color:white;padding:18px;display:flex;justify-content:space-between;align-items:center;}
 .container{padding:20px;}
@@ -25,7 +25,6 @@ button{padding:6px 12px;border:none;border-radius:4px;cursor:pointer;color:white
 .view{background:#1cc88a;}
 #modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);overflow:auto;}
 .payslip{background:white;width:900px;margin:40px auto;padding:25px;position:relative;}
-.psHeader{border:2px solid #000;}
 .psTable{width:100%;border-collapse:collapse;}
 .psTable td,.psTable th{border:2px solid #000;padding:8px;}
 .left{text-align:left;}
@@ -33,60 +32,19 @@ button{padding:6px 12px;border:none;border-radius:4px;cursor:pointer;color:white
 .center{text-align:center;}
 .net{font-size:20px;font-weight:bold;text-align:center;margin-top:10px;}
 .footer{text-align:center;margin-top:15px;font-size:12px;}
-
-/* ===== LOGIN PAGE MODERN STYLE ===== */
-#loginPage{
-  position:fixed;
-  width:100%;
-  height:100%;
-  background:#eef2f7;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  flex-direction:column;
-}
-#loginBox{
-  background:white;
-  padding:30px;
-  width:320px;
-  box-shadow:0 6px 20px rgba(0,0,0,0.15);
-  border-radius:12px;
-  text-align:center;
-  position:relative;
-}
-#loginBox img.logo{
-  width:100px;
-  height:100px;
-  border-radius:50%;
-  object-fit:cover;
-  margin-bottom:15px;
-  box-shadow:0 4px 12px rgba(0,0,0,0.2);
-}
-#loginBox input,#loginBox select{
-  width:100%;
-  margin-bottom:12px;
-  padding:10px;
-  border:1px solid #ccc;
-  border-radius:6px;
-  font-size:14px;
-}
-#loginBox button{
-  width:100%;
-  padding:10px;
-  border-radius:6px;
-  background:#4e73df;
-  color:white;
-  font-weight:bold;
-  border:none;
-  cursor:pointer;
-  transition:0.3s;
-}
-#loginBox button:hover{background:#2e59d9;}
-#copyright{margin-top:12px;font-size:12px;color:#555;}
-#msg{margin-top:5px;color:red;}
+#loginPage{position:fixed;width:100%;height:100%;background:#eef2f7;display:flex;justify-content:center;align-items:center;flex-direction:column;}
+#loginBox{background:white;padding:30px;width:300px;box-shadow:0 3px 10px rgba(0,0,0,0.2);}
+#loginBox input,#loginBox select{width:100%;margin-bottom:10px;padding:8px;}
+#copyright{margin-top:10px;font-size:12px;color:#555;text-align:center;}
 @media (max-width:480px){
 html,body{height:100%;margin:0;padding:0;}
-#loginBox{width:90%;height:auto;border-radius:12px;box-shadow:0 6px 20px rgba(0,0,0,0.15);}
+#loginBox{width:100%;height:auto;border-radius:0;box-shadow:none;box-sizing:border-box;}
+}
+
+/* ====== LOCK PAYSILP CONTENT ====== */
+.payslip *{
+    user-select: none !important;
+    pointer-events: none !important;
 }
 </style>
 
@@ -96,8 +54,6 @@ html,body{height:100%;margin:0;padding:0;}
 <div id="loginPage">
 
 <div id="loginBox">
-
-<img src="logo.png" class="logo">
 
 <h3>Login</h3>
 
@@ -115,7 +71,7 @@ html,body{height:100%;margin:0;padding:0;}
 © 2026 Rudransh Enterprises. All Rights Reserved.
 </div>
 
-<div id="msg"></div>
+<div id="msg" style="color:red"></div>
 
 </div>
 
@@ -190,7 +146,7 @@ Total Net
 <div class="footer">
 Note: This is a Computer Generated Slip and does not require signature
 <br><br>
-<button onclick="window.print()">Print</button>
+<button onclick="downloadPDF()">Download PDF</button>
 <button onclick="closePS()">Close</button>
 </div>
 
@@ -199,7 +155,6 @@ Note: This is a Computer Generated Slip and does not require signature
 </div>
 
 <script>
-// ===== SAME JS LOGIC AS YOUR WORKING CODE =====
 const USER="RudEnt03";
 const REPO="rudransh-payroll-system";
 let employees=[];
@@ -279,13 +234,14 @@ document.getElementById("cGross").innerText=rupee(g);
 document.getElementById("cNet").innerText=rupee(n);
 }
 
-function showPS(e){
-document.getElementById("modal").style.display="block";
-document.getElementById("psBody").innerHTML=`
+/* ===== LOCKED PAYSILP MODULE ===== */
+const PayslipModule = (() => {
+    const template = (e) => `
+<div contenteditable="false" style="width:210mm;height:297mm;box-sizing:border-box;">
 <table class="psTable">
 <tr>
 <td class="center" style="width:150px">
-<img src="logo.png" height="70">
+<img src="logo.png" height="70" style="border-radius:50%;box-shadow:0 2px 6px rgba(0,0,0,0.15)">
 </td>
 <td class="center">
 <b style="font-size:20px">Rudransh Enterprises</b><br>
@@ -312,7 +268,24 @@ Office Address: Shop No- 4,5,6,7, Idgha Road, Bholanath Nagar Market, Delhi-1100
 <tr><td class="left"><b>Gross</b></td><td class="right"><b>${rupee(e.gross)}</b></td><td></td><td></td></tr>
 </table>
 <div class="net">NET PAY ${rupee(e.net)}</div>
+</div>
 `;
+    return Object.freeze({ getHTML: template });
+})();
+
+function showPS(e){
+    document.getElementById("modal").style.display="block";
+    document.getElementById("psBody").innerHTML = PayslipModule.getHTML(e);
+}
+
+function downloadPDF(){
+    const element=document.getElementById("psBody");
+    html2pdf().set({
+        margin:0.5,
+        filename: 'Payslip.pdf',
+        pagebreak: { mode: ['avoid-all'] },
+        jsPDF: {unit:'mm', format:'a4', orientation:'portrait'}
+    }).from(element).save();
 }
 
 function closePS(){document.getElementById("modal").style.display="none";}
