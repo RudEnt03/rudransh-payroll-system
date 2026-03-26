@@ -242,30 +242,36 @@ let data=employees.filter(e=>
 render(data);
 }
 
+// ✅ Fixed render with safe showPSSafe
 function render(data){
-let tb=document.getElementById("tbody");
-tb.innerHTML="";
-let g=0,n=0;
+    let tb=document.getElementById("tbody");
+    tb.innerHTML="";
+    let g=0,n=0;
 
-data.forEach(e=>{
-g+=Number(e.gross);
-n+=Number(e.net);
+    data.forEach(e=>{
+        g+=Number(e.gross);
+        n+=Number(e.net);
 
-tb.innerHTML+=`
-<tr>
-<td>${e.code}</td>
-<td>${e.name}</td>
-<td>${e.projectLocation}</td>
-<td>${e.month}</td>
-<td>${rupee(e.gross)}</td>
-<td>${rupee(e.net)}</td>
-<td><button class="view" onclick='showPS(${JSON.stringify(e)})'>View</button></td>
-</tr>`;
-});
+        tb.innerHTML+=`
+        <tr>
+        <td>${e.code}</td>
+        <td>${e.name}</td>
+        <td>${e.projectLocation}</td>
+        <td>${e.month}</td>
+        <td>${rupee(e.gross)}</td>
+        <td>${rupee(e.net)}</td>
+        <td><button class="view" onclick='showPSSafe(${employees.indexOf(e)})'>View</button></td>
+        </tr>`;
+    });
 
-document.getElementById("cEmp").innerText=data.length;
-document.getElementById("cGross").innerText=rupee(g);
-document.getElementById("cNet").innerText=rupee(n);
+    document.getElementById("cEmp").innerText=data.length;
+    document.getElementById("cGross").innerText=rupee(g);
+    document.getElementById("cNet").innerText=rupee(n);
+}
+
+// Wrapper to safely show payslip
+function showPSSafe(index){
+    showPS(employees[index]);
 }
 
 function showPS(e){
