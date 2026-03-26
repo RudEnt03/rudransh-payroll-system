@@ -248,6 +248,7 @@ data.forEach(e=>{
 g+=Number(e.gross);
 n+=Number(e.net);
 
+// Use data-attribute instead of inline onclick
 tb.innerHTML+=`
 <tr>
 <td>${e.code}</td>
@@ -256,7 +257,7 @@ tb.innerHTML+=`
 <td>${e.month}</td>
 <td>${rupee(e.gross)}</td>
 <td>${rupee(e.net)}</td>
-<td><button class="view" onclick='showPS(${JSON.stringify(e)})'>View</button></td>
+<td><button class="view" data-emp='${JSON.stringify(e).replace(/'/g,"&apos;")}'>View</button></td>
 </tr>`;
 });
 
@@ -264,6 +265,14 @@ document.getElementById("cEmp").innerText=data.length;
 document.getElementById("cGross").innerText=rupee(g);
 document.getElementById("cNet").innerText=rupee(n);
 }
+
+// Event delegation for admin view buttons
+document.getElementById("tbody").addEventListener("click", function(e){
+if(e.target && e.target.classList.contains("view")){
+const empData = JSON.parse(e.target.getAttribute("data-emp"));
+showPS(empData);
+}
+});
 
 function showPS(e){
 document.getElementById("modal").style.display="block";
