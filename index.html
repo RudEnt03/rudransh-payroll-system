@@ -10,21 +10,14 @@
 
 <style>
 body{font-family:Segoe UI;margin:0;background:#eef2f7;}
+html,body{overflow-x:hidden;touch-action:manipulation;}
 
-/* MOBILE FIX */
-html,body{
-overflow-x:hidden;
-touch-action:manipulation;
-}
-
-/* LOGO */
 .logoCircle{
 width:90px;height:90px;border-radius:50%;
 object-fit:cover;margin:0 auto 15px;
 box-shadow:0 4px 12px rgba(0,0,0,0.2);
 }
 
-/* LOGIN */
 #loginPage{
 position:fixed;width:100%;height:100%;
 display:flex;justify-content:center;align-items:center;
@@ -49,16 +42,13 @@ background:linear-gradient(90deg,#4e73df,#36b9cc);
 width:100%;margin-top:5px;
 }
 
-/* DASHBOARD */
 header{
 background:linear-gradient(90deg,#4e73df,#36b9cc);
 color:white;padding:18px;
 }
 
 .container{padding:20px;}
-
 .controls{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;}
-
 .cards{display:flex;gap:15px;margin-bottom:20px;}
 
 .card{
@@ -73,7 +63,6 @@ td{padding:10px;border-bottom:1px solid #eee;text-align:center;}
 
 .view{background:#1cc88a;}
 
-/* MODAL FIX */
 #modal{
 display:none;
 position:fixed;
@@ -84,16 +73,13 @@ overflow-y:auto;
 -webkit-overflow-scrolling:touch;
 }
 
-/* PAYSLIP */
 .payslip{
 background:white;
-width:794px; /* A4 width */
-min-height:1123px; /* A4 height */
+width:794px;
+min-height:1123px;
 margin:20px auto;
 padding:25px;
 box-sizing:border-box;
-
-/* MOBILE RESPONSIVE */
 max-width:95%;
 }
 
@@ -133,7 +119,6 @@ color:#555;
 
 <body>
 
-<!-- LOGIN -->
 <div id="loginPage">
 <div id="loginBox">
 <img src="logo.png" class="logoCircle">
@@ -157,7 +142,6 @@ color:#555;
 </div>
 </div>
 
-<!-- DASHBOARD -->
 <div id="dashboard" style="display:none">
 <header><h2>Payroll Dashboard</h2></header>
 
@@ -178,8 +162,13 @@ color:#555;
 <table>
 <thead>
 <tr>
-<th>Emp Code</th><th>Name</th><th>Project</th>
-<th>Month</th><th>Gross</th><th>Net</th><th>Payslip</th>
+<th>Emp Code</th>
+<th>Name</th>
+<th>Project & Location</th>
+<th>Month</th>
+<th>Gross</th>
+<th>Net</th>
+<th>Payslip</th>
 </tr>
 </thead>
 <tbody id="tbody"></tbody>
@@ -188,7 +177,6 @@ color:#555;
 </div>
 </div>
 
-<!-- PAYSLIP -->
 <div id="modal">
 <div class="payslip" id="payslipArea">
 
@@ -229,8 +217,8 @@ const r=await fetch(f.download_url);
 const data=await r.arrayBuffer();
 const wb=XLSX.read(data,{type:"array"});
 
-wb.SheetNames.forEach(sheet=>{
-const rows=XLSX.utils.sheet_to_json(wb.Sheets[sheet]);
+wb.SheetNames.forEach(sheetName=>{
+const rows=XLSX.utils.sheet_to_json(wb.Sheets[sheetName]);
 
 rows.forEach(r=>{
 let rec={};
@@ -240,7 +228,7 @@ let m=rec["month"];
 if(typeof m==="number"){m=XLSX.SSF.format("mmm-yy",m);}
 
 months.add(m);
-projects.add(sheet);
+projects.add(sheetName);
 
 employees.push({
 code:rec["emp code"]||"",
@@ -251,7 +239,7 @@ esi_no:rec["esi no"]||"",
 mdays:rec["m days"]||"",
 pdays:rec["p days"]||"",
 month:m||"",
-projectLocation:sheet,
+projectLocation:sheetName,
 basic:rec["basic"],
 hra:rec["hra"],
 allow:rec["allowance"],
@@ -313,7 +301,103 @@ cNet.innerText=rupee(n);
 
 function showPS(e){
 modal.style.display="block";
-psBody.innerHTML=`... SAME YOUR ORIGINAL PAYSLIP HTML ...`;
+
+psBody.innerHTML=`
+<table class="psTable">
+<tr>
+<td class="center" style="width:150px">
+<img src="logo.png" height="70">
+</td>
+<td class="center">
+<b style="font-size:20px">Rudransh Enterprises</b><br>
+Office Address: Shop No- 4,5,6,7, Idgha Road, Bholanath Nagar Market, Delhi-110032
+</td>
+</tr>
+<tr>
+<td colspan="2" class="center">
+<b>Salary Slip for ${e.month}</b>
+</td>
+</tr>
+</table>
+
+<br>
+
+<table class="psTable">
+<tr>
+<td class="left">Employee Name</td>
+<td class="left">${e.name}</td>
+<td class="left">Employee Code</td>
+<td class="left">${e.code}</td>
+</tr>
+<tr>
+<td class="left">Designation</td>
+<td class="left">${e.designation}</td>
+<td class="left">Project & Location</td>
+<td class="left">${e.projectLocation}</td>
+</tr>
+<tr>
+<td class="left">UAN No</td>
+<td class="left">${e.uan}</td>
+<td class="left">ESI No</td>
+<td class="left">${e.esi_no}</td>
+</tr>
+<tr>
+<td class="left">M Days</td>
+<td class="left">${e.mdays}</td>
+<td class="left">P Days</td>
+<td class="left">${e.pdays}</td>
+</tr>
+</table>
+
+<br>
+
+<table class="psTable">
+<tr>
+<th class="left">Earnings</th>
+<th class="right">Amount</th>
+<th class="left">Deductions</th>
+<th class="right">Amount</th>
+</tr>
+<tr>
+<td class="left">Basic</td>
+<td class="right">${rupee(e.basic)}</td>
+<td class="left">PF</td>
+<td class="right">${rupee(e.pf)}</td>
+</tr>
+<tr>
+<td class="left">HRA</td>
+<td class="right">${rupee(e.hra)}</td>
+<td class="left">ESI</td>
+<td class="right">${rupee(e.esi)}</td>
+</tr>
+<tr>
+<td class="left">Allowance</td>
+<td class="right">${rupee(e.allow)}</td>
+<td class="left">LWF</td>
+<td class="right">${rupee(e.lwf)}</td>
+</tr>
+<tr>
+<td class="left">Bonus</td>
+<td class="right">${rupee(e.bonus)}</td>
+<td class="left">Advance</td>
+<td class="right">${rupee(e.advance)}</td>
+</tr>
+<tr>
+<td class="left">Attendance Incentive</td>
+<td class="right">${rupee(e.attendance)}</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td class="left"><b>Gross</b></td>
+<td class="right"><b>${rupee(e.gross)}</b></td>
+<td></td>
+<td></td>
+</tr>
+</table>
+
+<div class="net">NET PAY ${rupee(e.net)}</div>
+`;
 }
 
 function downloadPDF(){
@@ -355,15 +439,16 @@ loginPage.innerHTML=`
 <div id="loginBox">
 <img src="logo.png" class="logoCircle">
 <h3>Select Month</h3>
-<select id='empMonth'>${mList.map(m=>`<option>${m}</option>`)}</select>
+<select id='empMonth'>${mList.map(m=>`<option>${m}</option>`).join('')}</select>
 <button onclick='showEmpPayslip("${code}")'>View Payslip</button>
 <div id="copyright">© 2026 Rudransh Enterprises. All Rights Reserved.</div>
 </div>`;
 }
 
 function showEmpPayslip(code){
-const m=empMonth.value;
+const m=document.getElementById("empMonth").value;
 const emp=employees.find(e=>e.code===code && e.month===m);
+if(!emp){alert("Payslip not found");return;}
 showPS(emp);
 }
 </script>
