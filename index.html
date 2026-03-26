@@ -13,7 +13,7 @@ margin:0;
 background:#eef2f7;
 }
 
-/* ✅ ROUND LOGO */
+/* ✅ ROUND LOGO ONLY (NO OTHER CHANGE) */
 .logoCircle{
 width:90px;
 height:90px;
@@ -21,7 +21,6 @@ border-radius:50%;
 object-fit:cover;
 display:block;
 margin:0 auto 15px auto;
-box-shadow:0 4px 12px rgba(0,0,0,0.25);
 }
 
 /* LOGIN */
@@ -39,31 +38,18 @@ flex-direction:column;
 #loginBox{
 background:white;
 padding:30px;
-width:320px;
-border-radius:12px;
-box-shadow:0 8px 20px rgba(0,0,0,0.15);
+width:300px;
+box-shadow:0 3px 10px rgba(0,0,0,0.2);
 text-align:center;
 }
 
 #loginBox input,#loginBox select{
 width:100%;
 margin-bottom:10px;
-padding:10px;
-border-radius:6px;
-border:1px solid #ccc;
+padding:8px;
 }
 
-button{
-padding:10px;
-border:none;
-border-radius:6px;
-cursor:pointer;
-color:white;
-background:linear-gradient(90deg,#4e73df,#36b9cc);
-width:100%;
-}
-
-/* ORIGINAL */
+/* ORIGINAL STYLES */
 header{
 background:linear-gradient(90deg,#4e73df,#36b9cc);
 color:white;
@@ -87,6 +73,14 @@ box-shadow:0 2px 6px rgba(0,0,0,0.1);
 table{width:100%;border-collapse:collapse;background:white;}
 th{background:#4e73df;color:white;padding:10px;}
 td{padding:10px;border-bottom:1px solid #eee;text-align:center;}
+button{
+padding:6px 12px;
+border:none;
+border-radius:4px;
+cursor:pointer;
+color:white;
+background:#36b9cc;
+}
 .view{background:#1cc88a;}
 
 #modal{
@@ -105,13 +99,26 @@ background:white;
 width:900px;
 margin:40px auto;
 padding:25px;
+position:relative;
 }
 
-.psTable{width:100%;border-collapse:collapse;}
+.psHeader{
+border:2px solid #000;
+}
+
+.psTable{
+width:100%;
+border-collapse:collapse;
+}
+
 .psTable td,.psTable th{
 border:2px solid #000;
 padding:8px;
 }
+
+.left{text-align:left;}
+.right{text-align:right;}
+.center{text-align:center;}
 
 .net{
 font-size:20px;
@@ -120,10 +127,27 @@ text-align:center;
 margin-top:10px;
 }
 
-.footer{text-align:center;margin-top:15px;font-size:12px;}
+.footer{
+text-align:center;
+margin-top:15px;
+font-size:12px;
+}
+
+#copyright{
+margin-top:10px;
+font-size:12px;
+color:#555;
+text-align:center;
+}
 
 @media (max-width:480px){
-#loginBox{width:90%;}
+#loginBox{
+width:100%;
+height:100%;
+border-radius:0;
+box-shadow:none;
+box-sizing:border-box;
+}
 }
 </style>
 </head>
@@ -133,7 +157,7 @@ margin-top:10px;
 <div id="loginPage">
   <div id="loginBox">
 
-    <!-- LOGO -->
+    <!-- ✅ LOGO ADDED -->
     <img src="logo.png" class="logoCircle">
 
     <h3>Login</h3>
@@ -148,9 +172,11 @@ margin-top:10px;
 
     <button onclick="login()">Login</button>
 
-    <div style="font-size:12px;margin-top:10px;">© 2026 Rudransh Enterprises</div>
-    <div id="msg" style="color:red"></div>
+    <div id="copyright">
+      © 2026 Rudransh Enterprises. All Rights Reserved.
+    </div>
 
+    <div id="msg" style="color:red"></div>
   </div>
 </div>
 
@@ -161,20 +187,34 @@ margin-top:10px;
 
 <div class="container">
 
-<div style="text-align:center;margin-bottom:15px;">
+<!-- ✅ SMALL LOGO -->
+<div style="text-align:center;margin-bottom:10px;">
 <img src="logo.png" class="logoCircle" style="width:70px;height:70px;">
 </div>
 
 <div class="controls">
-<select id="monthFilter"><option value="all">All Months</option></select>
-<select id="projectFilter"><option value="all">All Projects</option></select>
+<select id="monthFilter">
+<option value="all">All Months</option>
+</select>
+<select id="projectFilter">
+<option value="all">All Projects</option>
+</select>
 <button onclick="applyFilter()">Filter</button>
 </div>
 
 <div class="cards">
-<div class="card">Total Employees<p id="cEmp">0</p></div>
-<div class="card">Total Gross<p id="cGross">0</p></div>
-<div class="card">Total Net<p id="cNet">0</p></div>
+<div class="card">
+Total Employees
+<p id="cEmp">0</p>
+</div>
+<div class="card">
+Total Gross
+<p id="cGross">0</p>
+</div>
+<div class="card">
+Total Net
+<p id="cNet">0</p>
+</div>
 </div>
 
 <table>
@@ -275,9 +315,6 @@ function populateFilters(){
 const mSel=document.getElementById("monthFilter");
 const pSel=document.getElementById("projectFilter");
 
-mSel.innerHTML='<option value="all">All Months</option>';
-pSel.innerHTML='<option value="all">All Projects</option>';
-
 months.forEach(m=>{mSel.innerHTML+=`<option value="${m}">${m}</option>`;});
 projects.forEach(p=>{pSel.innerHTML+=`<option value="${p}">${p}</option>`;});
 }
@@ -325,6 +362,7 @@ function showPS(e){
 document.getElementById("modal").style.display="block";
 
 document.getElementById("psBody").innerHTML=`
+
 <table class="psTable">
 <tr>
 <td class="center" style="width:150px">
@@ -332,7 +370,7 @@ document.getElementById("psBody").innerHTML=`
 </td>
 <td class="center">
 <b style="font-size:20px">Rudransh Enterprises</b><br>
-Office Address: Delhi-110032
+Office Address: Shop No- 4,5,6,7, Idgha Road, Bholanath Nagar Market, Delhi-110032
 </td>
 </tr>
 <tr>
@@ -341,15 +379,85 @@ Office Address: Delhi-110032
 </td>
 </tr>
 </table>
+
 <br>
+
 <table class="psTable">
 <tr>
-<td>Employee Name</td><td>${e.name}</td>
-<td>Employee Code</td><td>${e.code}</td>
+<td class="left">Employee Name</td>
+<td class="left">${e.name}</td>
+<td class="left">Employee Code</td>
+<td class="left">${e.code}</td>
+</tr>
+<tr>
+<td class="left">Designation</td>
+<td class="left">${e.designation}</td>
+<td class="left">Project & Location</td>
+<td class="left">${e.projectLocation}</td>
+</tr>
+<tr>
+<td class="left">UAN No</td>
+<td class="left">${e.uan}</td>
+<td class="left">ESI No</td>
+<td class="left">${e.esi_no}</td>
+</tr>
+<tr>
+<td class="left">M Days</td>
+<td class="left">${e.mdays}</td>
+<td class="left">P Days</td>
+<td class="left">${e.pdays}</td>
 </tr>
 </table>
+
 <br>
+
+<table class="psTable">
+<tr>
+<th class="left">Earnings</th>
+<th class="right">Amount</th>
+<th class="left">Deductions</th>
+<th class="right">Amount</th>
+</tr>
+<tr>
+<td class="left">Basic</td>
+<td class="right">${rupee(e.basic)}</td>
+<td class="left">PF</td>
+<td class="right">${rupee(e.pf)}</td>
+</tr>
+<tr>
+<td class="left">HRA</td>
+<td class="right">${rupee(e.hra)}</td>
+<td class="left">ESI</td>
+<td class="right">${rupee(e.esi)}</td>
+</tr>
+<tr>
+<td class="left">Allowance</td>
+<td class="right">${rupee(e.allow)}</td>
+<td class="left">LWF</td>
+<td class="right">${rupee(e.lwf)}</td>
+</tr>
+<tr>
+<td class="left">Bonus</td>
+<td class="right">${rupee(e.bonus)}</td>
+<td class="left">Advance</td>
+<td class="right">${rupee(e.advance)}</td>
+</tr>
+<tr>
+<td class="left">Attendance Incentive</td>
+<td class="right">${rupee(e.attendance)}</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td class="left"><b>Gross</b></td>
+<td class="right"><b>${rupee(e.gross)}</b></td>
+<td></td>
+<td></td>
+</tr>
+</table>
+
 <div class="net">NET PAY ${rupee(e.net)}</div>
+
 `;
 }
 
@@ -363,13 +471,42 @@ const pwd=document.getElementById("password").value;
 await loadExcel();
 
 if(role==="admin"){
-if(pwd!=="Rud@03"){document.getElementById("msg").innerText="Invalid admin password";return;}
+document.getElementById('empCode').value='Admin';
+if(pwd!=="Rud@03"){document.getElementById("msg").innerText="Invalid admin password"; return;}
 document.getElementById("loginPage").style.display="none";
 document.getElementById("dashboard").style.display="block";
 }else{
-if(code!==pwd){document.getElementById("msg").innerText="Password must equal Emp Code";return;}
-alert("Employee login working");
+const ua=navigator.userAgent;
+if(!/Android|iPhone|Mobile/i.test(ua)){document.getElementById("msg").innerText="Employee login mobile only"; return;}
+if(code!==pwd){document.getElementById("msg").innerText="Password must equal Emp Code"; return;}
+showMonthSelection(code);
 }
+}
+
+function showMonthSelection(code){
+const empMonths=[...new Set(employees.filter(e=>e.code===code).map(e=>e.month))];
+
+const loginPage=document.getElementById("loginPage");
+
+loginPage.innerHTML=`
+<div id="loginBox">
+<img src="logo.png" class="logoCircle">
+<h3>Select Month</h3>
+<select id='empMonth'>${empMonths.map(m=>`<option value="${m}">${m}</option>`).join('')}</select>
+<br><br>
+<button onclick='showEmpPayslip("${code}")'>View Payslip</button>
+<div id="copyright">© 2026 Rudransh Enterprises. All Rights Reserved.</div>
+</div>
+`;
+
+loginPage.style.display="flex";
+}
+
+function showEmpPayslip(code){
+const m=document.getElementById("empMonth").value;
+const emp=employees.find(e=>e.code===code && e.month===m);
+if(!emp){alert("Payslip not found"); return;}
+showPS(emp);
 }
 </script>
 
