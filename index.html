@@ -2,14 +2,14 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Rudransh Payroll System</title>
 
 <script src="xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
 <style>
-body{font-family:Segoe UI;margin:0;background:#eef2f7;overflow-x:hidden;}
+body{font-family:Segoe UI;margin:0;background:#eef2f7;}
 
 /* LOGO */
 .logoCircle{
@@ -55,19 +55,18 @@ text-align:center;box-shadow:0 2px 6px rgba(0,0,0,0.1);
 table{width:100%;border-collapse:collapse;background:white;}
 th{background:#4e73df;color:white;padding:10px;}
 td{padding:10px;border-bottom:1px solid #eee;text-align:center;}
-.view{background:#1cc88a;}
+.view-btn{background:#1cc88a;}
 
+/* MODAL */
 #modal{
 display:none;position:fixed;width:100%;height:100%;
 background:rgba(0,0,0,0.6);overflow:auto;
-touch-action: pan-y pinch-zoom;
 }
 
 /* A4 */
 .payslip{
 background:white;width:794px;min-height:1123px;
 margin:40px auto;padding:25px;box-sizing:border-box;
-touch-action: pinch-zoom;
 }
 
 .psTable{width:100%;border-collapse:collapse;}
@@ -182,7 +181,6 @@ const wb=XLSX.read(data,{type:"array"});
 
 wb.SheetNames.forEach(sheetName=>{
 const rows=XLSX.utils.sheet_to_json(wb.Sheets[sheetName]);
-
 rows.forEach(r=>{
 let rec={};
 for(let k in r){rec[k.trim().toLowerCase()]=r[k];}
@@ -242,52 +240,48 @@ let data=employees.filter(e=>
 render(data);
 }
 
-// ✅ Fixed render with safe lookup using data-code + data-month
+// ✅ Safe render with event listeners
 function render(data){
-    let tb=document.getElementById("tbody");
-    tb.innerHTML="";
-    let g=0,n=0;
+let tb=document.getElementById("tbody");
+tb.innerHTML="";
+let g=0,n=0;
 
-    data.forEach(e=>{
-        g+=Number(e.gross);
-        n+=Number(e.net);
+data.forEach(e=>{
+g+=Number(e.gross);
+n+=Number(e.net);
 
-        tb.innerHTML+=`
-        <tr>
-        <td>${e.code}</td>
-        <td>${e.name}</td>
-        <td>${e.projectLocation}</td>
-        <td>${e.month}</td>
-        <td>${rupee(e.gross)}</td>
-        <td>${rupee(e.net)}</td>
-        <td>
-            <button class="view" 
-                data-code="${e.code}" 
-                data-month="${e.month}" 
-                onclick="showPSByCodeMonth(this)">
-                View
-            </button>
-        </td>
-        </tr>`;
-    });
+tb.innerHTML+=`
+<tr>
+<td>${e.code}</td>
+<td>${e.name}</td>
+<td>${e.projectLocation}</td>
+<td>${e.month}</td>
+<td>${rupee(e.gross)}</td>
+<td>${rupee(e.net)}</td>
+<td>
+<button class="view-btn" data-code="${e.code}" data-month="${e.month}">View</button>
+</td>
+</tr>`;
+});
 
-    document.getElementById("cEmp").innerText=data.length;
-    document.getElementById("cGross").innerText=rupee(g);
-    document.getElementById("cNet").innerText=rupee(n);
-}
+document.getElementById("cEmp").innerText=data.length;
+document.getElementById("cGross").innerText=rupee(g);
+document.getElementById("cNet").innerText=rupee(n);
 
-// New function to safely get employee by button attributes
-function showPSByCodeMonth(btn){
+// Attach click handlers safely
+document.querySelectorAll('.view-btn').forEach(btn=>{
+btn.addEventListener('click', ()=>{
     const code = btn.dataset.code;
     const month = btn.dataset.month;
     const emp = employees.find(e=>e.code===code && e.month===month);
     if(emp) showPS(emp);
     else alert("Payslip not found!");
+});
+});
 }
 
 function showPS(e){
-const modal=document.getElementById("modal");
-modal.style.display="block";
+document.getElementById("modal").style.display="block";
 
 document.getElementById("psBody").innerHTML=`<table class="psTable">
 <tr>
@@ -318,9 +312,7 @@ Office Address: Shop No- 4,5,6,7, Idgha Road, Bholanath Nagar Market, Delhi-1100
 <tr><td class="left">Attendance Incentive</td><td class="right">${rupee(e.attendance)}</td><td></td><td></td></tr>
 <tr><td class="left"><b>Gross</b></td><td class="right"><b>${rupee(e.gross)}</b></td><td></td><td></td></tr>
 </table>
-<div class="net">NET PAY ${rupee(e.net)}</div>
-`;
-
+<div class="net">NET PAY ${rupee(e.net)}</div>`;
 }
 
 function downloadPDF(){
