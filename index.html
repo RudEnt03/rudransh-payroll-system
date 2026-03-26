@@ -141,7 +141,7 @@ let data=employees.filter(e=>(m=="all"||e.month==m)&&(p=="all"||e.projectLocatio
 render(data);
 }
 
-// ✅ FIXED: Admin View buttons
+// ✅ Fixed: render table and delegate clicks
 function render(data){
 let tb=document.getElementById("tbody"); tb.innerHTML=""; let g=0,n=0;
 data.forEach(e=>{
@@ -154,16 +154,17 @@ tb.innerHTML+=`<tr>
 document.getElementById("cEmp").innerText=data.length;
 document.getElementById("cGross").innerText=rupee(g);
 document.getElementById("cNet").innerText=rupee(n);
-
-// Attach click events
-document.querySelectorAll('.view-btn').forEach(btn=>{
-btn.addEventListener('click', ()=>{
-const code=btn.dataset.code, month=btn.dataset.month;
-const emp=employees.find(e=>e.code===code && e.month===month);
-if(emp) showPS(emp); else alert("Payslip not found!");
-});
-});
 }
+
+// ✅ Event delegation for view buttons
+document.getElementById("tbody").addEventListener("click", function(e){
+if(e.target && e.target.classList.contains("view-btn")){
+const code=e.target.dataset.code;
+const month=e.target.dataset.month;
+const emp=employees.find(emp=>emp.code===code && emp.month===month);
+if(emp) showPS(emp); else alert("Payslip not found!");
+}
+});
 
 function showPS(e){
 document.getElementById("modal").style.display="block";
