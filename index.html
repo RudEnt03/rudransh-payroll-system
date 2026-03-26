@@ -4,150 +4,89 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Rudransh Payroll System</title>
+
 <script src="xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
 <style>
-body{
-font-family:Segoe UI;
-margin:0;
-background:#eef2f7;
-}
+body{font-family:Segoe UI;margin:0;background:#eef2f7;}
 
-/* ✅ ROUND LOGO ONLY (NO OTHER CHANGE) */
 .logoCircle{
-width:90px;
-height:90px;
-border-radius:50%;
-object-fit:cover;
-display:block;
-margin:0 auto 15px auto;
+width:90px;height:90px;border-radius:50%;
+object-fit:cover;display:block;margin:0 auto 15px;
 }
 
-/* LOGIN */
+/* LOGIN SAME */
 #loginPage{
-position:fixed;
-width:100%;
-height:100%;
-background:#eef2f7;
-display:flex;
-justify-content:center;
-align-items:center;
-flex-direction:column;
+position:fixed;width:100%;height:100%;
+display:flex;justify-content:center;align-items:center;flex-direction:column;
 }
 
 #loginBox{
-background:white;
-padding:30px;
-width:300px;
-box-shadow:0 3px 10px rgba(0,0,0,0.2);
-text-align:center;
+background:white;padding:30px;width:300px;
+box-shadow:0 3px 10px rgba(0,0,0,0.2);text-align:center;
 }
 
 #loginBox input,#loginBox select{
-width:100%;
-margin-bottom:10px;
-padding:8px;
+width:100%;margin-bottom:10px;padding:8px;
 }
 
-/* ORIGINAL STYLES */
+/* ORIGINAL UI */
 header{
 background:linear-gradient(90deg,#4e73df,#36b9cc);
-color:white;
-padding:18px;
-display:flex;
-justify-content:space-between;
-align-items:center;
+color:white;padding:18px;
+display:flex;justify-content:space-between;align-items:center;
 }
+
 .container{padding:20px;}
 .controls{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px;}
-input,select{padding:8px;}
 .cards{display:flex;gap:15px;margin-bottom:20px;}
+
 .card{
-flex:1;
-background:white;
-padding:20px;
-border-radius:8px;
-text-align:center;
-box-shadow:0 2px 6px rgba(0,0,0,0.1);
+flex:1;background:white;padding:20px;border-radius:8px;
+text-align:center;box-shadow:0 2px 6px rgba(0,0,0,0.1);
 }
+
 table{width:100%;border-collapse:collapse;background:white;}
 th{background:#4e73df;color:white;padding:10px;}
 td{padding:10px;border-bottom:1px solid #eee;text-align:center;}
+
 button{
-padding:6px 12px;
-border:none;
-border-radius:4px;
-cursor:pointer;
-color:white;
-background:#36b9cc;
+padding:6px 12px;border:none;border-radius:4px;
+cursor:pointer;color:white;background:#36b9cc;
 }
+
 .view{background:#1cc88a;}
 
 #modal{
-display:none;
-position:fixed;
-top:0;
-left:0;
-width:100%;
-height:100%;
-background:rgba(0,0,0,0.6);
-overflow:auto;
+display:none;position:fixed;top:0;left:0;width:100%;height:100%;
+background:rgba(0,0,0,0.6);overflow:auto;
 }
 
+/* 🔴 A4 PERFECT */
 .payslip{
 background:white;
-width:900px;
-margin:40px auto;
+width:794px;   /* A4 width px */
+min-height:1123px; /* A4 height px */
+margin:20px auto;
 padding:25px;
-position:relative;
+box-sizing:border-box;
 }
 
-.psHeader{
-border:2px solid #000;
-}
-
-.psTable{
-width:100%;
-border-collapse:collapse;
-}
-
-.psTable td,.psTable th{
-border:2px solid #000;
-padding:8px;
-}
+.psTable{width:100%;border-collapse:collapse;}
+.psTable td,.psTable th{border:2px solid #000;padding:8px;}
 
 .left{text-align:left;}
 .right{text-align:right;}
 .center{text-align:center;}
 
-.net{
-font-size:20px;
-font-weight:bold;
-text-align:center;
-margin-top:10px;
-}
+.net{font-size:20px;font-weight:bold;text-align:center;margin-top:10px;}
+.footer{text-align:center;margin-top:15px;font-size:12px;}
 
-.footer{
-text-align:center;
-margin-top:15px;
-font-size:12px;
-}
-
-#copyright{
-margin-top:10px;
-font-size:12px;
-color:#555;
-text-align:center;
-}
-
-@media (max-width:480px){
-#loginBox{
-width:100%;
-height:100%;
-border-radius:0;
-box-shadow:none;
-box-sizing:border-box;
-}
+@media print{
+body *{visibility:hidden;}
+.payslip, .payslip *{visibility:visible;}
+.payslip{position:absolute;left:0;top:0;}
 }
 </style>
 </head>
@@ -155,78 +94,50 @@ box-sizing:border-box;
 <body>
 
 <div id="loginPage">
-  <div id="loginBox">
+<div id="loginBox">
+<img src="logo.png" class="logoCircle">
+<h3>Login</h3>
 
-    <!-- ✅ LOGO ADDED -->
-    <img src="logo.png" class="logoCircle">
+<select id="role" onchange="if(this.value==='admin'){empCode.value='Admin'}else{empCode.value=''}">
+<option value="emp">Employee</option>
+<option value="admin">Admin</option>
+</select>
 
-    <h3>Login</h3>
+<input id="empCode" placeholder="Employee Code">
+<input id="password" type="password" placeholder="Password">
 
-    <select id="role" onchange="if(this.value==='admin'){document.getElementById('empCode').value='Admin';}else{document.getElementById('empCode').value='';}">
-      <option value="emp">Employee</option>
-      <option value="admin">Admin</option>
-    </select>
-
-    <input id="empCode" placeholder="Employee Code">
-    <input id="password" type="password" placeholder="Password">
-
-    <button onclick="login()">Login</button>
-
-    <div id="copyright">
-      © 2026 Rudransh Enterprises. All Rights Reserved.
-    </div>
-
-    <div id="msg" style="color:red"></div>
-  </div>
+<button onclick="login()">Login</button>
+<div style="font-size:12px;margin-top:10px;">© 2026 Rudransh Enterprises</div>
+<div id="msg" style="color:red"></div>
+</div>
 </div>
 
 <div id="dashboard" style="display:none">
-<header>
-<h2>Payroll Dashboard</h2>
-</header>
+<header><h2>Payroll Dashboard</h2></header>
 
 <div class="container">
 
-<!-- ✅ SMALL LOGO -->
 <div style="text-align:center;margin-bottom:10px;">
 <img src="logo.png" class="logoCircle" style="width:70px;height:70px;">
 </div>
 
 <div class="controls">
-<select id="monthFilter">
-<option value="all">All Months</option>
-</select>
-<select id="projectFilter">
-<option value="all">All Projects</option>
-</select>
+<select id="monthFilter"><option value="all">All Months</option></select>
+<select id="projectFilter"><option value="all">All Projects</option></select>
 <button onclick="applyFilter()">Filter</button>
 </div>
 
 <div class="cards">
-<div class="card">
-Total Employees
-<p id="cEmp">0</p>
-</div>
-<div class="card">
-Total Gross
-<p id="cGross">0</p>
-</div>
-<div class="card">
-Total Net
-<p id="cNet">0</p>
-</div>
+<div class="card">Total Employees<p id="cEmp">0</p></div>
+<div class="card">Total Gross<p id="cGross">0</p></div>
+<div class="card">Total Net<p id="cNet">0</p></div>
 </div>
 
 <table>
 <thead>
 <tr>
-<th>Emp Code</th>
-<th>Name</th>
-<th>Project & Location</th>
-<th>Month</th>
-<th>Gross</th>
-<th>Net</th>
-<th>Payslip</th>
+<th>Emp Code</th><th>Name</th><th>Project</th>
+<th>Month</th><th>Gross</th><th>Net</th><th>Payslip</th>
 </tr>
 </thead>
 <tbody id="tbody"></tbody>
@@ -236,35 +147,33 @@ Total Net
 </div>
 
 <div id="modal">
-<div class="payslip">
+<div class="payslip" id="payslipArea">
 <div id="psBody"></div>
+
 <div class="footer">
-Note: This is a Computer Generated Slip and does not require signature
-<br><br>
-<button onclick="window.print()">Print</button>
+<button onclick="downloadPDF()">Download PDF</button>
 <button onclick="closePS()">Close</button>
 </div>
 </div>
 </div>
 
 <script>
-const USER="RudEnt03";
-const REPO="rudransh-payroll-system";
-let employees=[];
-let months=new Set();
-let projects=new Set();
+const files=[
+"data1.xlsx",
+"data2.xlsx"
+];
+
+const base="https://raw.githubusercontent.com/RudEnt03/rudransh-payroll-system/main/";
+
+let employees=[],months=new Set(),projects=new Set();
 
 function rupee(v){return "₹"+Math.round(Number(v||0)).toLocaleString("en-IN");}
 
 async function loadExcel(){
 employees=[];
-const api=`https://api.github.com/repos/${USER}/${REPO}/contents`;
-const res=await fetch(api);
-const files=await res.json();
-const excels=files.filter(f=>f.name.endsWith(".xlsx"));
 
-for(const f of excels){
-const r=await fetch(f.download_url);
+for(const f of files){
+const r=await fetch(base+f);
 const data=await r.arrayBuffer();
 const wb=XLSX.read(data,{type:"array"});
 
@@ -278,8 +187,7 @@ for(let k in r){rec[k.trim().toLowerCase()]=r[k];}
 let m=rec["month"];
 if(typeof m==="number"){m=XLSX.SSF.format("mmm-yy",m);}
 
-months.add(m);
-projects.add(sheetName);
+months.add(m);projects.add(sheetName);
 
 employees.push({
 code:rec["emp code"]||"",
@@ -312,36 +220,28 @@ render(employees);
 }
 
 function populateFilters(){
-const mSel=document.getElementById("monthFilter");
-const pSel=document.getElementById("projectFilter");
+monthFilter.innerHTML='<option value="all">All Months</option>';
+projectFilter.innerHTML='<option value="all">All Projects</option>';
 
-months.forEach(m=>{mSel.innerHTML+=`<option value="${m}">${m}</option>`;});
-projects.forEach(p=>{pSel.innerHTML+=`<option value="${p}">${p}</option>`;});
+months.forEach(m=>monthFilter.innerHTML+=`<option>${m}</option>`);
+projects.forEach(p=>projectFilter.innerHTML+=`<option>${p}</option>`);
 }
 
 function applyFilter(){
-const m=document.getElementById("monthFilter").value;
-const p=document.getElementById("projectFilter").value;
-
-let data=employees.filter(e=>
-(m=="all"||e.month==m) &&
-(p=="all"||e.projectLocation==p)
-);
-
-render(data);
+render(employees.filter(e=>
+(monthFilter.value=="all"||e.month==monthFilter.value)&&
+(projectFilter.value=="all"||e.projectLocation==projectFilter.value)
+));
 }
 
 function render(data){
-let tb=document.getElementById("tbody");
-tb.innerHTML="";
-
+tbody.innerHTML="";
 let g=0,n=0;
 
 data.forEach(e=>{
-g+=Number(e.gross);
-n+=Number(e.net);
+g+=+e.gross;n+=+e.net;
 
-tb.innerHTML+=`
+tbody.innerHTML+=`
 <tr>
 <td>${e.code}</td>
 <td>${e.name}</td>
@@ -349,20 +249,20 @@ tb.innerHTML+=`
 <td>${e.month}</td>
 <td>${rupee(e.gross)}</td>
 <td>${rupee(e.net)}</td>
-<td><button class="view" onclick='showPS(${JSON.stringify(e)})'>View</button></td>
+<td><button onclick='showPS(${JSON.stringify(e)})'>View</button></td>
 </tr>`;
 });
 
-document.getElementById("cEmp").innerText=data.length;
-document.getElementById("cGross").innerText=rupee(g);
-document.getElementById("cNet").innerText=rupee(n);
+cEmp.innerText=data.length;
+cGross.innerText=rupee(g);
+cNet.innerText=rupee(n);
 }
 
+/* ✅ ORIGINAL PAYSLIP EXACT */
 function showPS(e){
-document.getElementById("modal").style.display="block";
+modal.style.display="block";
 
-document.getElementById("psBody").innerHTML=`
-
+psBody.innerHTML=`
 <table class="psTable">
 <tr>
 <td class="center" style="width:150px">
@@ -457,56 +357,33 @@ Office Address: Shop No- 4,5,6,7, Idgha Road, Bholanath Nagar Market, Delhi-1100
 </table>
 
 <div class="net">NET PAY ${rupee(e.net)}</div>
-
 `;
 }
 
-function closePS(){document.getElementById("modal").style.display="none";}
+/* ✅ PERFECT PDF */
+function downloadPDF(){
+html2pdf().set({
+margin:0,
+filename:'Payslip.pdf',
+image:{type:'jpeg',quality:1},
+html2canvas:{scale:2},
+jsPDF:{unit:'px',format:[794,1123],orientation:'portrait'}
+}).from(document.getElementById("payslipArea")).save();
+}
+
+function closePS(){modal.style.display="none";}
 
 async function login(){
-const role=document.getElementById("role").value;
-const code=document.getElementById("empCode").value.trim();
-const pwd=document.getElementById("password").value;
-
 await loadExcel();
 
-if(role==="admin"){
-document.getElementById('empCode').value='Admin';
-if(pwd!=="Rud@03"){document.getElementById("msg").innerText="Invalid admin password"; return;}
-document.getElementById("loginPage").style.display="none";
-document.getElementById("dashboard").style.display="block";
+if(role.value==="admin"){
+if(password.value!=="Rud@03"){msg.innerText="Invalid";return;}
+loginPage.style.display="none";
+dashboard.style.display="block";
 }else{
-const ua=navigator.userAgent;
-if(!/Android|iPhone|Mobile/i.test(ua)){document.getElementById("msg").innerText="Employee login mobile only"; return;}
-if(code!==pwd){document.getElementById("msg").innerText="Password must equal Emp Code"; return;}
-showMonthSelection(code);
+if(empCode.value!==password.value){msg.innerText="Invalid";return;}
+alert("Employee login OK");
 }
-}
-
-function showMonthSelection(code){
-const empMonths=[...new Set(employees.filter(e=>e.code===code).map(e=>e.month))];
-
-const loginPage=document.getElementById("loginPage");
-
-loginPage.innerHTML=`
-<div id="loginBox">
-<img src="logo.png" class="logoCircle">
-<h3>Select Month</h3>
-<select id='empMonth'>${empMonths.map(m=>`<option value="${m}">${m}</option>`).join('')}</select>
-<br><br>
-<button onclick='showEmpPayslip("${code}")'>View Payslip</button>
-<div id="copyright">© 2026 Rudransh Enterprises. All Rights Reserved.</div>
-</div>
-`;
-
-loginPage.style.display="flex";
-}
-
-function showEmpPayslip(code){
-const m=document.getElementById("empMonth").value;
-const emp=employees.find(e=>e.code===code && e.month===m);
-if(!emp){alert("Payslip not found"); return;}
-showPS(emp);
 }
 </script>
 
