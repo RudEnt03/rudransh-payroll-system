@@ -55,7 +55,7 @@ text-align:center;box-shadow:0 2px 6px rgba(0,0,0,0.1);
 table{width:100%;border-collapse:collapse;background:white;}
 th{background:#4e73df;color:white;padding:10px;}
 td{padding:10px;border-bottom:1px solid #eee;text-align:center;}
-.view{background:#1cc88a;cursor:pointer;}
+.view{background:#1cc88a;}
 
 #modal{
 display:none;position:fixed;width:100%;height:100%;
@@ -248,7 +248,6 @@ data.forEach(e=>{
 g+=Number(e.gross);
 n+=Number(e.net);
 
-// Use data attributes instead of JSON.stringify
 tb.innerHTML+=`
 <tr>
 <td>${e.code}</td>
@@ -257,7 +256,7 @@ tb.innerHTML+=`
 <td>${e.month}</td>
 <td>${rupee(e.gross)}</td>
 <td>${rupee(e.net)}</td>
-<td><button class="view" data-code="${e.code}" data-month="${e.month}">View</button></td>
+<td><button class="view" onclick='showPS(${JSON.stringify(e)})'>View</button></td>
 </tr>`;
 });
 
@@ -265,16 +264,6 @@ document.getElementById("cEmp").innerText=data.length;
 document.getElementById("cGross").innerText=rupee(g);
 document.getElementById("cNet").innerText=rupee(n);
 }
-
-// Attach a single click listener for all "View" buttons
-document.addEventListener('click', function(e){
-if(e.target && e.target.classList.contains('view')){
-const code=e.target.getAttribute('data-code');
-const month=e.target.getAttribute('data-month');
-const emp=employees.find(emp=>emp.code===code && emp.month===month);
-if(emp){ showPS(emp); }
-}
-});
 
 function showPS(e){
 document.getElementById("modal").style.display="block";
