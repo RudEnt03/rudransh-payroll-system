@@ -11,7 +11,6 @@
 <style>
 body{font-family:Segoe UI;margin:0;background:#eef2f7;}
 
-/* APP FEEL */
 .logoCircle{
 width:90px;height:90px;border-radius:50%;
 object-fit:cover;margin:0 auto 15px;
@@ -39,8 +38,7 @@ button{
 padding:10px;border:none;border-radius:6px;
 cursor:pointer;color:white;
 background:linear-gradient(90deg,#4e73df,#36b9cc);
-width:100%;
-margin-top:5px;
+width:100%;margin-top:5px;
 }
 
 header{
@@ -71,7 +69,6 @@ display:none;position:fixed;width:100%;height:100%;
 background:rgba(0,0,0,0.6);
 }
 
-/* A4 */
 .payslip{
 background:white;width:794px;min-height:1123px;
 margin:40px auto;padding:25px;
@@ -97,7 +94,6 @@ margin:40px auto;padding:25px;
 #copyright{
 margin-top:10px;font-size:12px;color:#555;
 }
-
 </style>
 </head>
 
@@ -335,30 +331,43 @@ document.querySelectorAll(".noPrint").forEach(e=>e.style.display="inline-block")
 function closePS(){modal.style.display="none";}
 
 async function login(){
-const role=role.value;
-const code=empCode.value.trim();
-const pwd=password.value;
+
+const roleVal = document.getElementById("role").value;
+const code = document.getElementById("empCode").value.trim();
+const pwd = document.getElementById("password").value;
 
 await loadExcel();
 
-if(role==="admin"){
-if(pwd!=="Rud@03"){msg.innerText="Invalid password";return;}
+if(roleVal==="admin"){
+if(pwd!=="Rud@03"){
+msg.innerText="Invalid password";return;
+}
 loginPage.style.display="none";
 dashboard.style.display="block";
+
 }else{
-if(code!==pwd){msg.innerText="Password must equal Emp Code";return;}
+
+const ua=navigator.userAgent;
+if(!/Android|iPhone|Mobile/i.test(ua)){
+msg.innerText="Employee login mobile only";return;
+}
+
+if(code!==pwd){
+msg.innerText="Password must equal Emp Code";return;
+}
+
 showMonthSelection(code);
 }
 }
 
 function showMonthSelection(code){
-const months=[...new Set(employees.filter(e=>e.code===code).map(e=>e.month))];
+const mList=[...new Set(employees.filter(e=>e.code===code).map(e=>e.month))];
 
 loginPage.innerHTML=`
 <div id="loginBox">
 <img src="logo.png" class="logoCircle">
 <h3>Select Month</h3>
-<select id='empMonth'>${months.map(m=>`<option>${m}</option>`)}</select>
+<select id='empMonth'>${mList.map(m=>`<option>${m}</option>`)}</select>
 <button onclick='showEmpPayslip("${code}")'>View Payslip</button>
 <div id="copyright">© 2026 Rudransh Enterprises. All Rights Reserved.</div>
 </div>`;
@@ -367,6 +376,7 @@ loginPage.innerHTML=`
 function showEmpPayslip(code){
 const m=empMonth.value;
 const emp=employees.find(e=>e.code===code && e.month===m);
+if(!emp){alert("Payslip not found");return;}
 showPS(emp);
 }
 </script>
