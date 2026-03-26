@@ -239,38 +239,41 @@ let data=employees.filter(e=>
 render(data);
 }
 
+// ==== FIXED RENDER FUNCTION ====
 function render(data){
 let tb=document.getElementById("tbody");
 tb.innerHTML="";
 let g=0,n=0;
 
 data.forEach((e,i)=>{
-g+=Number(e.gross);
-n+=Number(e.net);
+    g+=Number(e.gross);
+    n+=Number(e.net);
 
-// Use data-index instead of JSON.stringify for safe admin view
-tb.innerHTML+=`
-<tr>
-<td>${e.code}</td>
-<td>${e.name}</td>
-<td>${e.projectLocation}</td>
-<td>${e.month}</td>
-<td>${rupee(e.gross)}</td>
-<td>${rupee(e.net)}</td>
-<td><button class="view" data-index="${i}">View</button></td>
-</tr>`;
+    tb.innerHTML+=`
+    <tr>
+    <td>${e.code}</td>
+    <td>${e.name}</td>
+    <td>${e.projectLocation}</td>
+    <td>${e.month}</td>
+    <td>${rupee(e.gross)}</td>
+    <td>${rupee(e.net)}</td>
+    <td><button class="view" data-index="${i}">View</button></td>
+    </tr>`;
 });
 
 document.getElementById("cEmp").innerText=data.length;
 document.getElementById("cGross").innerText=rupee(g);
 document.getElementById("cNet").innerText=rupee(n);
 
-// Add event listeners safely
+// ADD CLICK EVENTS AFTER TABLE IS BUILT
 document.querySelectorAll("button.view").forEach(btn=>{
-btn.addEventListener("click",()=>{ showPS(data[btn.getAttribute("data-index")]); });
+    btn.addEventListener("click",()=>{
+        showPS(data[btn.getAttribute("data-index")]);
+    });
 });
 }
 
+// ==== SHOW PAYSLIP ====
 function showPS(e){
 document.getElementById("modal").style.display="block";
 
@@ -384,6 +387,7 @@ jsPDF:{unit:'px',format:[794,1123],orientation:'portrait'}
 
 function closePS(){document.getElementById("modal").style.display="none";}
 
+// ==== LOGIN ====
 async function login(){
 const role=document.getElementById("role").value;
 const code=document.getElementById("empCode").value.trim();
