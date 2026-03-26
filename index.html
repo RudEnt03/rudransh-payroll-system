@@ -10,81 +10,31 @@
 
 <style>
 body{font-family:Segoe UI;margin:0;background:#eef2f7;}
-
-/* LOGO */
-.logoCircle{
-width:90px;height:90px;border-radius:50%;
-object-fit:cover;display:block;margin:0 auto 15px;
-box-shadow:0 4px 12px rgba(0,0,0,0.2);
-}
-
-/* APP LOGIN */
-#loginPage{
-position:fixed;width:100%;height:100%;
-display:flex;justify-content:center;align-items:center;flex-direction:column;
-}
-#loginBox{
-background:white;padding:30px;width:320px;
-border-radius:12px;box-shadow:0 8px 20px rgba(0,0,0,0.15);
-text-align:center;
-}
-#loginBox input,#loginBox select{
-width:100%;margin-bottom:10px;padding:10px;
-border-radius:6px;border:1px solid #ccc;
-}
-
-button{
-padding:10px;border:none;border-radius:6px;
-cursor:pointer;color:white;
-background:linear-gradient(90deg,#4e73df,#36b9cc);
-width:100%;
-}
-
-/* ORIGINAL UI */
-header{
-background:linear-gradient(90deg,#4e73df,#36b9cc);
-color:white;padding:18px;display:flex;justify-content:space-between;
-}
+.logoCircle{width:90px;height:90px;border-radius:50%;object-fit:cover;display:block;margin:0 auto 15px;box-shadow:0 4px 12px rgba(0,0,0,0.2);}
+#loginPage{position:fixed;width:100%;height:100%;display:flex;justify-content:center;align-items:center;flex-direction:column;}
+#loginBox{background:white;padding:30px;width:320px;border-radius:12px;box-shadow:0 8px 20px rgba(0,0,0,0.15);text-align:center;}
+#loginBox input,#loginBox select{width:100%;margin-bottom:10px;padding:10px;border-radius:6px;border:1px solid #ccc;}
+button{padding:10px;border:none;border-radius:6px;cursor:pointer;color:white;background:linear-gradient(90deg,#4e73df,#36b9cc);width:100%;}
+header{background:linear-gradient(90deg,#4e73df,#36b9cc);color:white;padding:18px;display:flex;justify-content:space-between;}
 .container{padding:20px;}
 .controls{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px;}
 .cards{display:flex;gap:15px;margin-bottom:20px;}
-.card{
-flex:1;background:white;padding:20px;border-radius:8px;
-text-align:center;box-shadow:0 2px 6px rgba(0,0,0,0.1);
-}
+.card{flex:1;background:white;padding:20px;border-radius:8px;text-align:center;box-shadow:0 2px 6px rgba(0,0,0,0.1);}
 table{width:100%;border-collapse:collapse;background:white;}
 th{background:#4e73df;color:white;padding:10px;}
 td{padding:10px;border-bottom:1px solid #eee;text-align:center;}
 .view{background:#1cc88a;}
-
-#modal{
-display:none;position:fixed;width:100%;height:100%;
-background:rgba(0,0,0,0.6);overflow:auto;
-}
-
-/* A4 */
-.payslip{
-background:white;width:794px;min-height:1123px;
-margin:40px auto;padding:25px;box-sizing:border-box;
-}
-
+#modal{display:none;position:fixed;width:100%;height:100%;background:rgba(0,0,0,0.6);overflow:auto;}
+.payslip{background:white;width:794px;min-height:1123px;margin:40px auto;padding:25px;box-sizing:border-box;}
 .psTable{width:100%;border-collapse:collapse;}
 .psTable td,.psTable th{border:2px solid #000;padding:8px;}
-
 .left{text-align:left;}
 .right{text-align:right;}
 .center{text-align:center;}
-
 .net{font-size:20px;font-weight:bold;text-align:center;margin-top:10px;}
 .footer{text-align:center;margin-top:15px;font-size:12px;}
-
-#copyright{
-margin-top:10px;font-size:12px;color:#555;text-align:center;
-}
-
-@media(max-width:480px){
-#loginBox{width:100%;height:100%;border-radius:0;box-shadow:none;}
-}
+#copyright{margin-top:10px;font-size:12px;color:#555;text-align:center;}
+@media(max-width:480px){#loginBox{width:100%;height:100%;border-radius:0;box-shadow:none;}}
 </style>
 </head>
 
@@ -94,65 +44,48 @@ margin-top:10px;font-size:12px;color:#555;text-align:center;
 <div id="loginBox">
 <img src="logo.png" class="logoCircle">
 <h3>Login</h3>
-
 <select id="role" onchange="if(this.value==='admin'){empCode.value='Admin'}else{empCode.value=''}">
 <option value="emp">Employee</option>
 <option value="admin">Admin</option>
 </select>
-
 <input id="empCode" placeholder="Employee Code">
 <input id="password" type="password" placeholder="Password">
-
 <button onclick="login()">Login</button>
-
-<div id="copyright">
-© 2026 Rudransh Enterprises. All Rights Reserved.
-</div>
-
+<div id="copyright">© 2026 Rudransh Enterprises. All Rights Reserved.</div>
 <div id="msg" style="color:red"></div>
 </div>
 </div>
 
 <div id="dashboard" style="display:none">
 <header><h2>Payroll Dashboard</h2></header>
-
 <div class="container">
-
 <div class="controls">
 <select id="monthFilter"><option value="all">All Months</option></select>
 <select id="projectFilter"><option value="all">All Projects</option></select>
 <button onclick="applyFilter()">Filter</button>
 </div>
-
 <div class="cards">
 <div class="card">Total Employees<p id="cEmp">0</p></div>
 <div class="card">Total Gross<p id="cGross">0</p></div>
 <div class="card">Total Net<p id="cNet">0</p></div>
 </div>
-
 <table>
 <thead>
-<tr>
-<th>Emp Code</th><th>Name</th><th>Project & Location</th>
-<th>Month</th><th>Gross</th><th>Net</th><th>Payslip</th>
-</tr>
+<tr><th>Emp Code</th><th>Name</th><th>Project & Location</th><th>Month</th><th>Gross</th><th>Net</th><th>Payslip</th></tr>
 </thead>
 <tbody id="tbody"></tbody>
 </table>
-
 </div>
 </div>
 
 <div id="modal">
 <div class="payslip" id="payslipArea">
 <div id="psBody"></div>
-
 <div class="footer">
 <button onclick="downloadPDF()">Download PDF</button>
 <button onclick="window.print()">Print</button>
 <button onclick="closePS()">Close</button>
 </div>
-
 </div>
 </div>
 
@@ -179,17 +112,13 @@ const wb=XLSX.read(data,{type:"array"});
 
 wb.SheetNames.forEach(sheetName=>{
 const rows=XLSX.utils.sheet_to_json(wb.Sheets[sheetName]);
-
 rows.forEach(r=>{
 let rec={};
 for(let k in r){rec[k.trim().toLowerCase()]=r[k];}
-
 let m=rec["month"];
 if(typeof m==="number"){m=XLSX.SSF.format("mmm-yy",m);}
-
 months.add(m);
 projects.add(sheetName);
-
 employees.push({
 code:rec["emp code"]||"",
 name:rec["name"]||"",
@@ -215,7 +144,6 @@ net:rec["net in hand"]
 });
 });
 }
-
 populateFilters();
 render(employees);
 }
@@ -230,164 +158,70 @@ projects.forEach(p=>{pSel.innerHTML+=`<option value="${p}">${p}</option>`;});
 function applyFilter(){
 const m=document.getElementById("monthFilter").value;
 const p=document.getElementById("projectFilter").value;
-
-let data=employees.filter(e=>
-(m=="all"||e.month==m) &&
-(p=="all"||e.projectLocation==p)
-);
-
+let data=employees.filter(e=>(m=="all"||e.month==m)&&(p=="all"||e.projectLocation==p));
 render(data);
 }
 
-// ==== FIXED RENDER FUNCTION ====
 function render(data){
 let tb=document.getElementById("tbody");
 tb.innerHTML="";
 let g=0,n=0;
-
-data.forEach((e,i)=>{
-    g+=Number(e.gross);
-    n+=Number(e.net);
-
-    tb.innerHTML+=`
-    <tr>
-    <td>${e.code}</td>
-    <td>${e.name}</td>
-    <td>${e.projectLocation}</td>
-    <td>${e.month}</td>
-    <td>${rupee(e.gross)}</td>
-    <td>${rupee(e.net)}</td>
-    <td><button class="view" data-index="${i}">View</button></td>
-    </tr>`;
+data.forEach(e=>{
+g+=Number(e.gross); n+=Number(e.net);
+tb.innerHTML+=`
+<tr>
+<td>${e.code}</td>
+<td>${e.name}</td>
+<td>${e.projectLocation}</td>
+<td>${e.month}</td>
+<td>${rupee(e.gross)}</td>
+<td>${rupee(e.net)}</td>
+<td><button class="view" onclick='showPS(${JSON.stringify(e)})'>View</button></td>
+</tr>`;
 });
-
 document.getElementById("cEmp").innerText=data.length;
 document.getElementById("cGross").innerText=rupee(g);
 document.getElementById("cNet").innerText=rupee(n);
-
-// ADD CLICK EVENTS AFTER TABLE IS BUILT
-document.querySelectorAll("button.view").forEach(btn=>{
-    btn.addEventListener("click",()=>{
-        showPS(data[btn.getAttribute("data-index")]);
-    });
-});
 }
 
-// ==== SHOW PAYSLIP ====
+// ------------------ ADMIN/EMPLOYE VIEW LOGIC ------------------
 function showPS(e){
 document.getElementById("modal").style.display="block";
-
 document.getElementById("psBody").innerHTML=`
 <table class="psTable">
 <tr>
-<td class="center" style="width:150px">
-<img src="logo.png" height="70">
-</td>
-<td class="center">
-<b style="font-size:20px">Rudransh Enterprises</b><br>
+<td class="center" style="width:150px"><img src="logo.png" height="70"></td>
+<td class="center"><b style="font-size:20px">Rudransh Enterprises</b><br>
 Office Address: Shop No- 4,5,6,7, Idgha Road, Bholanath Nagar Market, Delhi-110032
-</td>
-</tr>
-<tr>
-<td colspan="2" class="center">
-<b>Salary Slip for ${e.month}</b>
-</td>
-</tr>
-</table>
-
-<br>
-
+</td></tr>
+<tr><td colspan="2" class="center"><b>Salary Slip for ${e.month}</b></td></tr>
+</table><br>
 <table class="psTable">
-<tr>
-<td class="left">Employee Name</td>
-<td class="left">${e.name}</td>
-<td class="left">Employee Code</td>
-<td class="left">${e.code}</td>
-</tr>
-<tr>
-<td class="left">Designation</td>
-<td class="left">${e.designation}</td>
-<td class="left">Project & Location</td>
-<td class="left">${e.projectLocation}</td>
-</tr>
-<tr>
-<td class="left">UAN No</td>
-<td class="left">${e.uan}</td>
-<td class="left">ESI No</td>
-<td class="left">${e.esi_no}</td>
-</tr>
-<tr>
-<td class="left">M Days</td>
-<td class="left">${e.mdays}</td>
-<td class="left">P Days</td>
-<td class="left">${e.pdays}</td>
-</tr>
-</table>
-
-<br>
-
+<tr><td class="left">Employee Name</td><td class="left">${e.name}</td><td class="left">Employee Code</td><td class="left">${e.code}</td></tr>
+<tr><td class="left">Designation</td><td class="left">${e.designation}</td><td class="left">Project & Location</td><td class="left">${e.projectLocation}</td></tr>
+<tr><td class="left">UAN No</td><td class="left">${e.uan}</td><td class="left">ESI No</td><td class="left">${e.esi_no}</td></tr>
+<tr><td class="left">M Days</td><td class="left">${e.mdays}</td><td class="left">P Days</td><td class="left">${e.pdays}</td></tr>
+</table><br>
 <table class="psTable">
-<tr>
-<th class="left">Earnings</th>
-<th class="right">Amount</th>
-<th class="left">Deductions</th>
-<th class="right">Amount</th>
-</tr>
-<tr>
-<td class="left">Basic</td>
-<td class="right">${rupee(e.basic)}</td>
-<td class="left">PF</td>
-<td class="right">${rupee(e.pf)}</td>
-</tr>
-<tr>
-<td class="left">HRA</td>
-<td class="right">${rupee(e.hra)}</td>
-<td class="left">ESI</td>
-<td class="right">${rupee(e.esi)}</td>
-</tr>
-<tr>
-<td class="left">Allowance</td>
-<td class="right">${rupee(e.allow)}</td>
-<td class="left">LWF</td>
-<td class="right">${rupee(e.lwf)}</td>
-</tr>
-<tr>
-<td class="left">Bonus</td>
-<td class="right">${rupee(e.bonus)}</td>
-<td class="left">Advance</td>
-<td class="right">${rupee(e.advance)}</td>
-</tr>
-<tr>
-<td class="left">Attendance Incentive</td>
-<td class="right">${rupee(e.attendance)}</td>
-<td></td>
-<td></td>
-</tr>
-<tr>
-<td class="left"><b>Gross</b></td>
-<td class="right"><b>${rupee(e.gross)}</b></td>
-<td></td>
-<td></td>
-</tr>
+<tr><th class="left">Earnings</th><th class="right">Amount</th><th class="left">Deductions</th><th class="right">Amount</th></tr>
+<tr><td class="left">Basic</td><td class="right">${rupee(e.basic)}</td><td class="left">PF</td><td class="right">${rupee(e.pf)}</td></tr>
+<tr><td class="left">HRA</td><td class="right">${rupee(e.hra)}</td><td class="left">ESI</td><td class="right">${rupee(e.esi)}</td></tr>
+<tr><td class="left">Allowance</td><td class="right">${rupee(e.allow)}</td><td class="left">LWF</td><td class="right">${rupee(e.lwf)}</td></tr>
+<tr><td class="left">Bonus</td><td class="right">${rupee(e.bonus)}</td><td class="left">Advance</td><td class="right">${rupee(e.advance)}</td></tr>
+<tr><td class="left">Attendance Incentive</td><td class="right">${rupee(e.attendance)}</td><td></td><td></td></tr>
+<tr><td class="left"><b>Gross</b></td><td class="right"><b>${rupee(e.gross)}</b></td><td></td><td></td></tr>
 </table>
-
-<div class="net">NET PAY ${rupee(e.net)}</div>
-`;
+<div class="net">NET PAY ${rupee(e.net)}</div>`;
 }
 
 function downloadPDF(){
-html2pdf().set({
-margin:0,
-filename:'Payslip.pdf',
-image:{type:'jpeg',quality:1},
-html2canvas:{scale:2},
-jsPDF:{unit:'px',format:[794,1123],orientation:'portrait'}
-}).from(document.getElementById("payslipArea")).save();
+html2pdf().set({margin:0,filename:'Payslip.pdf',image:{type:'jpeg',quality:1},html2canvas:{scale:2},jsPDF:{unit:'px',format:[794,1123],orientation:'portrait'}})
+.from(document.getElementById("payslipArea")).save();
 }
 
 function closePS(){document.getElementById("modal").style.display="none";}
 
-// ==== LOGIN ====
+// ------------------ LOGIN ------------------
 async function login(){
 const role=document.getElementById("role").value;
 const code=document.getElementById("empCode").value.trim();
@@ -409,7 +243,6 @@ showMonthSelection(code);
 
 function showMonthSelection(code){
 const empMonths=[...new Set(employees.filter(e=>e.code===code).map(e=>e.month))];
-
 document.getElementById("loginPage").innerHTML=`
 <div id="loginBox">
 <img src="logo.png" class="logoCircle">
@@ -419,11 +252,8 @@ ${empMonths.map(m=>`<option value="${m}">${m}</option>`).join('')}
 </select>
 <br><br>
 <button onclick='showEmpPayslip("${code}")'>View Payslip</button>
-<div id="copyright">
-© 2026 Rudransh Enterprises. All Rights Reserved.
-</div>
-</div>
-`;
+<div id="copyright">© 2026 Rudransh Enterprises. All Rights Reserved.</div>
+</div>`;
 }
 
 function showEmpPayslip(code){
