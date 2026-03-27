@@ -134,10 +134,18 @@ background:#4e73df;color:white;font-weight:bold;border:none;
 <div id="psBody"></div>
 
 <div class="footer">
+
+<div id="pdfNote" style="display:none;">
 Note: This is a Computer Generated Slip and does not require signature
+</div>
+
 <br><br>
+
+<div id="actionBtns" style="text-align:center;">
 <button onclick="downloadPDF()">Download PDF</button>
 <button onclick="closePS()">Close</button>
+</div>
+
 </div>
 
 </div>
@@ -145,8 +153,15 @@ Note: This is a Computer Generated Slip and does not require signature
 
 <script>
 
-// ✅ REAL PDF
+// ✅ PDF FUNCTION
 async function downloadPDF(){
+
+const note = document.getElementById("pdfNote");
+const btns = document.getElementById("actionBtns");
+
+note.style.display = "block";
+btns.style.display = "none";
+
 const { jsPDF } = window.jspdf;
 const element = document.getElementById("payslipArea");
 
@@ -154,14 +169,18 @@ const canvas = await html2canvas(element,{scale:2});
 const imgData = canvas.toDataURL("image/png");
 
 const pdf = new jsPDF("p","mm","a4");
+
 const imgWidth = 210;
 const imgHeight = (canvas.height * imgWidth) / canvas.width;
 
 pdf.addImage(imgData,"PNG",0,0,imgWidth,imgHeight);
 pdf.save("Payslip.pdf");
+
+note.style.display = "none";
+btns.style.display = "block";
 }
 
-// ===== ORIGINAL JS =====
+// ===== ORIGINAL JS (UNCHANGED) =====
 const USER="RudEnt03";
 const REPO="rudransh-payroll-system";
 let employees=[];
