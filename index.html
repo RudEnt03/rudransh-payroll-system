@@ -89,11 +89,10 @@ html,body{height:100%;margin:0;padding:0;}
 #loginBox{width:90%;height:auto;border-radius:12px;box-shadow:0 6px 20px rgba(0,0,0,0.15);}
 }
 
-/* ✅ EXISTING PRINT CONTROL */
+/* ===== PRINT CONTROL ===== */
 .print-only{display:none;}
 .no-print{display:block;}
 
-/* ✅ FIXED PRINT SETTINGS (ONLY CHANGE) */
 @media print{
   .no-print{display:none !important;}
   .print-only{display:block !important;}
@@ -103,14 +102,24 @@ html,body{height:100%;margin:0;padding:0;}
     margin:5mm;
   }
 
-  body{
-    margin:0;
-  }
+  body{margin:0;}
 
   .payslip{
     width:100%;
     margin:0;
     box-shadow:none;
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  .psTable{
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  .psTable tr{
+    page-break-inside: avoid;
+    break-inside: avoid;
   }
 }
 </style>
@@ -118,73 +127,38 @@ html,body{height:100%;margin:0;padding:0;}
 </head>
 <body>
 
+<!-- ===== EVERYTHING BELOW EXACT SAME (UNCHANGED) ===== -->
+
 <div id="loginPage">
-
 <div id="loginBox">
-
 <img src="logo.png" class="logo">
-
 <h3>Login</h3>
-
 <select id="role" onchange="roleChange()">
 <option value="emp">Employee</option>
 <option value="admin">Admin</option>
 </select>
-
 <input id="empCode" placeholder="Employee Code">
 <input id="password" type="password" placeholder="Password">
-
 <button onclick="login()">Login</button>
-
-<div id="copyright">
-© 2026 Rudransh Enterprises. All Rights Reserved.
-</div>
-
+<div id="copyright">© 2026 Rudransh Enterprises. All Rights Reserved.</div>
 <div id="msg"></div>
-
 </div>
-
 </div>
 
 <div id="dashboard" style="display:none">
-
-<header>
-<h2>Payroll Dashboard</h2>
-</header>
-
+<header><h2>Payroll Dashboard</h2></header>
 <div class="container">
 
 <div class="controls">
-
-<select id="monthFilter">
-<option value="all">All Months</option>
-</select>
-
-<select id="projectFilter">
-<option value="all">All Projects</option>
-</select>
-
+<select id="monthFilter"><option value="all">All Months</option></select>
+<select id="projectFilter"><option value="all">All Projects</option></select>
 <button onclick="applyFilter()">Filter</button>
-
 </div>
 
 <div class="cards">
-
-<div class="card">
-Total Employees
-<p id="cEmp">0</p>
-</div>
-
-<div class="card">
-Total Gross
-<p id="cGross">0</p>
-</div>
-
-<div class="card">
-Total Net
-<p id="cNet">0</p>
-</div>
-
+<div class="card">Total Employees<p id="cEmp">0</p></div>
+<div class="card">Total Gross<p id="cGross">0</p></div>
+<div class="card">Total Net<p id="cNet">0</p></div>
 </div>
 
 <table>
@@ -203,11 +177,9 @@ Total Net
 </table>
 
 </div>
-
 </div>
 
 <div id="modal">
-
 <div class="payslip">
 
 <div id="psBody"></div>
@@ -226,11 +198,10 @@ Note: This is a Computer Generated Slip and does not require signature
 </div>
 
 </div>
-
 </div>
 
 <script>
-// ===== SAME JS LOGIC AS YOUR WORKING CODE =====
+// ===== YOUR ORIGINAL JS EXACTLY SAME =====
 const USER="RudEnt03";
 const REPO="rudransh-payroll-system";
 let employees=[];
