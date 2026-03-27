@@ -68,7 +68,7 @@ button{padding:6px 12px;border:none;border-radius:4px;cursor:pointer;color:white
 .print-only{display:none;}
 .no-print{display:block;}
 
-/* ✅ FINAL PERFECT PRINT FIX */
+/* ✅ FINAL PRINT FIX (ONLY CHANGE) */
 @media print{
 
   .no-print{display:none !important;}
@@ -81,15 +81,17 @@ button{padding:6px 12px;border:none;border-radius:4px;cursor:pointer;color:white
 
   html,body{
     margin:0;
-    width:210mm;
-    height:297mm;
+    padding:0;
   }
 
   .payslip{
-    width:210mm;      /* exact A4 width */
-    margin:0;
-    padding:15mm;     /* adjusted inner spacing */
+    width:900px;
+    margin:0 auto;
     box-shadow:none;
+
+    transform: scale(0.74);
+    transform-origin: top center;
+    display:block;
   }
 
 }
@@ -172,7 +174,7 @@ Note: This is a Computer Generated Slip and does not require signature
 </div>
 
 <script>
-/* 🔒 YOUR JS FULLY UNCHANGED — SAME AS YOUR ORIGINAL */
+/* 🔒 YOUR ORIGINAL JS FULLY UNTOUCHED */
 const USER="RudEnt03";
 const REPO="rudransh-payroll-system";
 let employees=[];
@@ -218,7 +220,7 @@ gross:rec["gross"],pf:rec["pf@12%"],esi:rec["esi@.75%"],lwf:rec["lwf"],advance:r
 populateFilters(); render(employees);
 }
 
-/* remaining JS same */
+/* rest JS SAME as your original */
 </script>
 
 </body>
