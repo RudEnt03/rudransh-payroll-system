@@ -89,14 +89,29 @@ html,body{height:100%;margin:0;padding:0;}
 #loginBox{width:90%;height:auto;border-radius:12px;box-shadow:0 6px 20px rgba(0,0,0,0.15);}
 }
 
-/* ✅ ONLY ADDITIONS */
+/* ✅ EXISTING PRINT CONTROL */
 .print-only{display:none;}
 .no-print{display:block;}
 
+/* ✅ FIXED PRINT SETTINGS (ONLY CHANGE) */
 @media print{
   .no-print{display:none !important;}
   .print-only{display:block !important;}
-  @page{size:landscape;}
+
+  @page{
+    size: landscape;
+    margin:5mm;
+  }
+
+  body{
+    margin:0;
+  }
+
+  .payslip{
+    width:100%;
+    margin:0;
+    box-shadow:none;
+  }
 }
 </style>
 
