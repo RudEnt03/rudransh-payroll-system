@@ -153,7 +153,7 @@ Note: This is a Computer Generated Slip and does not require signature
 
 <script>
 
-// ✅ PDF FUNCTION (ONLY CHANGE — HD + SMALL SIZE)
+// ✅ PDF FUNCTION (FINAL FIX: HD + SMALL SIZE + SINGLE PAGE)
 async function downloadPDF(){
 
 const note = document.getElementById("pdfNote");
@@ -165,6 +165,15 @@ btns.style.display = "none";
 const { jsPDF } = window.jspdf;
 const element = document.getElementById("payslipArea");
 
+const canvas = await html2canvas(element, {
+    scale: 3,
+    useCORS: true,
+    backgroundColor: "#ffffff"
+});
+
+// compress image
+const imgData = canvas.toDataURL("image/jpeg", 0.75);
+
 const pdf = new jsPDF({
     orientation: "p",
     unit: "mm",
@@ -172,16 +181,15 @@ const pdf = new jsPDF({
     compress: true
 });
 
-await pdf.html(element, {
-    x: 10,
-    y: 10,
-    width: 190,
-    windowWidth: 1000,
-    html2canvas: {
-        scale: 2,
-        useCORS: true
-    }
-});
+const pageWidth = 210;
+const pageHeight = 297;
+
+const imgWidth = pageWidth;
+const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+const y = (imgHeight < pageHeight) ? (pageHeight - imgHeight) / 2 : 0;
+
+pdf.addImage(imgData, "JPEG", 0, y, imgWidth, imgHeight);
 
 pdf.save("Payslip.pdf");
 
