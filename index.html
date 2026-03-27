@@ -88,7 +88,7 @@ button{padding:6px 12px;border:none;border-radius:4px;cursor:pointer;color:white
 .print-only{display:none;}
 .no-print{display:block;}
 
-/* ✅ FINAL PRINT FIX ONLY */
+/* ✅ FINAL PRINT FIX ONLY (NOTHING ELSE TOUCHED) */
 @media print{
 
   .no-print{display:none !important;}
@@ -99,16 +99,26 @@ button{padding:6px 12px;border:none;border-radius:4px;cursor:pointer;color:white
     margin:0;
   }
 
-  body{
+  html,body{
     margin:0;
+    padding:0;
+    width:100%;
+    overflow:hidden;
+  }
+
+  body{
+    display:flex;
+    justify-content:center;
+    align-items:flex-start;
   }
 
   .payslip{
     width:900px;
-    margin:0 auto;
+    margin:0;
+    padding:25px;
     box-shadow:none;
 
-    transform:scale(0.74);
+    transform:scale(0.70);
     transform-origin:top center;
   }
 
@@ -233,7 +243,7 @@ Note: This is a Computer Generated Slip and does not require signature
 </div>
 
 <script>
-// ===== YOUR ORIGINAL JS LOGIC (UNCHANGED) =====
+// ===== YOUR ORIGINAL JS (STRICTLY UNCHANGED) =====
 const USER="RudEnt03";
 const REPO="rudransh-payroll-system";
 let employees=[];
