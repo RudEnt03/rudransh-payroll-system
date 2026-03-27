@@ -59,19 +59,18 @@ button{padding:6px 12px;border:none;border-radius:4px;cursor:pointer;color:white
 .print-only{display:none;}
 .no-print{display:block;}
 
-/* ✅ FINAL BROWSER FIX */
 @media print{
   .no-print{display:none !important;}
   .print-only{display:block !important;}
 
   @page{
-    size: A4 landscape;
+    size: A4 portrait;
     margin:0;
   }
 
   html,body{
-    width:297mm;
-    height:210mm;
+    width:210mm;
+    height:297mm;
     margin:0;
     overflow:hidden;
   }
@@ -80,7 +79,7 @@ button{padding:6px 12px;border:none;border-radius:4px;cursor:pointer;color:white
     width:900px;
     margin:0;
     box-shadow:none;
-    transform: scale(0.78);
+    transform: scale(0.68);
     transform-origin: top left;
   }
 }
@@ -145,19 +144,24 @@ button{padding:6px 12px;border:none;border-radius:4px;cursor:pointer;color:white
 <div id="psBody"></div>
 
 <div class="footer">
+
 <div class="print-only">
 Note: This is a Computer Generated Slip and does not require signature
 </div>
+
 <br><br>
-<button class="no-print" onclick="window.print()">Download PDF</button>
-<button class="no-print" onclick="closePS()">Close</button>
+
+<div class="no-print" style="text-align:center;">
+<button onclick="window.print()">Download PDF</button>
+<button onclick="closePS()">Close</button>
+</div>
+
 </div>
 
 </div>
 </div>
 
 <script>
-// ===== YOUR ORIGINAL JS (UNCHANGED) =====
 const USER="RudEnt03";
 const REPO="rudransh-payroll-system";
 let employees=[];
