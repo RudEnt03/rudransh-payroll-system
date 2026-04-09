@@ -1,8 +1,10 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Attendance</title>
+  <title>Attendance System</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
+
 <body>
 
 <h2>Employee Attendance</h2>
@@ -12,6 +14,9 @@
 <button onclick="markIn()">IN Punch</button>
 <button onclick="markOut()">OUT Punch</button>
 
+<br><br>
+<button onclick="downloadExcel()">Download Monthly Report</button>
+
 <script>
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwoYUdvxjasCQHNKceQWlH2WClOV0p_-IpJn440V7gIQsvHjcVosWWNScxVL0hPgb4FEQ/exec";
 
@@ -20,8 +25,8 @@ const employees = {
     name: "Test User",
     empCode: "E001",
     project: "RDC",
-    lat: 28.434538960588217,
-    lon: 76.99391597716513
+    lat: 28.4595,
+    lon: 77.0266
   }
 };
 
@@ -40,10 +45,6 @@ function getDistance(lat1, lon1, lat2, lon2) {
   return R * c;
 }
 
-function getHours(inTime, outTime) {
-  return (new Date(outTime) - new Date(inTime)) / (1000 * 60 * 60);
-}
-
 function markIn() {
   processPunch("IN");
 }
@@ -53,6 +54,7 @@ function markOut() {
 }
 
 function processPunch(type) {
+
   let mobile = document.getElementById("mobile").value;
 
   if (!employees[mobile]) {
@@ -61,10 +63,12 @@ function processPunch(type) {
   }
 
   navigator.geolocation.getCurrentPosition(pos => {
+
     let userLat = pos.coords.latitude;
     let userLon = pos.coords.longitude;
 
     let emp = employees[mobile];
+
     let distance = getDistance(userLat, userLon, emp.lat, emp.lon);
 
     if (distance > 20) {
@@ -88,15 +92,43 @@ function processPunch(type) {
     } else {
       let inTime = localStorage.getItem("inTime");
       payload.outTime = now.toISOString();
-      payload.hours = getHours(inTime, payload.outTime);
+      payload.hours = (new Date(payload.outTime) - new Date(inTime)) / (1000*60*60);
     }
 
     fetch(SCRIPT_URL, {
       method: "POST",
       body: JSON.stringify(payload)
     }).then(() => alert(type + " recorded"));
+
   });
+
 }
+
+function downloadExcel() {
+  fetch(SCRIPT_URL + "?action=report")
+    .then(res => res.json())
+    .then(data => generateExcel(data));
+}
+
+function generateExcel(data) {
+
+  let wb = XLSX.utils.book_new();
+
+  let ws_data = [];
+
+  ws_data.push(data.headers);
+
+  data.rows.forEach(row => {
+    ws_data.push(row);
+  });
+
+  let ws = XLSX.utils.aoa_to_sheet(ws_data);
+
+  XLSX.utils.book_append_sheet(wb, ws, "Attendance");
+
+  XLSX.writeFile(wb, "Monthly_Attendance.xlsx");
+}
+
 </script>
 
 </body>
